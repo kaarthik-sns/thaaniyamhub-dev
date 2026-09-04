@@ -16,8 +16,10 @@ wp-content/*
 wp-content/themes/*
 !wp-content/themes/thaaniyamhub/
 
-# --- Ignore rules within plugins & themes ---
-# Ignore giant backups, upgrade caches, and WooCommerce/GoDaddy temp files
+# Explicitly ignore non-tracked wp-content folders
+wp-content/litespeed/
+wp-content/mu-plugins/
+wp-content/uploads/
 wp-content/backups-dup-lite/
 wp-content/upgrade/
 wp-content/upgrade-temp-backup/
