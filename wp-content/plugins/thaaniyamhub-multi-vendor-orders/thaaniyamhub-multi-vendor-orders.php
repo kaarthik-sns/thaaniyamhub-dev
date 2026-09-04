@@ -262,6 +262,8 @@ add_filter( 'woocommerce_get_settings_pages', function ( $settings ) {
 add_action( 'admin_post_thaaniyamhub_download_logs', 'thaaniyamhub_download_logs_handler' );
 if (!function_exists('thaaniyamhub_download_logs_handler')) {
     function thaaniyamhub_download_logs_handler() {
+        check_admin_referer( 'thaaniyamhub_download_logs' );
+
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_die( esc_html__( 'You do not have permission to download this log file.', 'thaaniyamhub-multi-vendor-orders' ) );
         }
@@ -288,6 +290,8 @@ if (!function_exists('thaaniyamhub_download_logs_handler')) {
 add_action( 'admin_post_thaaniyamhub_clear_logs', 'thaaniyamhub_clear_logs_handler' );
 if (!function_exists('thaaniyamhub_clear_logs_handler')) {
     function thaaniyamhub_clear_logs_handler() {
+        check_admin_referer( 'thaaniyamhub_clear_logs' );
+
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_die( esc_html__( 'You do not have permission to clear this log file.', 'thaaniyamhub-multi-vendor-orders' ) );
         }

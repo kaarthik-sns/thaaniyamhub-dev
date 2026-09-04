@@ -87,6 +87,117 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
         }
 
         /**
+         * Check if gateway is available for checkout.
+         */
+        public function is_available()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'is_available')) {
+                return $this->inner_gateway->is_available();
+            }
+            return parent::is_available();
+        }
+
+        /**
+         * Get icon HTML.
+         */
+        public function get_icon()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'get_icon')) {
+                return $this->inner_gateway->get_icon();
+            }
+            return parent::get_icon();
+        }
+
+        /**
+         * Get title.
+         */
+        public function get_title()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'get_title')) {
+                return $this->inner_gateway->get_title();
+            }
+            return !empty($this->title) ? $this->title : parent::get_title();
+        }
+
+        /**
+         * Get description.
+         */
+        public function get_description()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'get_description')) {
+                return $this->inner_gateway->get_description();
+            }
+            return !empty($this->description) ? $this->description : parent::get_description();
+        }
+
+        /**
+         * Render payment fields.
+         */
+        public function payment_fields()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'payment_fields')) {
+                $this->inner_gateway->payment_fields();
+            } else {
+                parent::payment_fields();
+            }
+        }
+
+        /**
+         * Validate form fields.
+         */
+        public function validate_fields()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'validate_fields')) {
+                return $this->inner_gateway->validate_fields();
+            }
+            return parent::validate_fields();
+        }
+
+        /**
+         * Check if form fields exist.
+         */
+        public function has_fields()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'has_fields')) {
+                return $this->inner_gateway->has_fields();
+            }
+            return !empty($this->has_fields);
+        }
+
+        /**
+         * Check feature support.
+         */
+        public function supports($feature)
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'supports')) {
+                return $this->inner_gateway->supports($feature);
+            }
+            return parent::supports($feature);
+        }
+
+        /**
+         * Get return URL after payment.
+         */
+        public function get_return_url($order = null)
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'get_return_url')) {
+                return $this->inner_gateway->get_return_url($order);
+            }
+            return parent::get_return_url($order);
+        }
+
+        /**
+         * Process admin options save.
+         */
+        public function process_admin_options()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'process_admin_options')) {
+                return $this->inner_gateway->process_admin_options();
+            }
+            return parent::process_admin_options();
+        }
+
+        /**
          * Output settings page HTML.
          */
         public function admin_options()
@@ -140,6 +251,10 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                 $primary_order_id = (int) $order_id;
             }
 
+            $primary_order = ($primary_order_id === (int) $order_id) ? $order : wc_get_order($primary_order_id);
+            $cf_order_id   = $primary_order ? ($primary_order->get_meta('_cf_order_id') ?: $primary_order->get_meta('_cashfree_order_id')) : '';
+            $refund_target_id = !empty($cf_order_id) ? $cf_order_id : $primary_order_id;
+
             // Generate a unique refund ID per attempt
             $refund_id = 'sub_' . $order_id . '-' . uniqid();
 
@@ -153,13 +268,13 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                     return new WP_Error('error', __('Cashfree adapter not available for refund', 'woocommerce'));
                 }
 
-                $refund = $adapter->refund($primary_order_id, $refund_id, $amount, $reason);
+                $refund = $adapter->refund($refund_target_id, $refund_id, $amount, $reason);
 
                 $order->add_order_note(
                     sprintf(
-                        __('Cashfree Refund Processed. Refund ID: %s (Primary Order #%d)', 'thaaniyamhub-multi-vendor-orders'),
+                        __('Cashfree Refund Processed. Refund ID: %s (Target Order: %s)', 'thaaniyamhub-multi-vendor-orders'),
                         isset($refund->cf_refund_id) ? $refund->cf_refund_id : $refund_id,
-                        $primary_order_id
+                        (string) $refund_target_id
                     )
                 );
 

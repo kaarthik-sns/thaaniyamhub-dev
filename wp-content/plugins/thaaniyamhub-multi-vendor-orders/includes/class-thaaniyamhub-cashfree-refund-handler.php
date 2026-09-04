@@ -46,6 +46,13 @@ class ThaaniyamHub_Cashfree_Refund_Handler
             return $gateways;
         }
 
+        // Only wrap Cashfree gateway if Cashfree Payment Gateway is enabled in WooCommerce settings
+        $cf_settings = get_option('woocommerce_cashfree_settings', []);
+        $is_enabled  = isset($cf_settings['enabled']) && 'yes' === $cf_settings['enabled'];
+        if (!$is_enabled) {
+            return $gateways;
+        }
+
         $wrapper_file = __DIR__ . '/class-thaaniyamhub-cashfree-payments-wrapper.php';
         if (file_exists($wrapper_file)) {
             include_once $wrapper_file;

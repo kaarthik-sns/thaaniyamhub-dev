@@ -1152,6 +1152,12 @@ class ThaaniyamHub_Ledger
      */
     public static function ajax_export_csv()
     {
+        if ( isset( $_REQUEST['_nonce'] ) ) {
+            check_ajax_referer( 'thaaniyamhub_export_ledger_csv', '_nonce' );
+        } else {
+            check_admin_referer( 'thaaniyamhub_export_ledger_csv' );
+        }
+
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_die( 'Insufficient permissions', 403 );
         }

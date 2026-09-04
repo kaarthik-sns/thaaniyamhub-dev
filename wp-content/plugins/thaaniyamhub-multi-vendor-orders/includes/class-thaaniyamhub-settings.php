@@ -973,8 +973,8 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
             </th>
             <td class="forminp forminp-thaaniyamhub-log-viewer">
                 <div style="margin-bottom: 12px;">
-                    <a href="<?php echo esc_url( admin_url( 'admin-post.php?action=thaaniyamhub_clear_logs' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Clear Today\'s Log', 'thaaniyamhub-multi-vendor-orders' ); ?></a>
-                    <a href="<?php echo esc_url( admin_url( 'admin-post.php?action=thaaniyamhub_download_logs' ) ); ?>" class="button button-secondary" style="margin-left: 5px;"><?php esc_html_e( 'Download Today\'s Log', 'thaaniyamhub-multi-vendor-orders' ); ?></a>
+                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=thaaniyamhub_clear_logs' ), 'thaaniyamhub_clear_logs' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Clear Today\'s Log', 'thaaniyamhub-multi-vendor-orders' ); ?></a>
+                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=thaaniyamhub_download_logs' ), 'thaaniyamhub_download_logs' ) ); ?>" class="button button-secondary" style="margin-left: 5px;"><?php esc_html_e( 'Download Today\'s Log', 'thaaniyamhub-multi-vendor-orders' ); ?></a>
                     <a href="<?php echo esc_url( $wc_logs_url ); ?>" class="button button-primary" style="margin-left: 5px;" target="_blank"><?php esc_html_e( 'View All Logs in WooCommerce Status', 'thaaniyamhub-multi-vendor-orders' ); ?> &rarr;</a>
                 </div>
                 <textarea readonly style="width: 100%; height: 450px; font-family: Consolas, Monaco, monospace; font-size: 12px; line-height: 1.5; white-space: pre; overflow-wrap: normal; background-color: #1e1e1e; color: #d4d4d4; border: 1px solid #c3c4c7; padding: 12px; border-radius: 4px; box-sizing: border-box;" id="thaaniyamhub_log_text"><?php echo esc_textarea( $log_content ); ?></textarea>

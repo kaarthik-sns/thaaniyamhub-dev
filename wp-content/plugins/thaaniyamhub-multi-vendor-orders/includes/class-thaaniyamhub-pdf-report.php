@@ -105,6 +105,7 @@ class ThaaniyamHub_PDF_Report
         $export_csv_url = add_query_arg(
             array_merge($_GET, [
                 'action' => 'thaaniyamhub_export_ledger_csv',
+                '_nonce' => wp_create_nonce('thaaniyamhub_export_ledger_csv'),
             ]),
             admin_url('admin-ajax.php')
         );

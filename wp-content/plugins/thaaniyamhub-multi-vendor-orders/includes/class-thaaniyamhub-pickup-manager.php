@@ -591,6 +591,29 @@ class ThaaniyamHub_Pickup_Manager
     // AJAX HANDLERS
     // =========================================================================
 
+    /**
+     * AJAX: Get all cached or live Shiprocket pickup locations.
+     */
+    public static function ajax_get_locations()
+    {
+        check_ajax_referer('thaaniyamhub_pm_nonce', '_nonce');
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error(__('Insufficient permissions.', 'thaaniyamhub-multi-vendor-orders'), 403);
+        }
+
+        $force     = isset($_GET['force']) && '1' === (string) $_GET['force'];
+        $locations = self::get_cached_locations($force);
+
+        if (is_wp_error($locations)) {
+            wp_send_json_error($locations->get_error_message());
+        }
+
+        wp_send_json_success([
+            'count'     => is_array($locations) ? count($locations) : 0,
+            'locations' => $locations,
+        ]);
+    }
+
     public static function ajax_refresh_cache()
     {
         check_ajax_referer('thaaniyamhub_pm_nonce', '_nonce');
