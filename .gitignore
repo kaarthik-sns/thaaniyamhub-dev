@@ -1,0 +1,49 @@
+# Ignore all files/folders in the root by default
+/*
+
+# Exclude .gitignore and wp-content from being ignored
+!/.gitignore
+!/wp-content/
+
+# Ignore everything inside wp-content by default
+wp-content/*
+
+# Allow plugins and themes directories inside wp-content
+!wp-content/plugins/
+!wp-content/themes/
+
+# Ignore all themes except thaaniyamhub
+wp-content/themes/*
+!wp-content/themes/thaaniyamhub/
+
+# --- Ignore rules within plugins & themes ---
+# Ignore giant backups, upgrade caches, and WooCommerce/GoDaddy temp files
+wp-content/backups-dup-lite/
+wp-content/upgrade/
+wp-content/upgrade-temp-backup/
+wp-content/wpaas-updates-log/
+
+# Ignore all log files
+*.log
+wp-content/*.log
+wp-content/**/*.log
+.htaccess.log
+
+# Ignore OS system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Ignore archives/zip files that exceed GitHub file limits
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.tgz
+*.rar
+
+.agent/skills/cashfree-skills/
+.agents/skills/cashfree-skills/
+.gemini/skills/cashfree-skills/
+

@@ -1,0 +1,211 @@
+/**
+ * Thaaniyam Refer a Friend — Admin Panel Styles
+ *
+ * Brand colors:
+ *   Primary: #7A9E22 (Avocado Green)
+ *   Hover:   #65841b
+ *   Cream:   #F7F3EA
+ *   Dark:    #2c2a29
+ *   Muted:   #706b69
+ *
+ * @package Thaaniyam\ReferFriend
+ * @since   1.0.0
+ */
+
+.traf-settings-wrap {
+	max-width: 1000px;
+	margin-top: 20px;
+}
+
+.traf-settings-wrap h1 {
+	font-size: 26px;
+	font-weight: 800;
+	color: var(--wp-admin-theme-color, #2c2a29);
+	margin-bottom: 24px;
+}
+
+/* Nav Tab Customizations */
+.traf-settings-wrap .nav-tab-wrapper {
+	border-bottom: 2px solid #e2dbcd;
+	margin-bottom: 20px;
+	padding-left: 0;
+}
+
+.traf-settings-wrap .nav-tab {
+	font-weight: 600;
+	font-size: 14px;
+	padding: 8px 16px;
+	margin-bottom: -2px;
+	border: 2px solid transparent;
+	background: transparent;
+	color: #706b69;
+	transition: all 0.2s ease;
+}
+
+.traf-settings-wrap .nav-tab:hover {
+	color: #2c2a29;
+	background: transparent;
+	border-bottom-color: #7A9E22;
+}
+
+.traf-settings-wrap .nav-tab-active,
+.traf-settings-wrap .nav-tab-active:focus,
+.traf-settings-wrap .nav-tab-active:hover {
+	color: #2c2a29;
+	background: transparent;
+	border: 2px solid #e2dbcd;
+	border-bottom-color: #f1f1f1 !important; /* blend into card */
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	border-bottom: 2px solid transparent !important;
+	position: relative;
+	z-index: 2;
+}
+
+/* Card layout */
+.traf-settings-wrap .traf-card {
+	background: #ffffff;
+	border: 1px solid #e2dbcd;
+	box-shadow: 0 4px 20px rgba(44, 42, 41, 0.03);
+	border-radius: 8px;
+	padding: 24px 30px 30px;
+	margin-top: -1px;
+}
+
+.traf-settings-wrap .traf-card h3 {
+	font-size: 18px;
+	font-weight: 700;
+	color: #2c2a29;
+	border-bottom: 1px solid #f0ece5;
+	padding-bottom: 12px;
+	margin-bottom: 20px;
+	margin-top: 0;
+}
+
+.traf-settings-wrap .form-table th {
+	font-weight: 600;
+	color: #2c2a29;
+	width: 220px;
+	padding: 20px 10px 20px 0;
+}
+
+.traf-settings-wrap .form-table td {
+	padding: 16px 10px;
+}
+
+/* Slider Switch Styles */
+.traf-switch {
+	position: relative;
+	display: inline-block;
+	width: 50px;
+	height: 26px;
+}
+
+.traf-switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.traf-slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	transition: .3s;
+}
+
+.traf-slider:before {
+	position: absolute;
+	content: "";
+	height: 18px;
+	width: 18px;
+	left: 4px;
+	bottom: 4px;
+	background-color: white;
+	transition: .3s;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+input:checked + .traf-slider {
+	background-color: #7A9E22;
+}
+
+input:focus + .traf-slider {
+	box-shadow: 0 0 1px #7A9E22;
+}
+
+input:checked + .traf-slider:before {
+	transform: translateX(24px);
+}
+
+.traf-slider.round {
+	border-radius: 34px;
+}
+
+.traf-slider.round:before {
+	border-radius: 50%;
+}
+
+/* Form Buttons */
+.traf-settings-wrap .submit-button-container {
+	margin-top: 20px;
+}
+
+.traf-save-btn {
+	background-color: #7A9E22 !important;
+	border-color: #7A9E22 !important;
+	color: #ffffff !important;
+	font-weight: 700 !important;
+	padding: 8px 24px !important;
+	height: auto !important;
+	font-size: 14px !important;
+	border-radius: 6px !important;
+	box-shadow: 0 4px 12px rgba(122, 158, 34, 0.2) !important;
+	transition: all 0.2s ease !important;
+}
+
+.traf-save-btn:hover {
+	background-color: #65841b !important;
+	border-color: #65841b !important;
+	transform: translateY(-1px);
+	box-shadow: 0 6px 16px rgba(122, 158, 34, 0.3) !important;
+}
+
+.traf-save-btn:active {
+	transform: translateY(0);
+}
+
+/* Referrals CPT Listing status styling */
+.status-completed {
+	background: #e8f4d9;
+	color: #4a6809;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.status-processing {
+	background: #e0f0fd;
+	color: #0d6efd;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.status-pending {
+	background: #fff3cd;
+	color: #856404;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+}

@@ -1,0 +1,1731 @@
+@import url('../fonts/font-style.css');
+
+:root {
+  --background-white: #ffffff;
+  --white: #ffffff;
+  --primary-color: #5C5C5C;
+  --font-Rethink-Sans: 'Rethink Sans';
+  --btn-primary-bg: #135486;
+  --btn-secondary-bg: #CFA859;
+}
+html{
+position: relative;
+}
+body {
+    margin: 0;
+    padding: 0;
+    position: relative;
+    font-weight: normal;
+    font-family: 'Rethink Sans';
+    font-size: 18px;
+}
+
+a{
+    color: #135486;
+    text-decoration: none;
+}
+a:hover{
+     text-decoration: none;
+}
+.top-header {
+    margin: 0;
+    display: block;
+    padding: 10px 0;
+    width: 100%;
+    position: relative;
+    z-index: 1030;
+    background:#fff;  
+    box-shadow: rgba(0, 0, 0, 0.04) 0px 3px 5px; 
+}
+html:has(.mfp-iframe-holder),
+html:has(.mfp-zoom-out-cur){
+    overflow: auto!important;
+    margin:0!important;
+}
+.header-part-info {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+}
+.top-header.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color:#fff; 
+}
+.right-part {
+    float: right;
+}
+.top-logo {
+    max-width: 394px;
+    float: left;
+    margin: 0 56px 0 0;
+    position: relative;
+}
+.top-logo a {
+    padding: 0;
+    margin-right: 0px;
+}
+.top-logo a img {
+    max-width: 100%;
+    border: 0;
+}
+.top-header .navbar {
+    padding: 10px 16px;     
+}
+.top-header.fixed  .navbar{
+    border-color: transparent;
+}
+.top-store-info {
+    min-height: 57px;
+    background-color: #EDFED8;
+    -webkit-border-bottom-right-radius: 25px;
+    -webkit-border-bottom-left-radius: 25px;
+    -moz-border-radius-bottomright: 25px;
+    -moz-border-radius-bottomleft: 25px;
+    border-bottom-right-radius: 25px;
+    border-bottom-left-radius: 25px;
+    margin-top: -1px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    float: right;
+}
+.header-menu-part {
+    float: right;
+    clear: both;
+    margin: 0 0;
+}
+#main-menu ul {
+    margin: 0px;
+    padding: 0;
+}
+#main-menu ul li {
+    padding: 0 10px;
+    margin: 0;
+}
+#main-menu ul li a {
+    color:var(--primary-color);  
+    font-family:var(--font-Rethink-Sans);
+    font-size: 18px;
+    font-weight:500;
+    line-height: normal;
+    padding: 0 15px;
+    text-decoration: none;
+}
+#main-menu ul li a:hover {
+    color: #135486;
+}
+#main-menu ul li.current-menu-item a{
+    color: #135486;  
+}
+
+
+.top-location-info{
+    text-align: right;
+    margin: 0 0 15px;
+}
+.top-location-info span{
+    color: var(--primary-color);
+    font-family:var(--font-Rethink-Sans);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: normal;
+    margin: 0;
+}
+.top-location-info span .fa-location-dot{ color:#CFA859; margin-right: 5px;}
+
+
+
+/***/
+/* Submenu Base */
+.sub-menu,
+.sub-sub-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  list-style: none;
+  margin: 0 0 0;
+  padding:10px 0;
+  min-width: 250px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  z-index: 999;
+}
+
+/* Submenu Items */
+.menu-item-has-children{
+    position: relative;
+}
+#main-menu .sub-menu{
+     margin: 12px 0 0;
+}
+#main-menu  .sub-menu li,
+#main-menu .sub-sub-menu li {
+  position: relative;
+}
+#main-menu  .sub-menu li:not(:last-child),
+#main-menu .sub-sub-menu li:not(:last-child) {
+    border-bottom: 1px solid #ccc;
+}
+
+#main-menu .sub-menu .nav-link,
+#main-menu  .sub-sub-menu .nav-link {
+  padding: 15px 15px;
+  font-size: 18px;
+  color:var(--primary-color);
+}
+
+#main-menu .sub-menu .nav-link:hover,
+#main-menu .sub-sub-menu .nav-link:hover {
+  background: #f8f9fa;
+  color: #135486;
+}
+
+.sub-sub-menu {
+  top: 0;
+  left: 100%;
+  margin-left: 2px;
+  border-radius: 6px;
+}
+
+.menu-item.menu-open > .sub-menu,
+.menu-item.menu-open > .sub-sub-menu {
+  display: block;
+  animation: dropdownFade 0.25s ease;
+  background-color: #fff;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+#main-menu .sub-menu li a > .dropdown-toggle-icon{
+    position: absolute;
+    right: 10px;
+}
+/* Animation */
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/**/
+
+
+
+.top-search{
+    margin: 0;
+    padding: 0 20px;
+    position: relative;
+}
+.top-search img{
+    max-width: 100%;
+}
+.top-right-link{
+    margin: 0;
+    padding: 0;
+}
+.right-btn-link{
+    margin: 0;
+    display: flex;
+}
+.right-btn-link li {
+    list-style-type: none;
+    display: inline-block!important;
+    margin:0 22px !important;
+}
+.right-btn-link li:last-child{
+    margin-right: 0!important;
+}
+  .right-btn-link li a{
+        border-radius: 50px;
+        padding: 30px 50px;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;    
+        display: flex;  
+        font-family:'Mulish';
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 30px; 
+        border: 1px solid #CFA859;
+   }
+    .right-btn-link li.cta-stud a{
+        background: #CFA859;
+        color: #fff!important;
+    }
+    .right-btn-link li.cta-stud a:hover{
+        color: #fff!important;  
+        background: #135486; 
+         border: 1px solid #135486;   
+    }
+    .right-btn-link li.cta-cal a{
+        color: #fff!important;
+        border: 1px solid #135486;
+        background: #135486;
+    }
+    .right-btn-link li.cta-cal a:hover{
+        color: #fff!important;
+        background: #CFA859;
+        border: 1px solid #CFA859;
+    }
+    .right-btn-link li a img{
+        max-width: 24px;
+        width: 100%;
+        fill: #fff;
+        filter: brightness(0) invert(1);
+    }
+    .right-btn-link li a:hover img {
+      fill: #fff;
+      filter: brightness(0) invert(1);
+    }
+
+
+/**/
+/**main-footer**/
+.main-footer {
+    background-color: #fff;
+    padding:30px 0;
+    clear: both;
+    width: 100%;
+    position: relative;
+    width: 100%;
+    display: block;
+}
+.footer-inner{
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+}
+.footer-menu-list ul{
+    list-style-type: none;
+    margin: 0;
+}
+.footer-logo-mdia{
+    /* max-width: 367px; */
+}
+.footer-menu-list {
+    flex: 1;
+    /* min-width: 200px; */
+    margin: 0;
+    padding: 0;
+}
+.footer-menu-list li {
+    list-style: none;
+    padding: 0 12px;
+    margin: 0px 0 5px;
+    width: 100%;
+    float: left;  
+}
+.footer-menu-list li a {
+    color: var(--primary-color);
+    font-family: var(--font-Rethink-Sans);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: normal;
+    text-decoration: none;
+}
+.footer-menu-list li a:hover {
+    color: #135486;
+}
+.fo-con-add-ino{
+    margin: 0;
+    padding: 0 0 30px;
+    display: block;
+}
+.fo-con-add-ino h5{
+    color: #F2F2F2;
+    font-family: 'Mooli';
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 15.4px; 
+    letter-spacing: 0.14px;
+    text-transform: capitalize;
+    margin: 0 0 16px;
+    padding: 0;
+}
+.fo-con-add-ino p{
+    color: #F2F2F2;
+    font-family: Mooli;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 26px;
+    margin: 0 0 10px;
+}
+.fo-con-add-ino p a{
+    color: #F2F2F2;
+    text-decoration: none;
+}
+.fo-con-add-ino p a:hover{
+    color: #800000;
+}
+.fo-social-info{
+    display: block;
+    position: relative;
+    width: 100%;
+}
+.fo-social-info h3{
+    color: #FFF;
+    font-family: Mooli;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 32px;
+    margin: 0 0 20px; 
+}
+.fo-signup-form{
+    display: block;
+    width: 100%;
+    margin: 0 0 20px;
+    max-width: 404px;
+}
+.fo-signup-form p{
+    color: #FFF;    
+    font-family: Mooli;
+    font-size: 12px;   
+    font-weight: 400;
+    line-height: 20px;
+    margin: 0;
+}
+.fo-signup-form p a{
+    color: #F1C5C5;
+    text-decoration: none;
+}
+
+/***/
+.footer-scoial-list h5{
+    color:var(--primary-color);
+    font-family: var(--font-Rethink-Sans);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px; 
+    margin: 0 0 0;
+}
+.footer-copyright {
+    display: block;
+    position: relative;
+    margin:6px 0 0;
+}
+.footer-copyright p {
+    color: #5C5C5C;
+    text-align:left;
+    font-family: "Rethink Sans";
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 26px;
+    margin: 0;
+    text-align: right;
+}
+.footer-scoial-info{
+    margin: 0;
+    padding: 0;
+}
+.footer-scoial-info ul{
+    margin: 10px 0 0;
+    padding: 0;
+    display: flex;
+    gap: 12px;
+}
+.footer-scoial-info ul li{
+    list-style-type: none;
+    display: inline-block;
+    padding: 0;
+    width: auto;
+   
+}
+
+/**main-baner**/
+.top-main-banner {
+    position: relative;
+    width: 100%;
+    display: block;
+    margin-top: -112px;
+}
+.top-main-banner .banner-slick {
+    margin-bottom: 0;
+    overflow: hidden;
+}
+.top-main-banner .slick-dots {
+    position: absolute;
+    bottom: 30px;
+}
+.top-main-banner .slick-dots li button::before {
+    font-size: 15px;
+    color: #fff;
+    opacity: 1;
+}
+
+/***/
+.main-banner{
+    position: relative;
+    width: 100%;
+}
+.banner-desc-info{
+    position: relative;
+    width: 100%;
+    height: 650px;
+}
+.banner-desc-info .background-video{
+    position:relative;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    border-radius:15px;
+    object-fit: cover;
+    object-position: right center;
+}
+.banner-content{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 40px;
+}
+.teeth-icon{
+    display: block;
+    margin: 0 0 15px;
+}
+.teeth-icon img{
+    max-width: 100%;
+}
+.contant-data-desc{
+    max-width: 410px;
+    width: 100%;
+    position: relative;
+}
+.contant-data-desc h1{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 68px;
+    font-weight:600;
+    line-height: 74.8px;
+    letter-spacing: -2px;
+    margin: 0 0 15px;
+    padding: 0;
+}
+.contant-data-desc p{
+    color: #FFF;
+    font-family:var(--font-Rethink-Sans);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 37.5px; 
+    padding: 0;
+}
+/***/
+
+.about-info{
+    position: relative;
+    width: 100%;
+    display: block;
+    margin: 0;
+    padding: 47px 0;
+}
+.about-info .row{
+    align-items: center;
+}
+.about-desc{
+    position: relative;
+    display: block;
+    width: 100%;
+}
+.about-desc h5{
+    color: #135486;
+    font-family: var(--font-Rethink-Sans);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 20.15px; 
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+}
+.about-desc p{
+    color:var(--primary-color);
+    font-family: var(--font-Rethink-Sans);
+    font-size: 23px;
+    font-weight: 500;
+    line-height: 33px;
+    margin: 0;
+}
+.about-desc p strong{
+    color: #CFA859;
+}
+.right-note{
+    display: block;
+}
+
+.right-note h3 {
+    color: #5C5C5C;
+    font-family: "Rethink Sans";
+    font-size: 23px;;
+    font-weight: 500;
+    line-height: 37.5px;
+    margin: 0 0;
+    padding: 0;
+}
+.ml-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-wrap {
+  position: relative;
+  display: inline-block;
+  width: 65px;
+  height: 65px;
+}
+
+.icon-wrap img {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2; 
+}
+
+.glow-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  background: rgba(19, 84, 134, 0.6); 
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  animation: pulseGlow 1.8s ease-out infinite;
+}
+
+@keyframes pulseGlow {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.6;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.4); 
+    opacity: 0; 
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/***/
+.our-service-info{
+    position: relative;
+    background-color: #FDF6E9;
+    padding: 60px 0;
+}
+.ser-head-top{
+    display: block;
+    margin: 0px auto 0;
+    width: 1100px;
+    text-align: center;
+}
+.ser-head-top h3{
+    color: #5C5C5C;
+    text-align: center;
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: 50.4px; 
+    letter-spacing: -1px;
+    margin: 0 auto 15px;
+    max-width:600px;
+
+}
+.ser-head-top p{
+    color: #5C5C5C;
+    text-align: center;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 28px;
+    margin: 0 0 30px;
+}
+
+.service-list-item{
+    position: relative;
+    margin: 0 auto 0;
+    display: inline-block;
+    border-radius: 40px;
+}
+.service-list-item img{
+    max-width: 100%;
+    border-radius: 40px;
+      object-fit: cover;
+  height: 100%;
+}
+
+.service-list-desc{
+    position: absolute;
+    width: 100%;
+    left: 0;
+    bottom: 20px;
+    padding:0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.service-list-desc h4{
+    color: #FFF;
+    font-family: var(--font-Rethink-Sans);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 37.5px; 
+    margin: 0;
+}
+.service-list-desc p{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 28px;
+    margin: 0;
+}
+.service-list-desc .cta-link{
+    text-align: right;
+    width: 100%;
+}
+.service-list-desc .view-more {
+    display:block;
+    width: 40px;
+    float: right;
+}
+.service-list-desc .view-more{
+    text-decoration: none;
+}
+.service-list-desc .view-more img{
+    max-width: 100%;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.service-list-desc .view-more:hover  img {
+  transform: translateX(8px); 
+  opacity: 0.8; 
+}
+.service-list-item:hover{
+    box-shadow: rgba(100, 100, 111, 0.5) 0px 7px 29px 0px;
+    border-radius: 40px;
+}
+
+
+/***/
+.btn-primary{
+    border-radius: 25px;
+    background: #CFA859;
+    padding: 10px 20px;
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24px;
+    text-decoration: none;
+    display: inline-flex;
+    border: 1px solid #CFA859;
+      transition: all 0.3s ease; 
+}
+.btn-primary:hover{
+    border: 1px solid #135486;
+    background: #135486;
+
+}
+.btn-secondary{
+    border-radius: 25px;
+    background: #135486;
+    padding: 10px 20px;
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24px;
+    text-decoration: none;
+    display: inline-flex;
+    border: 1px solid #135486;
+      transition: all 0.3s ease; 
+}
+.btn-secondary:hover{
+    border: 1px solid #CFA859;
+    background: #CFA859;
+}
+.cta-white-outline:hover{
+    border: 1px solid #fff;
+    
+}
+
+
+.our-profile-info{
+    position: relative;
+    display: block;
+    width: 100%;
+    background-image: url(../images/dr-arun-bg.webp);
+    background-position: top left;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+}
+.our-profile-info .profile-info-inner{
+    align-items: center;
+}
+.profile-info-media{
+    width: 100%;
+    position: relative;
+    min-height: 539px;
+}
+.profile-info-media img{
+    max-width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+.profile-content-info{
+    position: relative;
+    display: block;
+}
+.profile-content-info p{
+    color: #FFF;
+    font-family:var(--font-Rethink-Sans);
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 28px; 
+    letter-spacing: -1px;
+    margin: 0 0 30px;
+}
+.profile-content-info h5,
+.profile-content-info h4{
+    color: #FFF;
+    font-family:var(--font-Rethink-Sans);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 28px;
+    letter-spacing: -1px;
+    margin: 0 0 10px;
+}
+.cta-book-app{
+    margin-top: 15px;
+}
+
+/**/
+.client-logos-info{
+    background: #FDFBF6;
+    position: relative;
+    width: 100%;
+    padding:60px 0;
+    width: 100%;
+}
+
+.client-logo-slider{
+    position: relative;
+    width: 100%;
+    margin: 0px auto 0;
+    max-width: 1320px;    
+
+}
+.client-logo-slider .slick-track{
+    display: flex;
+    align-items: center;
+}
+.client-logo-item{
+    height: auto;
+    padding: 0 5px;
+}
+.client-logo-item img{
+    max-width: 100%;
+}
+
+/***/
+.our-personalized{
+    position: relative;
+    width: 100%;
+    padding: 60px 0;
+    display: block;
+}
+.per-top-header{
+    position: relative;
+}
+.per-top-header h3{
+    color: #5C5C5C;
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+    margin: 0 0 15px;
+}
+.per-top-header p{
+    color: #5C5C5C;
+    font-family: "Rethink Sans";
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 33px; 
+    margin: 0 0 15px;
+}
+.our-personalized-inner-desc{
+    margin-top: 30px;
+}
+.our-per-info-list-inner{
+    position: relative;
+    width: 100%;
+    display: block;
+    border-radius: 20px;  
+    transition: all 0.3s ease;  
+}
+.our-per-info-list-inner:hover{
+    box-shadow: rgba(100, 100, 111, 0.5) 0px 7px 29px 0px;
+}
+.our-per-info-list-inner img{
+    border-radius: 20px;
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+}
+.per-desc-info{
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.00) 31.85%, #F3DDB0 100%);
+    position: absolute;
+    bottom: 0;
+    padding:30px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: flex-start;
+}
+.per-desc-info h3{
+    color:var(--primary-color);
+    font-family:var(--font-Rethink-Sans);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 37.5px; 
+    margin: 0 0 15px;
+}
+.cta-out-line{
+    border-radius: 25px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.15);
+    color:var(--primary-color);
+    font-family: var(--font-Rethink-Sans);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24px;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 12px 30px;
+    transition: all 0.3s ease;
+}
+.cta-out-line:hover{
+  border: 1px solid rgba(0, 47, 135, 0.6);
+  background: rgba(0, 47, 135, 0.6);
+  color: #fff;
+}
+
+/***/
+
+
+.our-office-info {
+    position: relative;
+    width: 100%;
+    display: block;
+    background: #CFA859;
+    padding: 0;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.our-environment-slide-info {
+    position: absolute;
+    top: 0;
+    left: 0;
+   width: 48%;
+    height: 100%;
+    z-index: 1;
+}
+.our-environment-slide-info .environment-media-list img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+} 
+.env-pro-info-list{
+    position: relative;
+    min-height: 654px;
+}
+.evn-list-pro-inner{
+    position: relative;
+}
+.environment-project {
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 20px;
+   align-items: start;
+   width: 100%;
+   min-height: 306px;
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   padding: 0 15px;
+}
+
+.env-pro-list{
+   display: flex;
+    flex-direction: column;
+    justify-content: flex-start; 
+    height: 100%;
+    padding: 0 5px;
+    position: relative;
+    
+}
+.env-pro-list h4{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 64.4px; 
+    letter-spacing: -1px;
+    margin: 0 0 8px;
+}
+.env-pro-list h5{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 25px;
+    margin: 0 0 10px;
+    padding: 0;
+}
+.env-pro-list p{
+    color: rgba(255, 255, 255, 0.80);
+    font-family: "Rethink Sans";
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 33px;
+    padding: 0;
+    margin: 0;
+    
+}
+.env-pro-list:not(:last-child):after{
+    content: " ";
+    height: 100%;
+    width: 1px;
+    position: absolute;
+    right:-1px;
+    top: 0;
+    background-color: #EAC57A;
+}
+
+.env-slider-arrow{
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+}
+.env-slider-arrow .slick-arrow{
+    cursor: pointer;
+}
+.env-slider-arrow .slick-arrow svg{
+    width: 40px;
+    height: 40px;
+    transition: fill 0.3s ease;
+}
+.env-slider-arrow .slick-arrow:hover svg {
+      filter: brightness(0) saturate(100%) invert(11%) sepia(70%) saturate(3137%) hue-rotate(207deg) brightness(92%) contrast(103%);
+      opacity: 0.5;
+}
+
+/**/
+.our-testimonials{
+    position: relative;
+    width: 100%;
+    display: block;
+    padding: 60px 0;
+}
+.tm-top-title{
+    position: relative;
+    text-align: center;
+}
+.tm-top-title h3{
+    color: #5C5C5C;
+    text-align: center;
+    font-family: "Rethink Sans";
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20.15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.testimonials-list{
+    border-radius: 40px;
+    background: #EFF7FD;
+    position: relative;
+    margin: 50px auto 0;
+    display: block;
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+    padding: 40px 70px;
+    min-height: 464px;
+   
+}
+.testimonials-list-itmes{
+    position: relative;
+    display: flex!important;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    height: 100%;
+}
+.testimonials-list-itmes img{
+    max-width: 100%;
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    margin: 0;
+}
+.testimonials-list-itmes p{
+    color: #5C5C5C;
+    text-align: center;
+    font-family: "Rethink Sans";
+    font-size: 30px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 40.5px;
+    margin: 0;
+}
+.testimonials-list-itmes h6{
+    color: #222;
+    font-family: "Rethink Sans";
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 26.4px; 
+    margin: 0;
+}
+
+.testimonials-list .slick-arrow{
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    line-height: 20px;
+    border-radius: 50%;
+    border: 1px solid #DFE4E1;
+    background-color: #fff;
+    opacity: 0.5;
+    transition: fill 0.3s ease;
+}
+.testimonials-list .slick-arrow:hover{
+    opacity: 1;
+}
+.testimonials-list .slick-prev{
+    left:-90px;
+}
+.testimonials-list .slick-next{
+    right:-90px;
+}
+
+#testimonials-slider .slick-dots {
+  position: absolute;
+  bottom: 18px; 
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 8px; 
+}
+#testimonials-slider .slick-dots li {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+#testimonials-slider .slick-dots li button {
+  font-size: 0; 
+  line-height: 0;
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #CFA859;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#testimonials-slider .slick-dots li.slick-active button {
+  background:#135486;
+  width: 14px;
+  height: 14px;
+}
+#testimonials-slider .slick-dots li button:hover {
+  background: #135486;
+}
+
+
+/***/
+.our-blog-info{
+    background:#CFA859;
+    padding: 0;
+    width: 100%;
+    display: block;
+    position: relative;
+}
+.our-blog-inner{
+    position: relative;
+    min-height: 534px;
+}
+.card-media-info{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 55%;
+}
+.our-media-inner{
+    position: relative;
+    width: 100%;
+    height: 534px;
+}
+.our-media-inner img{
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center left;
+}
+.our-blog-inner{
+    align-items: center;
+    display: flex;
+}
+
+.main-heading-title{
+    display: block;
+}
+.main-heading-title h4{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20.15px; 
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin:0 0 15px;
+}
+
+.main-heading-title h3{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 64.4px; 
+    letter-spacing: -1px;
+    margin:0 0 15px;
+}
+.main-heading-title p{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px;
+    margin:0 0 15px;
+}
+
+
+
+/* office page style */
+.inner-banner-bg{
+    background-image: url(../images/office-banner-bg.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    overflow: hidden;
+    min-height: 431px;
+    align-items: center;
+    border-radius: 40px;
+    
+}
+.inner-banner-content{
+    padding: 0 0 0 80px;
+    max-width: 850px;
+}
+.inner-banner-content h1{
+    color: #CFA859;
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+}
+.inner-banner-content p{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px; 
+}
+.inner-banner-media {float: right;}
+.inner-banner-media img {max-width: 100%;}
+.about-content-sec{padding: 60px 0;}
+.about-content-sec{
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: top left;
+}
+.about-content h2{
+    color: #5C5C5C;
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+    margin-bottom: 30px;
+}
+.about-content p{
+    color: #5C5C5C;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px;
+}
+.staff-sec{padding: 60px 0;}
+.staff-content { max-width: 730px;}
+.office-bg-sec{
+    background-image: url(../images/office.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    overflow: hidden;
+    /* min-height: 436px; */
+}
+.office-info-content{
+    align-items: center;
+    padding: 60px 0;
+}
+.office-hours-table table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 15px;
+  overflow: hidden; 
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); 
+}
+.office-hours-table table tr:not(:last-child) {
+  border-bottom: 1px solid #ddd;
+}
+.office-hours-table .day,
+.office-hours-table .time {
+    background-color: #fff; 
+    color: #5C5C5C;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: normal; 
+    padding: 15px 16px;
+    width: 40%;
+    border-radius: 0; 
+}
+.office-hours-table .day {
+  background-color: #d1ac69;
+  color: white;
+}
+.office-hours-table span {
+    font-size: 13px;
+}
+.insurance-con-sec{background: #FDF6E9;}
+.finance-con-sec{background: #F0F9FF;}
+.insurance-img{float: right;}
+.insurance-img img{object-fit: cover;}
+.insurance-con, .finance-con{
+    max-width: 600px;
+    margin: 0 auto;
+}
+.insurance-con{padding: 20px 20px 20px 0;} 
+.finance-con{padding: 20px 0px 20px 20px;}
+.common-text { position: relative;}
+.left-media {
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+}
+
+.left-media img {
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+}
+.smile-content-info{background-color: #CFA859;}
+.smile-content{max-width: 600px;padding: 60px;}
+.smile-content h6{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20.15px; 
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+.smile-content h3{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 64.4px; 
+    letter-spacing: -1px;
+}
+.smile-content p{ 
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 28px; 
+    margin-bottom: 25px;
+}
+.smile-content a{
+    border-radius: 25px;
+    background: #135486;
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24px;
+    padding: 12px 16px;
+}
+.img-align-left .grid-media{order: 1;}
+.img-align-left .grid-content{order: 2;}
+.img-align-right .grid-media{order: 2;}
+.img-align-right .grid-content{order: 1;}
+
+/* orthodontics style */
+.common-banner-bg{
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    align-items: center;
+    border-radius: 40px;
+    min-height: 400px;
+}
+.common-banner-content{padding: 0 60px;}
+
+.orthodontics-grid-sec{
+    background-position:center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    padding: 70px 0;
+}
+.orthodontics-grid-media {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.orthodontics-grid-media video {
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+}
+.orthodontics-grid-media h2{
+    color: #CFA859;
+    font-family: "Rethink Sans";
+    font-size: 25px;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: -1px;
+    margin-bottom: 25px;
+}
+.orthodontics-grid-content h2{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+    margin-bottom: 25px;
+}
+.orthodontics-grid-content h4{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 30px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+}
+.orthodontics-grid-content p{
+    color:#5D5D5D;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px;
+    margin-bottom: 25px; 
+}
+.orthodontics-grid-media img{
+    max-width: 100%;
+    border-radius: 20px;
+}
+.articles-sec{background: #FFFDFB;padding:60px 0;}
+.article-list-info{padding: 25px 0;}
+.article-list-info h3{
+    color:#5D5D5D;
+    font-family: "Rethink Sans";
+    font-size: 25px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+    margin-bottom: 30px;
+}
+.article-list-info p{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px;
+    max-width: 450px;
+    margin-bottom: 30px; 
+}
+.article-list-info a{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24px;
+    border-radius: 25px;
+    background: #CFA859;
+    padding: 10px 20px;
+}
+
+.about-content.plain-content-center {
+		max-width: 1280px;
+		text-align: center;
+		margin: 0 auto;
+	}
+.orthodontics-grid-align-left .orthodontics-media-info{order:1;}
+.orthodontics-grid-align-left .orthodontics-content-info{order:2;}
+.orthodontics-grid-align-right .orthodontics-media-info{order:2;}
+.orthodontics-grid-align-right .orthodontics-content-info{order:1;}
+
+.ort-care{
+    position: relative;
+    max-width: 858px;
+    margin: 0px auto 40px; 
+}
+.ort-care video{
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+}
+
+.dis-infoist-list{
+    position: relative;
+    width: 100%;
+    display: block;
+    background-position: top center;
+    background-size: cover;
+}
+.dis-inner-list{
+    max-width: 750px;
+    width: 100%;
+    position: relative;
+    padding:50px 0;
+}
+.dis-inner-list h3{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+    margin: 0 0 15px;
+}
+.dis-inner-list  p{
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px; 
+    margin: 0 0 15px;
+}
+.dis-inner-list ul{
+    display: block;
+    list-style-type: none;
+    margin: 0 0 15px;
+    padding: 0;
+}
+.dis-inner-list ul li{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    color: #FFF;
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 40px; 
+}
+.dis-inner-list ul li img{
+    margin-right: 5px;
+    max-width: 100%;
+}
+.dis-cta-info{
+    display: flex;
+    position: relative;
+    gap:30px;
+    margin: 34px 0 0;
+}
+
+.art-slider-con .slick-arrow{
+    color:var(--primary-color);
+}
+
+.art-slider-con .slick-arrow {
+    width: 20px;
+    height: 20px;
+    background-color:var(--primary-color);
+    border-radius: 50%;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    z-index: 2;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    position: absolute;
+    top: 45%;
+    cursor: pointer;
+}
+.art-slider-con .slick-arrow:hover {
+    background-color: #444;
+    transform: scale(1.1);
+}
+.art-slider-con .slick-prev {
+    left: -50px; 
+}
+.art-slider-con .slick-next {
+    right: -50px; 
+}
+.art-slider-con .article-list img{
+    border-radius: 20px;
+}
+.art-slider-con .article-list{
+    padding: 0 20px;
+}
+
+.art-slider-con .slick-dots {
+        position: relative;
+        bottom: 0;
+        display: flex !important;
+        justify-content: center;
+        padding: 10px 0;
+    }
+.art-slider-con  .slick-dots li {
+        margin: 0 5px;
+        list-style-type: none;
+    }
+.art-slider-con .slick-dots li button {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ccc;
+        padding: 0;
+        border: none;
+        font-size: 0; 
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+.art-slider-con .slick-dots li.slick-active button {
+        background-color:var(--primary-color); 
+}
+
+.dental-ser-list{
+    position: relative;
+}
+.dental-ser-inner{
+    position: relative;
+    display: block;
+    margin-bottom: 20px;
+    padding: 0 6px;
+}
+.dental-ser-inner img{
+    border-radius: 30px;    
+    position: relative;
+    margin: 0 0 20px;
+    max-width: 100%;
+}
+.dental-ser-inner h3{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -1px;
+    margin: 0 0 15px;
+}
+.dental-ser-inner p{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px; 
+    margin: 0 0 15px;
+}
+
+.dental-ser-info-desc{
+    position: relative;
+    display: block;
+}
+.dental-ser-info-desc p{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px;
+    margin: 0;
+}
+
+/****/
+.faq-info{
+    position: relative;
+    width: 100%;
+    display: block;
+    z-index: 1;
+    padding: 60px 0;
+}
+.faq-heading-info{
+    display: flex;
+    flex-wrap: nowrap;
+  justify-content: space-between;
+    
+}
+.faq-title{
+    position: relative;
+    max-width: 337px;
+    width: 100%;
+}
+.faq-title h3{
+    color:var(--primary-color);
+    font-family: "Rethink Sans";
+    font-size: 42px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: -1px;
+}
+.faq-sub-dsc{
+    position: relative;   
+    max-width: 440px; 
+    width: 100%;
+}
+.faq-sub-dsc p{
+    color: var(--primary-color);
+    font-family:var(--font-Rethink-Sans);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 33px; 
+    margin: 0;
+}

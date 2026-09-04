@@ -1,0 +1,462 @@
+/* Admin review notice*/
+#sp-woogs-review-notice {
+    padding: 18px 15px 18px 0;
+    background-color: #fff;
+    border-radius: 5px;
+    margin: 20px 20px 0 0;
+    box-shadow: 0 0 20px 0 rgba(36, 39, 50, .08);
+}
+
+#sp-woogs-review-notice .sp-woogs-plugin-icon {
+    width: 125px;
+    float: left;
+    line-height: 90px;
+    text-align: center;
+    margin-left: 8px;
+}
+
+#sp-woogs-review-notice .sp-woogs-plugin-icon img {
+    width: 94px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text {
+    overflow: hidden;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text h3 {
+    font-size: 24px;
+    margin: 0 0 5px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text p {
+    margin: 10px 0 10px 0;
+    font-size: 13px;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text p.sp-woogs-review-actions {
+    margin: 10px 0 2px 0;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text .sp-woogs-review-actions a {
+    text-decoration: none;
+    margin-right: 8px;
+    color: #63a37b;
+    display: inline-block;
+    position: relative;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text .sp-woogs-review-actions a span {
+    padding-right: 2px;
+}
+
+#sp-woogs-review-notice .sp-woogs-notice-text .sp-woogs-review-actions a.button {
+    color: #fff;
+}
+
+/* Gallery Slider and Quick View admin notice. */
+.wqv-notice,
+.wcs-notice {
+    padding-left: 10px;
+    border-left-width: 1px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    overflow: hidden;
+    margin: 10px 20px 2px;
+    margin-left: 0;
+}
+
+.wqv-notice img,
+.wcs-notice img {
+    float: left;
+    max-width: 48px;
+    margin-right: 12px;
+}
+
+.wqv-notice .wqv-activate-btn,
+.wcs-notice .wcs-activate-btn {
+    background: #2171B1;
+    color: #fff;
+    padding: 9px 15px;
+    border-radius: 2px;
+    line-height: 19px;
+    text-decoration: none;
+    margin-left: 15px;
+    display: inline-block;
+}
+
+.wqv-notice .wqv-activate-btn:hover,
+.wcs-notice .wcs-activate-btn:hover {
+    background: #135e96;
+}
+
+.wqv-notice .wqv-notice-text,
+.wcs-notice .wcs-notice-text {
+    line-height: 48px;
+    font-size: 14px;
+    margin-left: 12px;
+}
+
+.wqv-notice .notice-dismiss,
+.wcs-notice .notice-dismiss {
+    top: 14px;
+}
+
+.wcs-demo-button,
+.wqv-demo-button {
+    color: #2171B1;
+    padding: 9px 15px;
+    border-radius: 2px;
+    line-height: 19px;
+    text-decoration: none;
+    margin-left: 15px;
+    border: 1px solid #2171B1;
+    transition-duration: 200ms;
+    transition-timing-function: linear;
+    display: inline-block;
+}
+
+.wcs-demo-button:hover,
+.wqv-demo-button:hover {
+    background-color: #135e96;
+    color: #ffffff;
+    border-color: #135e96;
+}
+
+.wcs-demo-button svg,
+.wqv-demo-button svg {
+    margin-left: 5px;
+    float: unset;
+    vertical-align: middle;
+    transition: .2s linear;
+}
+
+.wcs-demo-button:hover svg,
+.wqv-demo-button:hover svg {
+    transform: translateX(5px);
+    fill: #fff;
+}
+
+@media screen and (max-width: 776px) {
+
+    .wqv-notice .wqv-notice-text,
+    .wcs-notice .wcs-notice-text {
+        line-height: 38px;
+    }
+}
+
+.rtl #sp-woogs-review-notice {
+    margin: 20px 0 0 20px;
+    padding: 18px 0 18px 15px;
+}
+
+.rtl #sp-woogs-review-notice .sp-woogs-plugin-icon {
+    float: right;
+    margin: 0 0 0 8px;
+}
+
+.rtl .smart-swatches-notice {
+    margin: 20px 0 0 20px;
+    padding: 18px 18px 18px 15px;
+    border-right-width: 1px;
+}
+
+.rtl .smart-swatches-notice>img {
+    float: right;
+    margin: 0 0 0 8px;
+}
+
+.rtl .smart-swatches-notice .notice-dismiss {
+    right: auto;
+    left: 5px;
+    top: 5px
+}
+
+.rtl .smart-swatches-notice.is-dismissible {
+    padding-left: 25px;
+    padding-right: 10px;
+}
+
+.rtl .wcgs-options .wcgs-admin-header:not(.assign_layout_settings) .wcgs-version {
+    left: auto;
+    right: 274px;
+}
+
+/* Gallery Slider and Quick View admin notice. */
+.smart-swatches-notice .woogs-notice {
+    padding-left: 10px;
+    border-left-width: 1px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-left: 0;
+    overflow: hidden;
+}
+
+.smart-swatches-notice img,
+.woogs-notice img {
+    float: left;
+    max-width: 48px;
+    margin-right: 12px;
+    min-width: 40px;
+}
+
+.smart-swatches-notice .smart-swatches-activate-btn,
+.woogs-notice .woogs-activate-btn {
+    background: #2171B1;
+    color: #fff;
+    padding: 9px 15px;
+    border-radius: 2px;
+    line-height: 19px;
+    text-decoration: none;
+    margin-right: 15px;
+    display: inline-block;
+    margin-left: 15px;
+}
+
+.smart-swatches-notice .smart-swatches-activate-btn:hover,
+.woogs-notice .woogs-activate-btn:hover {
+    background: #135e96;
+}
+
+.smart-swatches-notice .smart-swatches-notice-text,
+.woogs-notice .woogs-notice-text {
+    line-height: 48px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.smart-swatches-notice .notice-dismiss,
+.woogs-notice .notice-dismiss {
+    padding: 0;
+    top: 5px;
+    right: 5px;
+}
+
+.smart-swatches-demo-button,
+.wqv-demo-button {
+    display: inline-block;
+    color: #2171B1;
+    padding: 9px 15px;
+    border-radius: 2px;
+    line-height: 19px;
+    text-decoration: none;
+    border: 1px solid #2171B1;
+    transition-duration: 200ms;
+    transition-timing-function: linear;
+}
+
+.smart-swatches-demo-button:hover,
+.wqv-demo-button:hover {
+    background-color: #135e96;
+    color: #ffffff;
+    border-color: #135e96;
+}
+
+.smart-swatches-demo-button svg,
+.wqv-demo-button svg {
+    margin-left: 5px;
+    float: unset;
+    vertical-align: middle;
+    transition: .2s linear;
+}
+
+.smart-swatches-demo-button:hover svg,
+.woogs-demo-button:hover svg,
+.wqv-demo-button:hover svg {
+    transform: translateX(5px);
+    fill: #fff;
+}
+
+.smart-swatches-notice {
+    padding-left: 10px;
+    border-left-width: 1px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-left: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    margin: 20px 20px 0 0;
+    box-shadow: 0 0 20px 0 rgba(36, 39, 50, .08);
+    clear: both;
+    position: relative;
+}
+
+.smart-swatches-notice-content img.emoji {
+    float: none;
+}
+
+@media screen and (max-width: 1445px) {
+    .smart-swatches-notice-content {
+        line-height: 1.6;
+        padding-top: 4px;
+    }
+
+    .smart-swatches-notice-content img.emoji {
+        display: none !important;
+    }
+
+}
+
+@media screen and (max-width: 776px) {
+
+    .smart-swatches-notice .smart-swatches-notice-text,
+    .wqv-notice .wqv-notice-text,
+    .woogs-notice .woogs-notice-text {
+        line-height: 38px;
+    }
+}
+
+.smart-swatches-notice.is-dismissible {
+    padding-right: 25px;
+}
+
+.smart-swatches-notice .smart-swatches-activate-btn {
+    margin-right: 0px;
+    margin-left: 12px;
+    white-space: nowrap;
+}
+
+.rtl .smart-swatches-notice .smart-swatches-activate-btn {
+    margin-left: 0;
+    margin-right: 12px;
+}
+
+/* Admin offer banner */
+#shapedplugin-offer-banner {
+    padding: 0;
+    border: 0;
+    line-height: 0;
+    background: transparent;
+}
+
+#shapedplugin-offer-banner a:focus {
+    outline: 0;
+    box-shadow: none;
+}
+
+#shapedplugin-offer-banner .notice-dismiss:focus {
+    outline: 0;
+    box-shadow: none;
+}
+
+#shapedplugin-offer-banner button.shapedplugin-offer-banner-dismiss:before {
+    color: #fff;
+    font-size: 22px;
+}
+
+#shapedplugin-offer-banner button.shapedplugin-offer-banner-dismiss:hover:before {
+    color: #f30808;
+}
+/* Rebrand announcement notice. */
+.wgs-rebrand-notice {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    /* A flex container makes its own formatting context, so it would sit
+       beside the right-floated Screen Options / Help tabs instead of
+       spanning past them. */
+    clear: both;
+    min-height: 40px;
+    padding: 10px 48px;
+    /* Bleed past the 20px left padding on #wpcontent so the bar spans the
+       full width of the screen, from the admin menu to the viewport edge. */
+    margin: 10px 0 15px -20px;
+    background-color: #148652;
+}
+
+.wgs-rebrand-notice-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.wgs-rebrand-notice-icon {
+    display: block;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.wgs-rebrand-notice-text {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.wgs-rebrand-notice-text strong {
+    font-weight: 700;
+}
+
+.wgs-rebrand-notice-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-left: 0;
+    color: #fff;
+    text-decoration: none;
+    opacity: .9;
+    transition: opacity .2s linear;
+}
+
+.wgs-rebrand-notice-link:hover,
+.wgs-rebrand-notice-link:focus {
+    color: #fff;
+    opacity: 1;
+    outline: 0;
+    box-shadow: none;
+}
+
+.wgs-rebrand-notice-dismiss {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    opacity: .85;
+    transition: opacity .2s linear;
+}
+
+.wgs-rebrand-notice-dismiss:hover,
+.wgs-rebrand-notice-dismiss:focus {
+    opacity: 1;
+    outline: 0;
+    box-shadow: none;
+}
+
+@media screen and (max-width: 782px) {
+    .wgs-rebrand-notice {
+        padding: 10px 44px 10px 12px;
+        /* #wpcontent drops to 10px of left padding on small screens. */
+        margin: 10px 0 15px -10px;
+    }
+
+    .wgs-rebrand-notice-content {
+        align-items: flex-start;
+    }
+
+    .wgs-rebrand-notice-text {
+        text-align: left;
+    }
+}

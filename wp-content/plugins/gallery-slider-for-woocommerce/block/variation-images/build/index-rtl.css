@@ -1,0 +1,49 @@
+/*!****************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/editor.scss ***!
+  \****************************************************************************************************************************************************************************************************************************************/
+/**
+ * The following styles get applied inside the editor only.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+.wp-block-shapedplugin-variation-images .wcgs-gallery-items img {
+  max-width: 100%;
+  width: 120px;
+  max-height: 120px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  -o-object-position: center;
+     object-position: center;
+}
+.wp-block-shapedplugin-variation-images .wcgs-image .wcgs-image-remover {
+  width: auto !important;
+  height: auto !important;
+  box-sizing: border-box;
+}
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons {
+  margin-top: 10px;
+}
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons .button {
+  display: inline-block;
+  margin-left: 10px;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  height: 30px !important;
+}
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons .wcgs-remove-all-images {
+  background: #a00 !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons .wcgs-upload-image,
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons .wcgs-upload-more-image {
+  border: 1px solid rgb(34, 113, 177) !important;
+}
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons .wcgs-pro-notice {
+  font-size: 13px;
+  line-height: 30px;
+}
+.wp-block-shapedplugin-variation-images .wcgs-gallery-buttons .wcgs-pro-notice a {
+  text-decoration: underline;
+}

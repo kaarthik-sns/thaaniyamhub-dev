@@ -1,0 +1,894 @@
+/**
+ * Thaaniyam Refer a Friend — Frontend UI Stylesheet
+ *
+ * Brand colors:
+ *   Primary: #7A9E22 (Avocado Green)
+ *   Hover:   #65841b
+ *   Cream:   #F7F3EA
+ *   Dark:    #2c2a29
+ *   Muted:   #706b69
+ *   White:   #ffffff
+ *
+ * @package Thaaniyam\ReferFriend
+ * @since   1.0.0
+ */
+
+/* =========================================================
+   Global/Variables Setup
+   ========================================================= */
+.traf-product-share-box,
+.traf-myaccount-wrap {
+	font-family: 'Montserrat', sans-serif !important;
+	box-sizing: border-box;
+}
+
+.traf-product-share-box *,
+.traf-myaccount-wrap * {
+	font-family: 'Montserrat', sans-serif !important;
+	box-sizing: border-box;
+}
+
+/* =========================================================
+   Single Product CTA Button & Share Modal
+   ========================================================= */
+/* Ensure parent buttons flex container wraps elements */
+.product-quantity-cart {
+	flex-wrap: wrap !important;
+}
+
+.traf-refer-inline-container {
+	margin-top: 15px !important;
+	margin-bottom: 15px !important;
+	display: none;
+	align-items: center !important;
+	gap: 12px !important;
+	clear: both !important;
+	width: 100% !important;
+	flex-basis: 100% !important;
+}
+
+.traf-refer-inline-container.repositioned {
+	display: flex !important;
+}
+
+.traf-refer-label {
+	font-family: 'Montserrat', sans-serif !important;
+	font-size: 13px;
+	font-weight: 700;
+	color: #706b69;
+}
+
+.traf-coupon-code-badge {
+	font-family: monospace !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	color: #7A9E22 !important;
+	background-color: #f4f8f4 !important;
+	border: 1px dashed #7A9E22 !important;
+	padding: 3px 8px !important;
+	border-radius: 4px !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.5px !important;
+	cursor: pointer !important;
+	transition: background-color 0.2s ease, border-style 0.2s ease;
+}
+
+.traf-coupon-code-badge:hover {
+	background-color: #edf5ee !important;
+	border-style: solid !important;
+}
+
+.traf-refer-icons-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	position: relative;
+}
+
+.traf-icon-btn {
+	width: 32px !important;
+	height: 32px !important;
+	border-radius: 50% !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	text-decoration: none !important;
+	font-size: 14px !important;
+	color: #ffffff !important;
+	transition: all 0.2s ease !important;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.traf-icon-btn.whatsapp {
+	background-color: #25D366 !important;
+}
+
+.traf-icon-btn.whatsapp:hover {
+	background-color: #1ebd58 !important;
+	transform: scale(1.1);
+	color: #ffffff !important;
+}
+
+.traf-icon-btn.instagram {
+	background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+}
+
+.traf-icon-btn.instagram:hover {
+	opacity: 0.9 !important;
+	transform: scale(1.1);
+	color: #ffffff !important;
+}
+
+.traf-icon-btn.email {
+	background-color: #7A9E22 !important;
+}
+
+.traf-icon-btn.email:hover {
+	background-color: #65841b !important;
+	transform: scale(1.1);
+	color: #ffffff !important;
+}
+
+.traf-icon-btn.copy-link {
+	background-color: #2c2a29 !important;
+}
+
+.traf-icon-btn.copy-link:hover {
+	background-color: #1a1918 !important;
+	transform: scale(1.1);
+	color: #ffffff !important;
+}
+
+.traf-login-link-inline {
+	font-family: 'Montserrat', sans-serif !important;
+	font-size: 12px;
+	font-weight: 700;
+	color: #7A9E22;
+	text-decoration: none;
+	border-bottom: 1px dashed #7A9E22;
+	transition: all 0.2s ease;
+}
+
+.traf-login-link-inline:hover {
+	color: #65841b;
+	border-bottom-color: #65841b;
+}
+
+.traf-inline-tooltip {
+	position: absolute;
+	bottom: 38px;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: #2c2a29;
+	color: #ffffff;
+	padding: 4px 10px;
+	font-size: 11px;
+	border-radius: 4px;
+	font-weight: 600;
+	pointer-events: none;
+	white-space: nowrap;
+	box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+	z-index: 100;
+}
+
+.traf-product-share-box {
+	background-color: #F7F3EA;
+	border: 1px solid #e2dbcd;
+	border-radius: 16px;
+	padding: 24px;
+	margin: 25px 0;
+	box-shadow: 0 8px 30px rgba(44, 42, 41, 0.02);
+	position: relative;
+	overflow: hidden;
+	clear: both !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	display: block !important;
+	flex-basis: 100% !important;
+	box-sizing: border-box !important;
+}
+
+.traf-badge-pill {
+	display: inline-block;
+	background-color: #7A9E22;
+	color: #ffffff !important;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	padding: 4px 10px;
+	border-radius: 20px;
+	margin-bottom: 12px;
+}
+
+.traf-card-title {
+	font-size: 18px;
+	font-weight: 800;
+	color: #2c2a29;
+	margin: 0 0 6px 0 !important;
+	line-height: 1.3;
+}
+
+.traf-card-desc {
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: #706b69;
+	margin: 0 0 16px 0 !important;
+}
+
+.traf-product-link-row {
+	margin-bottom: 16px;
+	position: relative;
+}
+
+.traf-input-wrapper {
+	display: flex;
+	border: 1px solid #d0c8b8;
+	border-radius: 8px;
+	background: #ffffff;
+	overflow: hidden;
+	height: 42px;
+	align-items: center;
+}
+
+.traf-input-wrapper input {
+	border: none !important;
+	background: transparent !important;
+	padding: 8px 12px !important;
+	font-size: 13px !important;
+	color: #2c2a29 !important;
+	width: 100% !important;
+	height: 100% !important;
+	outline: none !important;
+	font-family: monospace !important;
+	box-shadow: none !important;
+}
+
+.traf-input-wrapper .traf-copy-btn {
+	background-color: #7A9E22;
+	color: #ffffff;
+	border: none;
+	height: 100%;
+	padding: 0 20px;
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.traf-input-wrapper .traf-copy-btn:hover {
+	background-color: #65841b;
+}
+
+.traf-copy-success {
+	font-size: 12px;
+	color: #4a6809;
+	font-weight: 600;
+	margin-top: 4px;
+}
+
+/* Product share buttons */
+.traf-product-social {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.traf-social-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 38px;
+	border-radius: 6px;
+	color: #ffffff !important;
+	font-size: 12px;
+	font-weight: 700;
+	text-decoration: none !important;
+	transition: opacity 0.2s ease;
+	cursor: pointer;
+}
+
+.traf-social-btn i {
+	margin-right: 6px;
+	font-size: 14px;
+	font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome", sans-serif !important;
+	font-weight: 900 !important;
+}
+
+.traf-social-icon i {
+	font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome", sans-serif !important;
+	font-weight: 900 !important;
+}
+
+.traf-social-btn.whatsapp {
+	background-color: #25D366;
+	padding: 0 16px;
+}
+
+.traf-social-btn.instagram {
+	background-color: #E1306C;
+	padding: 0 16px;
+}
+
+.traf-social-btn.email {
+	background-color: #706b69;
+	padding: 0 16px;
+}
+
+.traf-social-btn:hover {
+	opacity: 0.9;
+	color: #ffffff !important;
+}
+
+/* Guest call-to-action styling */
+.traf-login-cta {
+	background-color: #ffffff;
+	border: 1px dashed #d0c8b8;
+	border-radius: 10px;
+	padding: 18px;
+	text-align: center;
+}
+
+.traf-login-cta p {
+	font-size: 13px;
+	color: #706b69;
+	margin: 0 0 12px 0 !important;
+}
+
+.traf-login-btn {
+	display: inline-flex;
+	align-items: center;
+	background-color: #2c2a29;
+	color: #ffffff !important;
+	font-size: 13px;
+	font-weight: 700;
+	padding: 10px 20px;
+	border-radius: 8px;
+	text-decoration: none !important;
+	transition: background-color 0.2s ease;
+}
+
+.traf-login-btn i {
+	margin-right: 8px;
+}
+
+.traf-login-btn:hover {
+	background-color: #7A9E22;
+	color: #ffffff !important;
+}
+
+
+/* =========================================================
+   My Account Referrals Portal Styling
+   ========================================================= */
+.traf-myaccount-wrap {
+	margin-bottom: 40px;
+}
+
+.traf-header {
+	margin-bottom: 25px;
+}
+
+.traf-header h2 {
+	font-size: 24px;
+	font-weight: 800;
+	color: #2c2a29;
+	margin: 0 0 8px 0;
+}
+
+.traf-intro {
+	font-size: 14px;
+	line-height: 1.6;
+	color: #706b69;
+	margin: 0;
+}
+
+/* Referrer Dashboard Link Card */
+.traf-share-card {
+	background-color: #F7F3EA;
+	border: 1px solid #e2dbcd;
+	border-radius: 16px;
+	padding: 24px 30px;
+	margin-bottom: 30px;
+	box-shadow: 0 4px 20px rgba(44, 42, 41, 0.02);
+}
+
+.traf-share-card h3 {
+	font-size: 16px;
+	font-weight: 700;
+	color: #2c2a29;
+	margin: 0 0 12px 0;
+}
+
+.traf-link-box {
+	display: flex;
+	border: 1px solid #d0c8b8;
+	border-radius: 8px;
+	background: #ffffff;
+	overflow: hidden;
+	height: 46px;
+	align-items: center;
+}
+
+.traf-link-box input {
+	border: none !important;
+	background: transparent !important;
+	padding: 10px 16px !important;
+	font-size: 13.5px !important;
+	color: #2c2a29 !important;
+	width: 100% !important;
+	height: 100% !important;
+	outline: none !important;
+	font-family: monospace !important;
+	box-shadow: none !important;
+}
+
+.traf-link-box .traf-copy-btn {
+	background-color: #7A9E22;
+	color: #ffffff;
+	border: none;
+	height: 100%;
+	padding: 0 25px;
+	font-size: 13.5px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	white-space: nowrap;
+}
+
+.traf-link-box .traf-copy-btn:hover {
+	background-color: #65841b;
+}
+
+.traf-copy-feedback {
+	font-size: 13px;
+	color: #4a6809;
+	font-weight: 600;
+	margin-top: 6px;
+}
+
+.traf-social-share {
+	margin-top: 18px;
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+
+.traf-social-label {
+	font-size: 13px;
+	font-weight: 700;
+	color: #706b69;
+}
+
+.traf-social-buttons {
+	display: flex;
+	gap: 10px;
+}
+
+.traf-social-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	color: #ffffff !important;
+	font-size: 15px;
+	text-decoration: none !important;
+	transition: transform 0.2s ease;
+}
+
+.traf-social-icon:hover {
+	transform: scale(1.1);
+	color: #ffffff !important;
+}
+
+.traf-social-icon.whatsapp { background-color: #25D366; }
+.traf-social-icon.instagram { background-color: #E1306C; }
+.traf-social-icon.email { background-color: #706b69; }
+
+/* Stats grid cards */
+.traf-stats-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 16px;
+	margin-bottom: 35px;
+}
+
+@media (min-width: 768px) {
+	.traf-stats-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.traf-stat-card {
+	background: #ffffff;
+	border: 1px solid #e2dbcd;
+	border-radius: 12px;
+	padding: 20px 24px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	box-shadow: 0 4px 15px rgba(44, 42, 41, 0.02);
+}
+
+.traf-stat-icon {
+	width: 48px;
+	height: 48px;
+	border-radius: 10px;
+	background-color: rgba(122, 158, 34, 0.1);
+	color: #7A9E22;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+}
+
+.traf-stat-details {
+	display: flex;
+	flex-direction: column;
+}
+
+.traf-stat-num {
+	font-size: 26px;
+	font-weight: 800;
+	color: #2c2a29;
+	line-height: 1.1;
+}
+
+.traf-stat-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #706b69;
+	margin-top: 2px;
+}
+
+/* History table */
+.traf-history-section h3 {
+	font-size: 18px;
+	font-weight: 800;
+	color: #2c2a29;
+	margin: 0 0 16px 0;
+}
+
+.traf-table-wrapper {
+	border: 1px solid #e2dbcd;
+	border-radius: 12px;
+	overflow: hidden;
+	background: #ffffff;
+}
+
+.traf-history-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: left;
+	font-size: 13.5px;
+	margin: 0;
+}
+
+.traf-history-table th {
+	background-color: #F7F3EA;
+	color: #2c2a29;
+	font-weight: 700;
+	padding: 14px 18px;
+	border-bottom: 1px solid #e2dbcd;
+}
+
+.traf-history-table td {
+	padding: 16px 18px;
+	border-bottom: 1px solid #f0ece5;
+	color: #2c2a29;
+	vertical-align: middle;
+}
+
+.traf-history-table tr:last-child td {
+	border-bottom: none;
+}
+
+/* Badge values */
+.traf-badge {
+	display: inline-block;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	padding: 3px 8px;
+	border-radius: 4px;
+	letter-spacing: 0.5px;
+}
+
+.traf-badge.success {
+	background-color: #e8f4d9;
+	color: #4a6809;
+}
+
+.traf-badge.pending {
+	background-color: #fff3cd;
+	color: #856404;
+}
+
+.traf-coupon-pill {
+	display: inline-flex;
+	align-items: center;
+	background-color: #f1ebd9;
+	border: 1px solid #e2dbcd;
+	border-radius: 6px;
+	padding: 3px 6px 3px 10px;
+	gap: 8px;
+}
+
+.traf-coupon-pill code {
+	font-family: monospace !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	color: #2c2a29 !important;
+	background: transparent !important;
+	padding: 0 !important;
+	letter-spacing: 0.5px;
+}
+
+.traf-coupon-copy {
+	background: none;
+	border: none;
+	color: #706b69;
+	cursor: pointer;
+	padding: 2px 4px;
+	font-size: 11px;
+	transition: color 0.2s ease;
+}
+
+.traf-coupon-copy:hover {
+	color: #7A9E22;
+}
+
+.traf-reward-value {
+	display: block;
+	font-size: 11px;
+	color: #706b69;
+	font-weight: 600;
+	margin-top: 4px;
+}
+
+.traf-no-coupon {
+	color: #c0b9a8;
+}
+
+/* Empty State */
+.traf-empty-state {
+	background-color: #ffffff;
+	border: 1px solid #e2dbcd;
+	border-radius: 12px;
+	padding: 40px;
+	text-align: center;
+}
+
+.traf-empty-icon {
+	font-size: 38px;
+	color: #c0b9a8;
+	margin-bottom: 12px;
+}
+
+.traf-empty-state p {
+	font-size: 14px;
+	color: #706b69;
+	max-width: 460px;
+	margin: 0 auto;
+	line-height: 1.6;
+}
+
+/* Responsive Table layout for smaller viewports */
+@media (max-width: 600px) {
+	.traf-history-table, 
+	.traf-history-table thead, 
+	.traf-history-table tbody, 
+	.traf-history-table th, 
+	.traf-history-table td, 
+	.traf-history-table tr {
+		display: block;
+	}
+
+	.traf-history-table thead {
+		display: none;
+	}
+
+	.traf-history-table tr {
+		border-bottom: 2px solid #e2dbcd;
+		padding: 10px 0;
+	}
+
+	.traf-history-table tr:last-child {
+		border-bottom: none;
+	}
+
+	.traf-history-table td {
+		border-bottom: none;
+		position: relative;
+		padding-left: 50%;
+		text-align: right;
+		font-size: 13px;
+	}
+
+	.traf-history-table td:before {
+		content: attr(data-title);
+		position: absolute;
+		left: 18px;
+		width: 45%;
+		text-align: left;
+		font-weight: 700;
+		color: #706b69;
+	}
+	
+	.traf-reward-td {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+}
+
+/* =========================================================
+   Email Share Modal Styling
+   ========================================================= */
+.traf-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(44, 42, 41, 0.6);
+	backdrop-filter: blur(4px);
+	z-index: 99999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	animation: trafFadeIn 0.3s ease;
+}
+
+.traf-modal-card {
+	background-color: #ffffff;
+	border: 1px solid #e2dbcd;
+	border-radius: 16px;
+	width: 90%;
+	max-width: 480px;
+	padding: 32px 36px;
+	box-shadow: 0 15px 50px rgba(44, 42, 41, 0.15);
+	position: relative;
+	animation: trafScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	box-sizing: border-box;
+}
+
+.traf-modal-close {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	background: none;
+	border: none;
+	font-size: 28px;
+	font-weight: 300;
+	color: #706b69;
+	cursor: pointer;
+	line-height: 1;
+	padding: 0;
+	transition: color 0.2s ease;
+}
+
+.traf-modal-close:hover {
+	color: #2c2a29;
+}
+
+.traf-modal-card h3 {
+	font-size: 20px;
+	font-weight: 800;
+	color: #2c2a29;
+	margin: 0 0 8px 0;
+	letter-spacing: -0.5px;
+}
+
+.traf-modal-card p {
+	font-size: 13.5px;
+	color: #706b69;
+	margin: 0 0 24px 0;
+	line-height: 1.5;
+}
+
+.traf-modal-field {
+	margin-bottom: 20px;
+	text-align: left;
+}
+
+.traf-modal-field label {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	color: #2c2a29;
+	text-transform: uppercase;
+	margin-bottom: 8px;
+	letter-spacing: 0.5px;
+}
+
+.traf-modal-field input[type="text"],
+.traf-modal-field input[type="email"],
+.traf-modal-field textarea {
+	width: 100% !important;
+	padding: 10px 14px !important;
+	border: 1px solid #d0c8b8 !important;
+	border-radius: 8px !important;
+	background-color: #ffffff !important;
+	font-size: 13.5px !important;
+	color: #2c2a29 !important;
+	outline: none !important;
+	box-shadow: none !important;
+	font-family: 'Montserrat', sans-serif !important;
+	box-sizing: border-box !important;
+	transition: border-color 0.2s ease !important;
+}
+
+.traf-modal-field input[type="text"]:focus,
+.traf-modal-field input[type="email"]:focus,
+.traf-modal-field textarea:focus {
+	border-color: #7A9E22 !important;
+}
+
+.traf-modal-field textarea {
+	resize: vertical;
+}
+
+.traf-modal-submit-btn {
+	background-color: #7A9E22;
+	color: #ffffff;
+	border: none;
+	border-radius: 8px;
+	width: 100%;
+	padding: 12px 24px;
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background-color 0.2s ease, transform 0.1s ease;
+	box-shadow: 0 4px 12px rgba(122, 158, 34, 0.2);
+}
+
+.traf-modal-submit-btn:hover {
+	background-color: #65841b;
+}
+
+.traf-modal-submit-btn:active {
+	transform: scale(0.98);
+}
+
+.traf-btn-spinner {
+	margin-left: 8px;
+}
+
+.traf-modal-alert {
+	margin-top: 18px;
+	padding: 12px 16px;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.traf-modal-alert.success {
+	background-color: #e8f4d9;
+	color: #4a6809;
+	border: 1px solid #d4e8b9;
+}
+
+.traf-modal-alert.error {
+	background-color: #fce8e6;
+	color: #a82416;
+	border: 1px solid #f9d5d1;
+}
+
+@keyframes trafFadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes trafScaleUp {
+	from { transform: scale(0.95); opacity: 0; }
+	to { transform: scale(1); opacity: 1; }
+}
+}

@@ -1,0 +1,57 @@
+/**
+ * The following styles get applied inside the editor only.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+
+.wp-block-shapedplugin-variation-images {
+
+
+
+	.wcgs-gallery-items img {
+		max-width: 100%;
+		width: 120px;
+		max-height: 120px;
+		object-fit: cover;
+		object-position: center;
+	}
+	// .wcgs-gallery-items {
+	//     display: grid;
+	//     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+	//     grid-column-gap: 10px;
+	//     grid-row-gap: 10px;
+	// }
+	.wcgs-image .wcgs-image-remover {
+		width: auto !important;
+		height: auto !important;
+		box-sizing: border-box;
+	}
+
+	.wcgs-gallery-buttons {
+		margin-top: 10px;
+		.button {
+			display: inline-block;
+			margin-right: 10px;
+			border: 0 !important;
+			outline: none !important;
+			box-shadow: none !important;
+			height: 30px !important;
+		}
+		.wcgs-remove-all-images {
+			background: #a00 !important;
+			border-color: transparent !important;
+			color: #fff !important;
+		}
+		.wcgs-upload-image,
+		.wcgs-upload-more-image {
+			border: 1px solid rgb(34, 113, 177) !important;
+		}
+		.wcgs-pro-notice {
+			font-size: 13px;
+			line-height: 30px;
+			a {
+				text-decoration: underline;
+			}
+		}
+	}
+}

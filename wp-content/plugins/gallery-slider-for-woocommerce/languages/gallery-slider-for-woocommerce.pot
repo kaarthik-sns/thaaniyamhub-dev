@@ -1,0 +1,1832 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Reno Product Gallery 3.2.0\n"
+"POT-Creation-Date: 2026-07-28 15:40+0600\n"
+"PO-Revision-Date: 2024-07-29 17:56+0600\n"
+"Last-Translator: \n"
+"Language-Team: ShapedPlugin <support@shapedplugin.com>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: __;_e;_ex;_n;_nx;_n_noop;esc_html__;esc_html_e;esc_html_x;"
+"esc_attr__;esc_attr_e;esc_attr_x;number_format_i18n\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: admin/class-woo-gallery-slider-admin.php:90
+#: admin/class-woo-gallery-slider-admin.php:96
+msgid "Manage Layouts"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:91
+msgid "Layout"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:92
+#: admin/partials/sections/class-wcgs-assign.php:42
+#: admin/partials/shapedplugin-framework/fields/group/group.php:48
+msgid "Add New"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:93
+msgid "Add New Layout"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:94
+msgid "Edit"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:95
+msgid "New Layout"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:97
+msgid "Search"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:98
+msgid "No Layout Found"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:99
+msgid "No Layout Found in Trash"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:130
+msgid "Product Gallery"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:147 admin/partials/class-wcgs-assigns.php:46
+#: admin/partials/class-wcgs-metaboxs.php:37 admin/partials/class-wcgs-settings.php:46
+#, php-format
+msgid ""
+"Enjoying %1$sReno Product Gallery?%2$s Please rate us %3$s★★★★★%4$s %5$sWordPress.org."
+"%6$s Your positive feedback will help us grow more. Thank you! 😊"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:173
+msgid "Title"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:174
+#: admin/partials/sections/class-wcgs-general.php:37
+msgid "Gallery Layout"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:175
+msgid "Date"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:245 admin/partials/class-wcgs-assigns.php:56
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:404
+msgid ""
+"Create unlimited custom product gallery layouts and assign them to specific products "
+"and categories."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:248
+#, php-format
+msgid ""
+"Take your online shop's product page experience to the next level with many premium "
+"features and %1$sBoost Sales!%2$s %3$s"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:254 admin/partials/class-wcgs-assigns.php:63
+#: admin/partials/class-wcgs-settings.php:65
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:415
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:72
+msgid "Upgrade to Pro Now"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:290
+#: admin/partials/sections/class-wcgs-general.php:49
+msgid "Thumbs Bottom"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:293
+#: admin/partials/sections/class-wcgs-general.php:54
+msgid "Thumbs Left"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:296
+msgid "Grid"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:299
+#: admin/partials/sections/class-wcgs-general.php:81
+msgid "Hierarchy Grid"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:302
+#: admin/partials/sections/class-wcgs-general.php:93
+msgid "Anchor Nav"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:305
+#: admin/partials/sections/class-wcgs-general.php:59
+msgid "Thumbs Right"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:308
+#: admin/partials/sections/class-wcgs-general.php:64
+msgid "Thumbs Top"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:311
+msgid "Multi Row Thumbs"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:314
+#: admin/partials/sections/class-wcgs-general.php:87
+msgid "Modern Grid"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:317
+#: admin/partials/sections/class-wcgs-general.php:69
+msgid "Slider"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:335
+#: admin/class-woo-gallery-slider-admin.php:338
+msgid "Layout updated."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:340
+#, php-format
+msgid "Layout restored to revision from %s"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:341
+msgid "Layout published."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:342
+msgid "Layout saved."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:343
+msgid "Layout submitted."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:345
+#, php-format
+msgid "Layout scheduled for: <strong>%1$s</strong>."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:345
+msgid "M j, Y @ G:i"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:346
+msgid "Layout draft updated."
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:461
+msgid "Reno Product Gallery Video (Youtube)"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:465
+msgid "Video Link"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:469
+#, php-format
+msgid "To show this video on the %1$sShop page%2$s, %3$s Upgrade to Pro!%2$s"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:504
+msgid "Variation Image Gallery by Reno Product Gallery"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:543
+msgid "Remove all"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:545
+msgid "Add Gallery Images"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:547
+msgid "Add more"
+msgstr ""
+
+#: admin/class-woo-gallery-slider-admin.php:549
+msgid "Edit Gallery"
+msgstr ""
+
+#: admin/help-page/help.php:193 admin/partials/class-wgs-admin-notices.php:206
+#: admin/partials/class-wgs-admin-notices.php:207
+msgid "Activate"
+msgstr ""
+
+#: admin/help-page/help.php:200 admin/partials/class-wgs-admin-notices.php:200
+msgid "Install Now"
+msgstr ""
+
+#: admin/help-page/help.php:206
+msgid "More Details"
+msgstr ""
+
+#: admin/help-page/help.php:238
+msgid "Version:"
+msgstr ""
+
+#: admin/help-page/help.php:247
+msgid "+ Active Installations"
+msgstr ""
+
+#: admin/help-page/help.php:255
+msgid "Last Updated:"
+msgstr ""
+
+#: admin/help-page/help.php:256
+msgid "ago"
+msgstr ""
+
+#: admin/partials/class-wcgs-assigns.php:33
+msgid "Assign Layout"
+msgstr ""
+
+#: admin/partials/class-wcgs-assigns.php:59
+#, php-format
+msgid ""
+"Take your online shop's product page experience to the next level with many premium "
+"features and %1$sBoost Sales!%2$ss%3$s"
+msgstr ""
+
+#: admin/partials/class-wcgs-metaboxs.php:34
+msgid "Gallery Settings"
+msgstr ""
+
+#: admin/partials/class-wcgs-metaboxs.php:54
+msgid "Page Builders"
+msgstr ""
+
+#: admin/partials/class-wcgs-metaboxs.php:83
+msgid "How To Use"
+msgstr ""
+
+#: admin/partials/class-wcgs-settings.php:33
+#: admin/partials/sections/class-wcgs-advance.php:240
+msgid "Global Settings"
+msgstr ""
+
+#: admin/partials/class-wcgs-settings.php:57
+#, php-format
+msgid "Upgrade to %1$sReno Product Gallery Pro%2$s"
+msgstr ""
+
+#: admin/partials/class-wcgs-settings.php:60
+msgid "To unlock this feature, simply upgrade to Pro!"
+msgstr ""
+
+#: admin/partials/class-wcgs-settings.php:62
+#, php-format
+msgid ""
+"Take your online shop's product page experience to the next level with many premium "
+"features and %1$sBoost Sales!%2$s"
+msgstr ""
+
+#: admin/partials/class-wgs-admin-notices.php:176
+#: admin/partials/class-wgs-rebrand-notice.php:175
+msgid "Authorization failed!"
+msgstr ""
+
+#: admin/partials/class-wgs-admin-notices.php:199
+msgid "Install"
+msgstr ""
+
+#: admin/partials/class-wgs-rebrand-notice.php:128
+#, php-format
+msgid "%1$s is now %2$s — Everything else remains the same. Why we rebranded"
+msgstr ""
+
+#: admin/partials/class-wgs-rebrand-notice.php:129
+msgid "WooGallery"
+msgstr ""
+
+#: admin/partials/class-wgs-rebrand-notice.php:130
+msgid "Reno Product Gallery"
+msgstr ""
+
+#: admin/partials/class-wgs-rebrand-notice.php:135
+msgid "Read more about the rebranding"
+msgstr ""
+
+#: admin/partials/class-wgs-rebrand-notice.php:144
+msgid "Dismiss this notice"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:32
+msgid "Advanced"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:38
+msgid "Advanced Controls"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:44
+msgid "Clean-up Data on Deletion"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:45
+msgid ""
+"Check this box if you would like Reno Product Gallery plugin to completely remove all "
+"of its data when the plugin is deleted."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:52
+msgid "Shortcode"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:56
+#, php-format
+msgid ""
+"If the Product Gallery is not displaying automatically on your product pages when "
+"edited using page builders (%1$sDivi, Elementor, Bricks%2$s Builder, etc.), use this "
+"shortcode manually to render the Product Gallery. %3$sSee Instructions.%4$s"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:71
+msgid "Assets (Styles & Scripts)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:76
+msgid "FancyBox CSS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:77
+#: admin/partials/sections/class-wcgs-advance.php:86
+#: admin/partials/sections/class-wcgs-advance.php:95
+#: admin/partials/sections/class-wcgs-advance.php:104
+msgid "Enqueued"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:78
+#: admin/partials/sections/class-wcgs-advance.php:87
+#: admin/partials/sections/class-wcgs-advance.php:96
+#: admin/partials/sections/class-wcgs-advance.php:105
+msgid "Dequeued"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:85
+msgid "FancyBox JS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:94
+msgid "Swiper CSS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:103
+msgid "Swiper JS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:112
+msgid "Speed Optimization"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:122
+#, php-format
+msgid ""
+"To improve the loading speed of your single product page with %3$sReno Product "
+"Gallery%4$s, please follow these %1$sguidelines%2$s. Additionally, you may refer to "
+"your caching plugin's recommendations for further optimization."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:132
+msgid "Load the Product Gallery on the Visible Viewport"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:133
+msgid ""
+"Check this box if you would like Reno Product Gallery plugin to ensure the product "
+"gallery loads automatically when it enters the visible viewport"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:139
+msgid "Remove Default WooCommerce Gallery Scripts"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:140
+msgid ""
+"WooCommerce gallery assets are disabled because Reno Product Gallery is handling those "
+"functions."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:143
+msgid "Lightbox(PhotoSwipe) "
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:144
+msgid "Zoom (Zoom)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:145
+msgid "Slider(FlexSlider)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:151
+msgid "Add handler to Dequeue Unnecessary CSS files"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:152
+msgid ""
+"Enter the CSS file handlers separated by comma. e.g., theme-style, plugin-style-xyz"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:153
+msgid ""
+"Enter the CSS file handles to remove, separated by commas. Caution: Incorrectly "
+"removing CSS files can break site styling. Only use this if you understand CSS handles."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:159
+msgid "Add handler to Dequeue Unnecessary JS files "
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:160
+msgid ""
+"Enter the JS file handlers, separated by comma. e.g., theme-script, plugin-script-xyz"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:161
+msgid ""
+"Enter the JS file handles to remove, separated by commas. Caution: Incorrectly "
+"removing JS files can break site styling. Only use this if you understand JS handles."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:167
+msgid "Migration"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:175
+msgid ""
+"Migrate galleries from the following plugins to <b>Reno Product Gallery</b>. The "
+"migration process will run in the background."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:184
+#: admin/partials/sections/class-wcgs-advance.php:194
+#: admin/partials/sections/class-wcgs-advance.php:204
+#: admin/partials/sections/class-wcgs-advance.php:214
+#: admin/partials/sections/class-wcgs-advance.php:224
+msgid "Migrate Now"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:230
+msgid "Import & Export"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:237
+msgid "Choose What to Export"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:241
+msgid "All Layout(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:242
+msgid "Selected Layout(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:255
+msgid "Choose Layout(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:270
+msgid "Export"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:277
+msgid "Import JSON File to Upload"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:283
+msgid "Additional CSS & JS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:289
+msgid "Additional CSS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:298
+msgid "Additional JS"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:309
+#: admin/partials/sections/class-wcgs-shoppage.php:32
+msgid "Shop Page Video"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-advance.php:318
+#: admin/partials/sections/class-wcgs-shoppage.php:41
+#, php-format
+msgid ""
+"Want to show multiple types of %1$s Product Featured Videos with AutoPlay%2$s on the "
+"%3$sShop/Archive Page%4$s and speed up customer decision-making? %5$sUpgrade to Pro!"
+"%6$s See the %7$savailable options.%8$s"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:31
+#: admin/partials/sections/class-wcgs-gallery.php:31
+msgid "Gallery"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:43
+msgid "Assign Layout:"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:49
+msgid "Filter Products"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:51
+msgid "Category(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:52
+#: admin/partials/sections/class-wcgs-assign.php:81
+msgid "Specific Product(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:61
+msgid "Specific Category(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:62
+msgid "Choose the product category term(s)."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:71
+msgid "Choose term(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:91
+msgid "Choose Product"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:98
+msgid "Select Layout"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:99
+msgid "Choose the products to display. Sort the products position by drag & drop."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-assign.php:107
+msgid "Choose Layout"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:37
+msgid "Gallery Slider"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:43
+msgid "AutoPlay"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:44
+#: admin/partials/sections/class-wcgs-gallery.php:99
+#: admin/partials/sections/class-wcgs-gallery.php:155
+#: admin/partials/sections/class-wcgs-gallery.php:164
+#: admin/partials/sections/class-wcgs-gallery.php:173
+#: admin/partials/sections/class-wcgs-gallery.php:182
+#: admin/partials/sections/class-wcgs-gallery.php:603
+#: admin/partials/sections/class-wcgs-gallery.php:649
+#: admin/partials/sections/class-wcgs-gallery.php:855
+#: admin/partials/sections/class-wcgs-lightbox.php:38
+msgid "Enabled"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:45
+#: admin/partials/sections/class-wcgs-gallery.php:100
+#: admin/partials/sections/class-wcgs-gallery.php:156
+#: admin/partials/sections/class-wcgs-gallery.php:165
+#: admin/partials/sections/class-wcgs-gallery.php:174
+#: admin/partials/sections/class-wcgs-gallery.php:183
+#: admin/partials/sections/class-wcgs-gallery.php:604
+#: admin/partials/sections/class-wcgs-gallery.php:650
+#: admin/partials/sections/class-wcgs-gallery.php:856
+#: admin/partials/sections/class-wcgs-lightbox.php:39
+msgid "Disabled"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:53
+#: admin/partials/sections/class-wcgs-gallery.php:62
+msgid "AutoPlay Interval"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:63
+msgid ""
+"Set the autoplay delay or interval time, indicating the duration to pause between "
+"automatically cycling through slides. For example, 1000 milliseconds (ms) equal 1 "
+"second."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:69
+#: admin/partials/sections/class-wcgs-gallery.php:77
+msgid "Slider Speed"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:78
+msgid "Set slider scrolling speed. For example, 1000 milliseconds (ms) equal 1 second."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:86
+msgid "Slide Orientation"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:87
+#: admin/partials/sections/class-wcgs-gallery.php:454
+#: admin/partials/sections/class-wcgs-gallery.php:679
+#: admin/partials/sections/class-wcgs-gallery.php:745
+#: admin/partials/sections/class-wcgs-gallery.php:772
+#: admin/partials/sections/class-wcgs-gallery.php:830
+#: admin/partials/sections/class-wcgs-gallery.php:846
+#: admin/partials/sections/class-wcgs-gallery.php:901
+#: admin/partials/sections/class-wcgs-gallery.php:959
+#: admin/partials/sections/class-wcgs-general.php:138
+#: admin/partials/sections/class-wcgs-general.php:156
+#: admin/partials/sections/class-wcgs-general.php:271
+#: admin/partials/sections/class-wcgs-lightbox.php:62
+msgid "Live Demo"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:89
+msgid "Horizontal"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:90
+msgid "Vertical"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:97
+msgid "Infinite Loop"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:107
+msgid "Sliding Effect"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:109
+#: admin/partials/sections/class-wcgs-lightbox.php:49
+msgid "Slide"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:110
+msgid "Flip"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:111
+msgid "Cube"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:112
+#: admin/partials/sections/class-wcgs-lightbox.php:53
+msgid "Fade (Pro)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:120
+msgid "Gallery Height"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:122
+msgid "Adaptive"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:123
+msgid "Max Image Height"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:132
+#: admin/partials/sections/class-wcgs-gallery.php:829
+msgid "Height"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:154
+msgid "Accessibility"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:163
+msgid "RTL Mode"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:172
+msgid "Free Mode"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:181
+msgid "Mouse Wheel"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:198
+msgid "Navigation & Pagination"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:204
+#: admin/partials/sections/class-wcgs-gallery.php:205
+msgid "Slider Navigation"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:206
+#: admin/partials/sections/class-wcgs-gallery.php:346
+#: admin/partials/sections/class-wcgs-gallery.php:434
+#: admin/partials/sections/class-wcgs-lightbox.php:178
+#: admin/partials/sections/class-wcgs-lightbox.php:205
+#: admin/partials/sections/class-wcgs-lightbox.php:215
+msgid "Show"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:207
+#: admin/partials/sections/class-wcgs-gallery.php:347
+#: admin/partials/sections/class-wcgs-gallery.php:435
+#: admin/partials/sections/class-wcgs-lightbox.php:179
+#: admin/partials/sections/class-wcgs-lightbox.php:206
+#: admin/partials/sections/class-wcgs-lightbox.php:216
+msgid "Hide"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:215
+msgid "Navigation Icon Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:267
+msgid "Navigation Position"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:271
+msgid "Center Center"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:275
+#: admin/partials/sections/class-wcgs-lightbox.php:79
+msgid "Bottom Left"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:279
+#: admin/partials/sections/class-wcgs-lightbox.php:75
+msgid "Bottom Right"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:284
+msgid "Bottom Center"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:294
+msgid "Navigation Icon Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:302
+msgid "Navigation Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:304
+#: admin/partials/sections/class-wcgs-gallery.php:403
+#: admin/partials/sections/class-wcgs-gallery.php:533
+#: admin/partials/sections/class-wcgs-lightbox.php:161
+#: admin/partials/shapedplugin-framework/fields/border/border.php:150
+msgid "Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:305
+#: admin/partials/sections/class-wcgs-gallery.php:534
+#: admin/partials/sections/class-wcgs-lightbox.php:162
+#: admin/partials/shapedplugin-framework/fields/border/border.php:164
+msgid "Hover Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:306
+#: admin/partials/sections/class-wcgs-gallery.php:535
+#: admin/partials/sections/class-wcgs-lightbox.php:163
+msgid "Background"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:307
+#: admin/partials/sections/class-wcgs-gallery.php:536
+#: admin/partials/sections/class-wcgs-lightbox.php:164
+msgid "Hover Background"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:320
+msgid "Navigation Background Radius"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:329
+msgid "Navigation Visibility"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:331
+#: admin/partials/sections/class-wcgs-gallery.php:417
+#: admin/partials/sections/class-wcgs-gallery.php:444
+msgid "Always"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:332
+#: admin/partials/sections/class-wcgs-gallery.php:418
+#: admin/partials/sections/class-wcgs-gallery.php:445
+msgid "On hover"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:339
+msgid "Pagination"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:344
+msgid "Slider Pagination"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:345
+#: admin/partials/sections/class-wcgs-gallery.php:426
+#: admin/partials/sections/class-wcgs-gallery.php:432
+#: admin/partials/sections/class-wcgs-gallery.php:433
+msgid "Thumbnails Navigation"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:355
+msgid "Pagination Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:359
+msgid "Bullets"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:363
+msgid "Dynamic"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:367
+msgid "Strokes"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:371
+msgid "Numbers"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:376
+msgid "Progress Bar"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:381
+msgid "Dot Hopper"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:386
+msgid "Expanding Dot"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:391
+msgid "Flexing Fraction"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:401
+msgid "Pagination Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:404
+msgid "Active Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:415
+msgid "Pagination Visibility"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:442
+msgid "Thumbnails Navigation Visibility"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:454
+#: admin/partials/sections/class-wcgs-gallery.php:455
+msgid "Thumbnails Navigation Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:454
+msgid "Stylize your thumbnail navigation using Inner, Outer, and Custom design."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:454
+#: admin/partials/sections/class-wcgs-gallery.php:679
+#: admin/partials/sections/class-wcgs-gallery.php:745
+#: admin/partials/sections/class-wcgs-gallery.php:772
+#: admin/partials/sections/class-wcgs-gallery.php:830
+#: admin/partials/sections/class-wcgs-gallery.php:901
+#: admin/partials/sections/class-wcgs-gallery.php:959
+#: admin/partials/sections/class-wcgs-general.php:138
+#: admin/partials/sections/class-wcgs-general.php:156
+#: admin/partials/sections/class-wcgs-general.php:271
+#: admin/partials/sections/class-wcgs-lightbox.php:62
+msgid "Open Docs"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:459
+#: admin/partials/sections/class-wcgs-gallery.php:816
+msgid "Custom"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:463
+msgid "Inner Right"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:467
+msgid "Outer"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:472
+msgid "Inner"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:484
+msgid "Thumbnail Navigation Icon"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:524
+msgid "Thumbnail Navigation Icon Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:531
+msgid "Thumbnail Navigation Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:549
+msgid "Product Image"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:555
+msgid "Image Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:591
+msgid "Lazy Load"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:593
+#: admin/partials/shapedplugin-framework/fields/switcher/switcher.php:46
+msgid "Off"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:594
+msgid "On Demand"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:602
+msgid "Preloader"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:611
+msgid "Preload Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:613
+#: admin/partials/sections/class-wcgs-general.php:185
+#: admin/partials/sections/class-wcgs-general.php:273
+msgid "Normal"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:614
+msgid "Fade"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:615
+msgid "Gray"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:616
+#: admin/partials/sections/class-wcgs-gallery.php:775
+msgid "Blur"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:624
+msgid "Border Radius"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:631
+msgid "Image Mode"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:633
+msgid "Original"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:634
+#: admin/partials/sections/class-wcgs-general.php:274
+msgid "Grayscale"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:635
+msgid "Grayscale on hover"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:642
+msgid "Product Image Zoom"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:648
+msgid "Enable Image Zoom"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:658
+#: admin/partials/sections/class-wcgs-gallery.php:679
+msgid "Zoom Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:662
+msgid "Default"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:666
+msgid "Inside (2x)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:670
+msgid "Right Side"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:675
+msgid "Magnific"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:679
+msgid ""
+"This option indicates the visual or interactive approach used to magnify or enlarge "
+"product thumbnails."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:687
+msgid "Zoom Scale"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:699
+msgid "Cursor Type"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:724
+#: admin/partials/sections/class-wcgs-gallery.php:726
+msgid "Lens Shape"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:726
+msgid "Choose a source from where you want to display the gallery images."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:729
+msgid "Circle"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:732
+msgid "Box"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:744
+msgid "Lens Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:753
+msgid "Lens Border"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:771
+msgid "Product Image Overlay on Hover"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:778
+msgid "Custom Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:790
+msgid "Image Overlay Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:798
+msgid "Image Overlay opacity"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:810
+msgid "Zoom Window Size Type"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:813
+msgid "Auto"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:827
+#: admin/partials/sections/class-wcgs-gallery.php:830
+msgid "Zoom Window Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:828
+msgid "Width"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:830
+msgid "Adjust the zoom window size as per your need."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:845
+msgid "Zoom Window Distance"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:854
+msgid "Use Zoom for Mobile Devices"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:876
+msgid "Select Categories (Pro)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:877
+msgid "Exclude Zoom by Category(s)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:894
+msgid "Product Video Gallery"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:900
+#: admin/partials/sections/class-wcgs-gallery.php:901
+msgid "Video Play Mode"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:901
+msgid ""
+"This option refers to the specific behavior or settings related to how a video is "
+"played."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:903
+msgid "Inline"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:904
+msgid "Popup"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:913
+msgid "Video Icon Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:958
+#: admin/partials/sections/class-wcgs-gallery.php:959
+msgid "Place of the Videos in Gallery Slider"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:959
+msgid "Determine where and when you want to display the video."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:961
+msgid "Keep Videos in Default Position"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:962
+msgid "End of the Slider"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-gallery.php:963
+msgid "At Starting of the Slider (Pro)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:30
+msgid "General"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:40
+#, php-format
+msgid ""
+"Want to enhance your product pages with %1$s16+ gallery layouts%2$s  to boost sales? "
+"%3$sUpgrade to Pro!%4$s"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:75
+msgid "Tiles"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:99
+msgid "Vertical Scroll"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:105
+msgid "Multi-row Thumbs"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:119
+msgid "Thumbnail Items Per View"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:125
+#: admin/partials/sections/class-wcgs-general.php:126
+msgid "Vertical Thumbnails Width"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:137
+#: admin/partials/sections/class-wcgs-general.php:138
+msgid "Thumbnails Space"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:139
+msgid "Gap"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:140
+msgid "Vertical Gap"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:155
+#: admin/partials/sections/class-wcgs-general.php:156
+msgid "Thumbnails Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:156
+msgid "Adjust the thumbnail Size according to your website design."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:164
+msgid "Thumbnails Border"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:182
+msgid "Thumbnails Hover Effect"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:183
+msgid "Thumbnail Hover Effect"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:186
+#: admin/partials/sections/class-wcgs-general.php:238
+msgid "Zoom Out"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:187
+msgid "Slide Down"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:188
+msgid "Zoom In (Pro)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:189
+msgid "Slide Up (Pro)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:199
+msgid "Thumbnails Activate On"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:200
+msgid "Thumbnails Activate on"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:208
+msgid "Click"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:210
+msgid "Mouseover"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:220
+msgid "Active Thumbnail Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:225
+msgid "Border Around"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:229
+msgid "Inner Line"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:233
+msgid "Outer Line"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:243
+msgid "Opacity"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:253
+#: admin/partials/sections/class-wcgs-general.php:254
+msgid "Active Thumbnail Border"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:270
+#: admin/partials/sections/class-wcgs-general.php:271
+msgid "Inactive Thumbnails Effect"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:271
+msgid ""
+"Refers to the visual treatment of thumbnails that are not currently selected or in "
+"focus."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:275
+msgid "Opacity (Pro)"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:283
+msgid "Gallery Width"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:296
+msgid "Responsive Gallery Width"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:306
+msgid ""
+"%1$sA default value of 0 means that the thumbnail gallery will inherit the Gallery "
+"Width value intended for large devices. This default Gallery width is set to 50% up "
+"above,%2$s Tablet -Screen size is smaller than 768px. Set the value in between 480-768,"
+"%3$s Mobile - Screen size is smaller than 480px.  Set a value between 0-480."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:317
+#: admin/partials/sections/class-wcgs-general.php:318
+msgid "Gallery Bottom Gap"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:326
+#: admin/partials/sections/class-wcgs-general.php:328
+msgid "Gallery Image Source"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:330
+msgid "Only images uploaded to the product gallery"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:331
+msgid "All images attached to this product content"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:338
+msgid "Include Feature Image"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:342
+msgid "To Default Gallery"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-general.php:343
+msgid "To Variation Gallery"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-help.php:32
+msgid "Get Help"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:32
+msgid "Lightbox"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:37
+msgid "Enable Lightbox"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:47
+msgid "Lightbox Sliding Effect"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:50
+msgid "Classic"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:51
+msgid "Crossfade"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:52
+msgid "No Animation"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:62
+#: admin/partials/sections/class-wcgs-lightbox.php:63
+msgid "Lightbox Icon Display Position"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:62
+msgid "Choose where you want to place the lightbox icon over the product thumbnail."
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:67
+msgid "Top Right"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:71
+msgid "Top Left"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:83
+msgid "Middle"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:94
+msgid "Lightbox Icon Style"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:151
+msgid "Lightbox Icon Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:159
+msgid "Lightbox Icon Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:177
+msgid "Lightbox Caption"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:187
+msgid "Lightbox Caption Size"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:197
+msgid "Caption Color"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:204
+msgid "Image Counter"
+msgstr ""
+
+#: admin/partials/sections/class-wcgs-lightbox.php:214
+msgid "Full Screen Button"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:370
+#: admin/partials/shapedplugin-framework/fields/select/select.php:140
+msgid "No data available."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:386
+msgid "Reset"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:387
+msgid "update post"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:387
+msgid "Cancel"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/metabox-options.class.php:408
+#, php-format
+msgid ""
+"Take your online shop's product page experience to the next level with many premium "
+"features and %1$sBoost Sales!%2$s%3$s"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:316
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:324
+msgid "Nonce verification failed."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:406
+#, php-format
+msgid "Migrated %d variation(s) in this batch."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:425
+msgid "Error while saving the changes."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:593
+#: admin/partials/shapedplugin-framework/classes/options.class.php:617
+msgid "Default settings restored."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:710
+msgid "Settings saved."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:948
+msgid "show all options"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:950
+msgid "Search option(s)"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:953
+msgid "Save Settings"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:953
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1068
+msgid "Saving..."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:954
+msgid "Reset Tab"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:954
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1069
+msgid "Are you sure to reset this section options?"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1045
+msgid "No option provided by developer."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1068
+msgid "Save"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1069
+msgid "Reset Section"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1070
+msgid "Reset All"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/options.class.php:1070
+msgid "Are you sure to reset all options?"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:361
+msgid "Are you sure?"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:362
+msgid "Restoring options."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:363
+msgid "Importing options."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:365
+#, php-format
+msgid "Please enter %s or more characters"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:366
+msgid "Searching..."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:367
+msgid "No results found."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:415
+#, php-format
+msgid "Ooops! This field type (%s) can not be used here, yet."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:491
+msgid "This field class is not available!"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/classes/setup.class.php:494
+msgid "This type is not found!"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:53
+msgid "top"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:54
+msgid "right"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:55
+msgid "bottom"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:56
+msgid "left"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:57
+msgid "all"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:84
+msgid "Solid"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:85
+msgid "Dashed"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:86
+msgid "Dotted"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:87
+msgid "Double"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:88
+msgid "Inset"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:89
+msgid "Outset"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:90
+msgid "Groove"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:91
+msgid "ridge"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:92
+msgid "None"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:136
+msgid "Style"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:157
+msgid "Active"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/border/border.php:172
+msgid "Radius"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/checkbox/checkbox.php:87
+#: admin/partials/shapedplugin-framework/fields/radio/radio.php:75
+msgid "No data provided for this option type."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/group/group.php:61
+msgid "Error: Field ID conflict."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/group/group.php:72
+#: admin/partials/shapedplugin-framework/fields/group/group.php:111
+msgid "Are you sure to delete this item?"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/group/group.php:144
+msgid "You cannot add more."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/group/group.php:145
+msgid "You cannot remove more."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/image_sizes/image_sizes.php:80
+msgid "Original uploaded image"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/image_sizes/image_sizes.php:81
+msgid "Set custom size (Pro)"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/image_sizes/image_sizes.php:126
+msgid "No image sizes found."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/migration/migration.php:42
+msgid "Run Migration"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:49
+#, php-format
+msgid "Unlock Full Potential with %1$sPRO%2$s"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:56
+#, php-format
+msgid "Create Engaging, Branded Product Galleries with %1$sPro%2$s and Drive More Sales!"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:61
+msgid "16+ Modern Gallery Layouts"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:62
+msgid "Different Layouts Per Category"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:63
+msgid "Additional Variation Gallery"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:64
+msgid "Product Videos in Galleries"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:65
+msgid "Product Videos on Shop Page"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:66
+msgid "Advanced Product Image Zoom"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:67
+msgid "Powerful Product Lightbox"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:68
+msgid "200+ Customizations and More"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/shortcode/shortcode.php:84
+#, php-format
+msgid ""
+"Reno Product Gallery works smoothly with Gutenberg, Classic Editor, %1$sElementor%2$s, "
+"Divi, Bricks, Beaver, Oxygen, WPBakery Builder, etc."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/fields/switcher/switcher.php:45
+msgid "On"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/actions.php:32
+#: admin/partials/shapedplugin-framework/functions/actions.php:53
+msgid "Error: Invalid nonce verification."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/actions.php:60
+msgid "Error: Invalid term ID."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/actions.php:66
+msgid "Error: You do not have permission to do that."
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/validate.php:25
+#: admin/partials/shapedplugin-framework/functions/validate.php:93
+msgid "Please write a valid email address!"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/validate.php:40
+#: admin/partials/shapedplugin-framework/functions/validate.php:115
+msgid "Please write a numeric data!"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/validate.php:57
+#: admin/partials/shapedplugin-framework/functions/validate.php:136
+msgid "Error! This field is required!"
+msgstr ""
+
+#: admin/partials/shapedplugin-framework/functions/validate.php:74
+#: admin/partials/shapedplugin-framework/functions/validate.php:157
+msgid "Please write a valid url!"
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:111
+msgid "You do not have permission to export."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:290
+msgid "Error: Nonce verification has failed. Please try again."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:295
+msgid "You do not have permission to import."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:303
+#: includes/class-woo-gallery-slider-import-export.php:350
+msgid "Nothing to import."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:319
+msgid "Invalid JSON data."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:335
+msgid "Global settings imported successfully."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-import-export.php:343
+msgid "Invalid shortcode data structure."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-variation-image-import.php:143
+#: includes/class-woo-gallery-slider-variation-image-import.php:218
+#: includes/class-woo-gallery-slider-variation-image-import.php:231
+msgid "Reno Product Gallery Variation Images"
+msgstr ""
+
+#: includes/class-woo-gallery-slider-variation-image-import.php:374
+#, php-format
+msgid "Not able to attach \"%s\"."
+msgstr ""
+
+#: includes/class-woo-gallery-slider-variation-image-import.php:391
+#, php-format
+msgid "Unable to use image \"%s\"."
+msgstr ""
+
+#: includes/class-woo-gallery-slider.php:95
+msgid "Settings"
+msgstr ""
+
+#: includes/class-woo-gallery-slider.php:99
+msgid "Go Pro!"
+msgstr ""

@@ -1,0 +1,908 @@
+/*================= start about us page style ================*/
+.common-banner-sec{
+    position: relative;
+    width: 100%;
+    margin: -131px 0 0;
+    height:840px;
+    background-color: #000;
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+}
+.common-banner-content{
+    margin: 0 ;
+    padding: 131px 0 0;
+    display: flex;
+    text-align: center;
+    min-height: 532px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.common-banner-content h1{
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 25px;
+}
+.common-banner-content p{
+    color: #242424;
+    font-family: 'Montserrat';
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 150%;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.about-thaniyam-story{
+    margin: 60px 0;
+}
+.about-thaniyam-story h2{
+    max-width: 700px;
+}
+.about-banner-main-title{
+    color: #064C50;
+    font-family: 'Museo';
+    font-weight: 500;
+    font-size: 60px;
+    line-height: 100%;
+    margin: 0 0 30px;
+}
+.about-main-title{
+    color: #064C50;
+    font-family: 'Museo';
+    font-size: 30px;
+    font-weight: 500;
+    line-height: normal;
+    margin-bottom: 25px;
+}
+.about-para{
+    font-family: 'Montserrat';
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 160%;
+    color:#242424;
+}
+.about-thaniyam-story h3{
+    font-family:' Museo Slab';
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 30px;
+    color: #3F3F3F;
+}
+.vision-mission-container{
+    max-width: 550px;
+    margin: 60px auto;
+}
+.vision-mission-title{
+    color: #FFF8E5;
+    margin: 0 0 30px;
+}
+.vision-mission-para{
+    color: #F4F6F6;
+}
+.values-section {
+    background: #FFFAEE;
+    padding: 80px 0 0 0;
+}
+.values-title{
+    font-family: 'Museo Slab';
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 100%;
+    color: #242424;
+}
+.values-container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin: 0 0 85px 0;
+}
+.values-icon {
+    object-fit: contain;
+    flex-shrink: 0;
+}
+.values-main-desc{
+    max-width: 580px; 
+    margin: 0 0 40px;
+}
+.values-image-col{
+    text-align: center;
+}
+.quote{
+    font-family: 'Museo';
+    font-weight: 500;
+    font-size: 50px;
+    line-height: 100%;
+    color: #064C50;
+    max-width: 700px;
+}
+.quotes-section{
+    margin: 60px 0;
+}
+
+/*====================== inner Banner style  ================*/ 
+
+.inner-banner-sec{
+    position: relative;
+    width: 100%;
+    margin: -131px 0 0;
+    background-color: #000;
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+}
+.inner-banner-content{
+    margin: 0 ;
+    padding: 131px 0 0;
+    display: flex;
+    text-align: center;
+    min-height: 532px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.inner-banner-content h1{
+  color: var(--H1-Primary, #064C50);
+    text-align: center;
+    font-family: 'Museo';
+    font-size: 60px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    margin: 0;
+}
+.inner-banner-content p{
+    color: var(--Home-2-Text, #242424);
+    text-align: center;
+    font-family: 'Montserrat';
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 30px;  
+}
+
+
+/*====================== about us page mobile style  ================*/ 
+@media (max-width: 767px) {
+    .common-banner-sec::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 520px;
+        background: rgba(216, 208, 194, 0.8);
+        z-index: 1;
+    }
+    .common-banner-sec{
+		position: relative; /* important for overlay positioning */
+		background-size: cover;
+		background-position: center;
+		height: 520px; /* adjust height as needed */
+	}
+    .common-banner-sec {
+        height: 520px ;
+    }
+    .common-banner-content {
+        margin: 40px 0;
+        position: relative; /* above overlay */
+        z-index: 2;
+        padding: 0;
+    }
+    .common-banner-content h1 {
+        font-size: 30px;
+    }
+    .common-banner-content p {
+        font-size: 16px;
+    }
+    .about-thaniyam-story {
+        margin: 40px 0;
+    }
+  
+    .about-main-title{
+        font-size: 26px;
+        margin-bottom: 25px;
+
+    }
+    .about-para {
+        font-size: 16px;
+        line-height: 140%;
+    }
+    .about-thaniyam-story h3 {
+        font-size: 18px;
+        line-height: 26px;
+    }
+    .vision-mission-container {
+        margin: 40px 20px;
+    }
+    .vision-mission-title {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .vision-mission-para{
+        text-align: center;
+    }
+    .values-section {
+        padding: 50px 0 0;
+    }
+    .values-container {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .values-icon {
+        margin: 0 auto;
+    }
+    .values-title {
+        font-size: 20px;
+        line-height: 120%;
+    }
+    .values-main-desc {
+        max-width: 100%;
+        margin-bottom: 25px;
+        font-size: 15px;
+        line-height: 150%;
+    }
+    .values-image-col img {
+        max-width: 100%;
+        height: auto;
+    }
+    .quotes-section {
+        margin: 30px 0px;
+    }
+    .quote {
+        font-size: 28px;
+        line-height: 120%;
+        max-width: 100%;
+        text-align: center;
+    } 
+
+    /*====================== inner Banner style  ================*/ 
+
+    .inner-banner-sec{
+        background-size: auto 100%;
+        margin-top: -75px;
+    }
+    .inner-banner-content{
+        padding: 75px 0 0 0;
+        min-height: 200px;
+    }
+    .inner-banner-content h1{
+        font-size: 30px;
+    }
+    .inner-banner-content p{
+        font-size: 16px;
+        line-height: 30px;  
+    }
+}
+
+/*====================== about us page  medium screen style ================*/ 
+@media (min-width: 768px) and (max-width: 1599px) {
+     .common-banner-sec::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 450px;
+        background: rgba(216, 208, 194, 0.8);
+        z-index: 1;
+    }
+    .common-banner-sec {
+        position: relative; /* important for overlay positioning */
+        background-size: cover;
+        background-position: center;
+        height: 450px; /* adjust height as needed */
+    }
+    .common-banner-content {
+        margin: 0px 0 0 0;
+        position: relative;
+        z-index: 2;
+        padding: 0;
+    }
+    .common-banner-content h1 {
+        font-size: 3.09vw;
+        max-width: 41.67vw;
+        margin: 0 auto 1.53vw;
+    }
+    .common-banner-content p {
+        font-size: 1.25vw;
+        max-width: 55.56vw;
+    }
+    .about-thaniyam-story {
+        margin: 4.17vw 0;
+    }
+    .about-banner-main-title{
+        font-size: 3.33vw;
+        line-height: 110%;
+        max-width: 41.67vw;
+        margin: 0 0 1.25vw;
+    }
+    .about-main-title{
+        font-size: 2.08vw;
+        margin-bottom: 1.74vw;
+    }
+    .about-para {
+        font-size: 1.18vw;
+        line-height: 150%;
+    }
+    .about-thaniyam-story h3 {
+        font-size: 1.39vw;
+        line-height: 1.94vw;
+    }
+    .vision-mission-container {
+        max-width: 27.25vw;
+        margin: 2.78vw auto;
+    }
+    .vision-mission-title {
+        margin-bottom: 1.74vw;
+    }
+    .values-section {
+        padding: 4.86vw 0 0;
+    }
+    .values-container {
+        gap: 0.97vw;
+        margin-bottom: 4.51vw;
+    }
+    .values-title {
+        font-size: 1.53vw;
+        line-height: 110%;
+    }
+    .values-main-desc {
+        max-width: 36.11vw;
+        margin-bottom: 2.08vw;
+        font-size: 1.11vw;
+        line-height: 155%;
+    }
+    .values-image-col img {
+        max-width: 90%;
+        height: auto;
+    }
+     .quotes-section {
+        margin: 2.78vw 0;
+    }
+    .quote {
+        font-size: 2.5vw;
+        line-height: 110%;
+        max-width: 41.67vw;
+    }
+
+    /*====================== inner Banner style  ================*/ 
+
+    .inner-banner-sec{
+        margin: -10.1vw 0 0;
+        background-size: cover;
+    }
+    .inner-banner-content{
+        padding: 9.1vw 0 0;
+        min-height: 36.94vw;
+    }
+    .inner-banner-content h1{
+        font-size: 3.09vw;
+        line-height: 4.08vw;
+    }
+    .inner-banner-content p{
+        font-size: 1.39vw;
+        line-height: 2.08vw; 
+    }
+}
+/*====================== iPad Mini (portrait & landscape)  about us page style ================*/
+@media (min-width: 768px)
+       and (max-width: 819px)
+       and (min-height: 900px) {
+
+  .common-banner-content {
+    margin: 0px 0 0 0;
+  }
+}
+
+@media (min-width: 820px)
+       and (max-width: 1024px)
+       and (min-height: 900px) {
+
+  .common-banner-content {
+    margin: 0px 0 0 0;
+  }
+}
+
+@media(min-width:540px) and (max-width: 720px){
+    .common-banner-content {
+        margin: 40px 0;
+    }
+}
+/*====================== end about us page style ================*/
+
+/* --------------- privacy-policy styles desktop start 1234 ----------------*/
+    .page-id-1719 .top-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 999;
+        box-shadow: none !important;
+    }
+    .page-id-1772 .top-header, .page-id-3238 .top-header, .page-id-2962 .top-header, .page-id-3491 .top-header {
+		position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 999;
+        box-shadow: none !important;
+    }
+    .privacy-sec a{
+        font-family: 'Montserrat' ;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 200%;
+        color: #064C50;
+		text-decoration: none;
+    }
+    .privacy-sec{
+        padding: 120px 0 0 0;
+        background-color: #FFFAED;
+    }
+    .privacy-policy-title{
+        font-family: 'Montserrat' ;
+        font-weight: 500;
+        font-size: 24px ;
+        line-height: 100%;
+        color: #064C50;
+        margin: 0 0 20px;
+    }
+    .header-title1 {
+        font-size: 36px;
+    }
+    .privacy-policy-subtitle{
+        font-family: 'Montserrat' ;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 100%;
+        color: #242424;
+        margin: 0 0 20px
+    }
+    .privacy-policy-description p{
+        font-family: 'Montserrat' ;
+        font-weight: 400;
+        font-size: 18px;
+        line-height: 150%;
+        color: #242424;
+   }
+   .privacy-policy-desc{
+        font-family: 'Montserrat' ;
+        font-weight: 400;
+        font-size: 18px;
+        line-height: 200%;
+        color: #242424;
+   }
+   .privacy-policy-options{
+    padding: 0 0 20px 0;
+   }
+
+
+/*-------------------  privacy-policy Mobile ---------------------*/
+@media (max-width: 767px) {
+    .privacy-sec {
+        padding: 100px 0 0;
+    }
+
+    .privacy-policy-title {
+        font-size: 20px;
+        margin: 0 0 15px;
+		line-height: normal;
+    }
+    .header-title1 {
+        font-size: 26px;
+    }
+
+    .privacy-policy-subtitle{
+        font-size: 16px;
+        margin: 0 0 15px;
+    }
+
+    .privacy-policy-description p,
+    .privacy-policy-desc {
+        font-size: 14px;
+    }
+
+    .privacy-sec a {
+        font-size: 14px;
+    }
+
+    .privacy-policy-options {
+        padding: 0 0 15px 0;
+    }
+}
+/* ---------------- privacy-policy Tablet to desktop ----------------*/
+@media (min-width: 768px) and (max-width: 1599px) {
+    .privacy-sec {
+        padding: 9.33vw 0px 0 0px; 
+    }
+
+    .privacy-policy-title{
+        font-size: 1.6vw;
+        margin: 0 0 1.25vw;
+    }
+    .header-title1 {
+        font-size: 2.4vw;
+    }
+
+    .privacy-policy-subtitle{
+        font-size: 1.25vw;
+        margin: 0 0 1.25vw;
+    }
+
+    .privacy-policy-description p,
+    .privacy-policy-desc {
+        font-size: 1.18vw;
+    }
+
+    .privacy-sec a {
+        font-size: 1.18vw;
+    }
+
+    .privacy-policy-options {
+        padding: 0 0 1.25vw 0;
+}
+}
+/* ----------------- privacy-policy styles end----------------------*/
+
+
+/* ----------------- sitemap styles start----------------------*/
+    .sitemap{
+        padding: 60px 0;
+    }
+    .sitemap-title{
+        font-family: 'Museo Slab';
+        font-weight: 500;
+        font-size: 30px;
+        line-height: 100%;
+        color: #064C50;
+        padding: 0 0 20px;
+        margin: 0;
+    }
+    .sitemap-list-items a{
+        font-family: 'Museo Slab';
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 100%;
+        color: #242424;
+        text-decoration: none;
+    }
+    .sitemap-list-items li{
+        padding: 0 0 15px;
+    }
+
+
+/* ----------------- sitemap styles mobile----------------------*/
+@media (max-width: 767px) {
+    .sitemap {
+        padding: 30px 0;
+    }
+
+    .sitemap-title {
+        font-size: 22px;
+        line-height: 120%;
+        padding-bottom: 14px;
+    }
+
+    .sitemap-list-items a {
+        font-size: 16px;
+        line-height: 140%;
+    }
+
+    .sitemap-list-items li {
+        padding-bottom: 10px;
+    }
+
+      .sitemap-list-items li{
+        font-size: 12px !important;
+    }
+
+}
+
+/* ----------------- sitemap styles Tablet to desktop----------------------*/
+@media (min-width: 768px) and (max-width: 1599px) {
+    .sitemap {
+        padding: 2.78vw 0;
+    }
+
+    .sitemap-title {
+        font-size: 1.81vw;
+        padding-bottom: 1.11vw;
+    }
+
+    .sitemap-list-items a {
+        font-size: 1.25vw;
+    }
+
+    .sitemap-list-items li {
+        padding-bottom: 0.83vw;
+    }
+
+    .sitemap-list-items  li {
+        font-size: 1.56vw !important;
+    }
+}
+/* ----------------- sitemap styles end----------------------*/
+
+/* --------------- 404 styles desktop start ----------------*/
+    .oops-banner-bg
+    {
+        background-repeat:no-repeat; 
+        background-position:center;
+        height: 800px;
+        display: flex;
+        align-items: center;     /* vertical center */
+        justify-content: center; /* horizontal center */
+        background-color: #FFFAED;
+    }      
+    .oops-info-content 
+    {
+        text-align:center;
+    }
+    .oops-info-content h1{
+        color: #064C50;
+        font-family: Museo;
+		font-weight: 500;
+		font-size: 56px;
+		line-height: 100%;
+        margin: 0 0 20px;
+    }
+	.oops-p{
+		color: #242424;
+		font-family: Montserrat;
+		font-weight: 500;
+		font-size: 20px;
+		line-height: 160%;
+        margin: 0 0 10px;
+	}
+    .oops-sub-p{
+        color: #242424;
+        font-family: Montserrat;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 160%;
+        margin: 0 0 25px;
+    }
+    .oops-info-content a{
+        color: #F4F6F6;
+        text-align: center;
+        font-family: 'Montserrat';
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 150%;
+        border-radius: 30px;
+        background: #064C50;
+        text-decoration: none;
+        display: inline-grid;
+        padding: 10px 23px;
+        grid-template-rows: repeat(1, fit-content(100%));
+        grid-template-columns: repeat(1, fit-content(100%));
+        margin: 0 auto;
+    }
+
+    /* ----------------- 404 styles mobile----------------------*/
+    @media (max-width: 767px) {
+    .oops-banner-bg{
+        height: auto;
+        min-height: 520px;
+        background-size: contain;
+        padding: 40px 15px;
+    }
+    .oops-info-content h1{
+        font-size: 32px;
+        line-height: 120%;
+        margin-bottom: 15px;
+    }
+    .oops-p{
+        font-size: 16px;
+        line-height: 150%;
+    }
+    .oops-sub-p{
+        font-size: 14px;
+        line-height: 150%;
+        margin-bottom: 20px;
+    }
+    .oops-info-content a{
+        font-size: 15px;
+        padding: 8px 20px;
+    }
+}
+/* ----------------- 404 styles Tablet to desktop----------------------*/
+@media (min-width: 768px) and (max-width: 1599px) {
+    .oops-banner-bg{
+        height: auto;
+        min-height: 63.14vw;
+        background-size: contain;
+        padding: 0 1.39vw;
+    }
+    .oops-info-content h1{
+        font-size: 3.06vw;
+        margin: 0 0 1.39vw;
+    }
+    .oops-p{
+        font-size: 1.25vw;
+        margin: 0 0 0.69vw;
+    }
+    .oops-sub-p{
+        font-size: 1.04vw;
+        margin: 0 0 1.74vw;
+    }
+    .oops-info-content a{
+        font-size: 1.11vw;
+        padding: 0.63vw 1.53vw;
+    }
+}
+/* --------------- 404 styles end ----------------*/
+
+/* --------------- faq styles start ----------------*/
+
+.faq-container {
+    max-width: 87vw !important;
+    width: 100% !important;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+}
+@media screen and (min-width: 1600px) {
+    .faq-container {
+        max-width: 1200px !important;
+    }
+}
+@media (max-width: 576px) {
+    .faq-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+    }
+}
+@media (max-width: 992px) {
+    .faq-container {
+        max-width: 80vw !important;
+        width: 100% !important;
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+    }
+}
+@media (max-width: 1200px) {
+    .faq-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+    }
+}
+
+.faq-section{
+    margin: 0 0 60px;
+}
+.faq-header{
+    padding: 60px 0;
+    background-color:#064C50;
+    margin: 0 0 60px;
+}
+
+.faq-title{
+    font-family: Museo;
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 100%;
+    text-align: center;
+    color: #FFF8E5;
+    margin: 0 0 25px;
+}
+.faq-description{
+    font-family: Montserrat;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 150%;
+    text-align: center;
+    color: #FFF8E5;
+}
+.accordion {
+    --bs-accordion-bg: #FFF9E9;          /* closed */
+    --bs-accordion-active-bg: #FFF9E9;    /* open */
+}
+.accordion-button{
+   text-decoration: none;
+}
+.faq-question{
+    font-family: Montserrat;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 100%;
+    color: #3F3F3F;
+}
+.faq-question:not(.collapsed) {
+    font-family: Montserrat;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 100%;
+    color: #3F3F3F;
+    border-bottom: none;
+    box-shadow: none;
+}
+.faq-answer p{
+    font-family: Montserrat;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+    color: #242424;
+}
+
+ /* ----------------- faq styles mobile----------------------*/
+    @media (max-width: 767px) {
+    .faq-section{
+        margin: 0 0 40px;
+    }
+    .faq-header{
+        padding: 40px 0;
+        margin: 0 0 40px;
+    }
+    .faq-title{
+        font-size: 26px;
+        margin-bottom: 25px;
+    }
+    
+    .faq-description{
+        font-size: 16px;
+        line-height: 26px;
+    }
+   
+    .faq-question{
+       font-size: 16px;
+       line-height: 140%;
+    }
+    .faq-question:not(.collapsed) {
+       font-size: 16px;
+        line-height: 140%;
+    }
+    .faq-answer p{
+        font-size: 15px;
+    }
+}
+
+/* ----------------- faq styles Tablet to desktop----------------------*/
+@media (min-width: 768px) and (max-width: 1599px) {
+     .faq-section{
+        margin: 0 0 4.17vw;
+    }
+    .faq-header{
+        padding: 4.17vw 0;
+        margin: 0 0 4.17vw;
+    }
+    .faq-title {
+         font-size: 2.08vw;
+        margin-bottom: 1.74vw;
+    }
+    
+    .faq-description{
+        font-size: 1.18vw;
+        line-height: 150%;
+    }
+
+    .faq-question{
+        font-size: 1.18vw;
+        line-height: 150%;
+    }
+
+    .faq-question:not(.collapsed) {
+        font-size: 1.18vw;
+        line-height: 140%;
+    }
+    .faq-answer p{
+        font-size: 1.17vw;
+    }
+}
+
+/* --------------- faq styles end ----------------*/

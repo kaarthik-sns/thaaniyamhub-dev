@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * Plugin Name: WCFM - WooCommerce Frontend Manager
+ * Plugin URI: https://wclovers.com
+ * Description: WooCommerce is really Easy and Beautiful. We are here to make your life much more Easier and Peaceful.
+ * Author: WC Lovers
+ * Version: 6.8.1
+ * Author URI: https://wclovers.com
+ *
+ * Text Domain: wc-frontend-manager
+ * Domain Path: /lang/
+ *
+ * WC requires at least: 7.0.0
+ * WC tested up to: 11.0
+ *
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;  
+}
+
+
+if ( ! class_exists( 'WCFM_Dependencies' ) ) {
+	require_once 'helpers/class-wcfm-dependencies.php';
+}
+
+require_once 'helpers/wcfm-core-functions.php';
+require_once 'wc_frontend_manager_config.php';
+
+if ( ! defined( 'WCFM_TOKEN' ) ) {
+	exit;
+}
+if ( ! defined( 'WCFM_TEXT_DOMAIN' ) ) {
+	exit;
+}
+
+if ( ! WCFM_Dependencies::woocommerce_plugin_active_check() ) {
+	add_action( 'admin_notices', 'wcfm_woocommerce_inactive_notice' );
+} elseif ( ! class_exists( 'WCFM' ) ) {
+		include_once 'core/class-wcfm.php';
+		global $WCFM, $WCFM_Query;
+		$WCFM            = new WCFM( __FILE__ );
+		$GLOBALS['WCFM'] = $WCFM;
+
+		 
+		include_once 'core/class-wcfm-query.php';
+		$WCFM_Query            = new WCFM_Query();
+		$GLOBALS['WCFM_Query'] = $WCFM_Query;
+
+		 
+		register_activation_hook( __FILE__, array( 'WCFM', 'activate_wcfm' ) );
+		register_activation_hook( __FILE__, 'flush_rewrite_rules' );
+
+		 
+		register_deactivation_hook( __FILE__, array( 'WCFM', 'deactivate_wcfm' ) );
+
+		
+
+
+		add_action(
+			'before_woocommerce_init',
+			function () {
+				if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+					\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+				}
+			}
+		);
+}
