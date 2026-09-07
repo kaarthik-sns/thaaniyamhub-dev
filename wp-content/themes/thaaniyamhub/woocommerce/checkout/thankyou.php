@@ -327,6 +327,37 @@ if ($order) :
             }
         }
 
+        // Resilient check: If the primary checkout order contains multiple vendors but splitting
+        // is still in-flight (due to asynchronous payment gateway webhook vs browser redirect race condition),
+        // wait briefly (up to ~2.5 seconds) for the background webhook to finish writing sub-orders to the DB,
+        // or trigger the split if not yet initiated.
+        if (class_exists('ThaaniyamHub_Order_Splitter') && !$primary_order->get_meta('_thaaniyamhub_order_split_done')) {
+            $vendor_groups = ThaaniyamHub_Order_Splitter::group_items_by_vendor($primary_order);
+            if (count($vendor_groups) > 1) {
+                for ($wait_i = 0; $wait_i < 6; $wait_i++) {
+                    usleep(400000); // 400ms delay per check
+                    wp_cache_delete($primary_order->get_id(), 'posts');
+                    wp_cache_delete($primary_order->get_id(), 'post_meta');
+                    $refreshed = wc_get_order($primary_order->get_id());
+                    if ($refreshed && $refreshed->get_meta('_thaaniyamhub_order_split_done')) {
+                        $primary_order = $refreshed;
+                        $all_orders = [$refreshed];
+                        break;
+                    }
+                }
+
+                // If still not split and order is already in a paid/processing state, execute split immediately
+                if (!$primary_order->get_meta('_thaaniyamhub_order_split_done') && $primary_order->has_status(['processing', 'completed', 'on-hold'])) {
+                    ThaaniyamHub_Order_Splitter::split($primary_order);
+                    $refreshed = wc_get_order($primary_order->get_id());
+                    if ($refreshed) {
+                        $primary_order = $refreshed;
+                        $all_orders = [$refreshed];
+                    }
+                }
+            }
+        }
+
         $sec_ids = $primary_order->get_meta('_thaaniyamhub_secondary_order_ids');
         if (!empty($sec_ids) && is_array($sec_ids)) {
             foreach ($sec_ids as $sid) {

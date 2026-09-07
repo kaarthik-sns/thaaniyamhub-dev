@@ -245,61 +245,164 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                 return new WP_Error('error', __('Refund failed: No transaction ID', 'woocommerce'));
             }
 
-            // Determine the primary order ID under which the Cashfree transaction was created
-            $primary_order_id = (int) $order->get_meta('_thaaniyamhub_primary_order_id');
-            if (!$primary_order_id) {
-                $primary_order_id = (int) $order_id;
+            // 1. Strict Per-Order Refund Amount Validation:
+            // Ensures only this specific order is refunded and cannot exceed its own remaining balance,
+            // never refunding or bleeding into another split vendor order's share.
+            $order_total    = (float) $order->get_total();
+            $total_refunded = (float) $order->get_total_refunded();
+            $max_refundable = max(0.0, round($order_total - $total_refunded, 2));
+
+            if (null === $amount || (float) $amount <= 0) {
+                $refund_amount = $max_refundable;
+            } else {
+                $refund_amount = round((float) $amount, 2);
             }
 
-            $primary_order = ($primary_order_id === (int) $order_id) ? $order : wc_get_order($primary_order_id);
-            $cf_order_id   = $primary_order ? ($primary_order->get_meta('_cf_order_id') ?: $primary_order->get_meta('_cashfree_order_id')) : '';
-            $refund_target_id = !empty($cf_order_id) ? $cf_order_id : $primary_order_id;
-
-            // Generate a unique refund ID per attempt
-            $refund_id = 'sub_' . $order_id . '-' . uniqid();
-
-            try {
-                $adapter = null;
-                if ($this->inner_gateway) {
-                    try {
-                        $ref = new \ReflectionProperty(get_class($this->inner_gateway), 'adapter');
-                        $ref->setAccessible(true);
-                        $adapter = $ref->getValue($this->inner_gateway);
-                    } catch (\Throwable $e) {
-                        // ignore reflection error
-                    }
-                    if (!$adapter && class_exists('WC_Cashfree_Adapter')) {
-                        $adapter = new \WC_Cashfree_Adapter($this->inner_gateway);
-                    }
-                }
-
-                if (!$adapter) {
-                    return new WP_Error('error', __('Cashfree adapter not available for refund', 'woocommerce'));
-                }
-
-                $refund = $adapter->refund($refund_target_id, $refund_id, $amount, $reason);
-
-                $order->add_order_note(
-                    sprintf(
-                        __('Cashfree Refund Processed. Refund ID: %s (Target Order: %s)', 'thaaniyamhub-multi-vendor-orders'),
-                        isset($refund->cf_refund_id) ? $refund->cf_refund_id : $refund_id,
-                        (string) $refund_target_id
-                    )
+            if ($refund_amount <= 0) {
+                return new WP_Error(
+                    'error',
+                    sprintf(__('Order #%d has no remaining refundable amount.', 'thaaniyamhub-multi-vendor-orders'), $order_id)
                 );
+            }
 
-                do_action('woo_cashfree_refund_success', isset($refund->cf_refund_id) ? $refund->cf_refund_id : $refund_id, $order_id, $refund);
-
-                return true;
-            } catch (\Exception $e) {
+            if ($refund_amount > $max_refundable) {
                 return new WP_Error(
                     'error',
                     sprintf(
-                        __('Cashfree refund failed. ID: %1$s. Code: %2$s.', 'cashfree'),
-                        $transaction_id,
-                        $e->getMessage()
+                        __('Requested refund amount (₹%1$s) exceeds remaining balance for Order #%2$d (₹%3$s). Each vendor order can only be refunded up to its own total.', 'thaaniyamhub-multi-vendor-orders'),
+                        number_format($refund_amount, 2),
+                        $order_id,
+                        number_format($max_refundable, 2)
                     )
                 );
             }
+
+            // 2. Resolve Primary Cashfree Transaction Order ID:
+            // For split secondary orders, the Cashfree charge lives under the primary order ID.
+            $primary_order_id = (int) $order->get_meta('_thaaniyamhub_primary_order_id');
+            $is_sub_order     = ($primary_order_id > 0 && $primary_order_id !== (int) $order_id);
+            if (!$is_sub_order) {
+                $primary_order_id = (int) $order_id;
+            }
+
+            $primary_order = $is_sub_order ? wc_get_order($primary_order_id) : $order;
+            $cf_order_id   = $primary_order ? ($primary_order->get_meta('_cf_order_id') ?: $primary_order->get_meta('_cashfree_order_id')) : '';
+
+            $settings       = is_array($this->settings) ? $this->settings : get_option('woocommerce_cashfree_settings', []);
+            $prefix_enabled = ($settings['order_id_prefix_text'] ?? 'no') === 'yes';
+
+            // Resolve exact Cashfree Order ID for API calls
+            $target_cf_order_id = !empty($cf_order_id) ? $cf_order_id : '';
+            if (empty($target_cf_order_id)) {
+                if ($prefix_enabled) {
+                    $prefix = substr(md5(home_url()), 0, 4);
+                    $target_cf_order_id = $prefix . '_' . $primary_order_id;
+                } else {
+                    $target_cf_order_id = (string) $primary_order_id;
+                }
+            }
+
+            // Generate a unique, isolated refund ID per attempt
+            $prefix_tag = $is_sub_order ? 'sub_' : 'pri_';
+            $refund_id  = $prefix_tag . $order_id . '-' . time() . '-' . wp_rand(100, 999);
+
+            $refund_processed = false;
+            $cf_refund_id     = $refund_id;
+            $refund_obj       = null;
+
+            // Strategy 1: Clean public WC_Cashfree_Adapter call (without PHP Reflection)
+            if (class_exists('WC_Cashfree_Adapter')) {
+                try {
+                    $adapter = new \WC_Cashfree_Adapter($this->inner_gateway);
+
+                    // Note: WC_Cashfree_Adapter::refund automatically prepends prefix if order_id_prefix_text is 'yes'.
+                    // To prevent double-prefixing (e.g. prefix_prefix_1234), pass raw integer ID when prefix is enabled.
+                    $target_for_adapter = $prefix_enabled ? (string) $primary_order_id : $target_cf_order_id;
+
+                    $refund_obj = $adapter->refund($target_for_adapter, $refund_id, $refund_amount, $reason);
+                    if ($refund_obj) {
+                        $refund_processed = true;
+                        if (isset($refund_obj->cf_refund_id)) {
+                            $cf_refund_id = $refund_obj->cf_refund_id;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    if (function_exists('thaaniyamhub_log')) {
+                        thaaniyamhub_log('Cashfree Adapter refund attempt failed: ' . $e->getMessage() . '. Falling back to direct REST API.');
+                    }
+                }
+            }
+
+            // Strategy 2: Direct Official Cashfree PG REST API (v2025-01-01 / v2022-09-01)
+            if (!$refund_processed) {
+                $app_id     = $settings['app_id'] ?? '';
+                $secret_key = $settings['secret_key'] ?? '';
+                $is_sandbox = ($settings['sandbox'] ?? 'no') === 'yes';
+
+                if (empty($app_id) || empty($secret_key)) {
+                    return new WP_Error('error', __('Cashfree credentials missing for refund processing', 'woocommerce'));
+                }
+
+                $base_url = $is_sandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+                $api_url  = $base_url . '/orders/' . rawurlencode($target_cf_order_id) . '/refunds';
+
+                $body_data = [
+                    'refund_id'     => $refund_id,
+                    'refund_amount' => $refund_amount,
+                    'refund_note'   => !empty($reason) ? $reason : sprintf('Refund for Order #%d', $order_id),
+                    'refund_speed'  => 'STANDARD',
+                ];
+
+                $response = wp_remote_post($api_url, [
+                    'timeout' => 30,
+                    'headers' => [
+                        'x-client-id'     => $app_id,
+                        'x-client-secret' => $secret_key,
+                        'x-api-version'   => '2025-01-01',
+                        'Content-Type'    => 'application/json',
+                        'x-request-id'    => 'cf-woo-ref-' . $order_id . '-' . time(),
+                    ],
+                    'body' => wp_json_encode($body_data),
+                ]);
+
+                if (is_wp_error($response)) {
+                    return new WP_Error(
+                        'error',
+                        sprintf(__('Cashfree refund network error: %s', 'cashfree'), $response->get_error_message())
+                    );
+                }
+
+                $code     = wp_remote_retrieve_response_code($response);
+                $res_body = json_decode(wp_remote_retrieve_body($response));
+
+                if ($code >= 200 && $code < 300 && !empty($res_body)) {
+                    $refund_processed = true;
+                    $refund_obj       = $res_body;
+                    $cf_refund_id     = $res_body->cf_refund_id ?? $refund_id;
+                } else {
+                    $error_msg = $res_body->message ?? wp_remote_retrieve_response_message($response);
+                    return new WP_Error(
+                        'error',
+                        sprintf(__('Cashfree refund failed. Order #%1$d (Tx: %2$s). Error: %3$s', 'cashfree'), $order_id, $transaction_id, $error_msg)
+                    );
+                }
+            }
+
+            if ($refund_processed) {
+                $order->add_order_note(
+                    sprintf(
+                        __('Cashfree Refund Processed for ₹%1$s. Refund ID: %2$s (Target Cashfree Order: %3$s)', 'thaaniyamhub-multi-vendor-orders'),
+                        number_format($refund_amount, 2),
+                        (string) $cf_refund_id,
+                        (string) $target_cf_order_id
+                    )
+                );
+
+                do_action('woo_cashfree_refund_success', $cf_refund_id, $order_id, $refund_obj);
+                return true;
+            }
+
+            return new WP_Error('error', __('Cashfree refund could not be processed', 'woocommerce'));
         }
     }
 }

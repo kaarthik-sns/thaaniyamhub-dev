@@ -668,9 +668,10 @@ class ThaaniyamHub_Payout_Scheduler {
             $completed_ts   = $completed_date ? $completed_date->getTimestamp() : 0;
 
             if ( ! $completed_ts ) {
-                // Fallback to post_date if date_completed is not recorded
-                $post_date_raw = get_post_field( 'post_date', $order->get_id() );
-                $completed_ts  = $post_date_raw ? strtotime( $post_date_raw ) : 0;
+                // Fallback to order creation date if date_completed is not recorded
+                // Uses WC_Order API instead of get_post_field() for HPOS compatibility
+                $created_date = $order->get_date_created();
+                $completed_ts = $created_date ? $created_date->getTimestamp() : 0;
             }
 
             if ( $completed_ts > $cutoff_ts ) {
