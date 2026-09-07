@@ -259,9 +259,18 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
             $refund_id = 'sub_' . $order_id . '-' . uniqid();
 
             try {
-                $adapter = isset($this->inner_gateway->adapter) ? $this->inner_gateway->adapter : null;
-                if (!$adapter && method_exists($this->inner_gateway, 'get_adapter')) {
-                    $adapter = $this->inner_gateway->get_adapter();
+                $adapter = null;
+                if ($this->inner_gateway) {
+                    try {
+                        $ref = new \ReflectionProperty(get_class($this->inner_gateway), 'adapter');
+                        $ref->setAccessible(true);
+                        $adapter = $ref->getValue($this->inner_gateway);
+                    } catch (\Throwable $e) {
+                        // ignore reflection error
+                    }
+                    if (!$adapter && class_exists('WC_Cashfree_Adapter')) {
+                        $adapter = new \WC_Cashfree_Adapter($this->inner_gateway);
+                    }
                 }
 
                 if (!$adapter) {

@@ -18,6 +18,13 @@ defined('ABSPATH') || exit;
 class ThaaniyamHub_Order_Splitter
 {
     /**
+     * In-memory recursion prevention map.
+     *
+     * @var array<int, bool>
+     */
+    private static $is_splitting = [];
+
+    /**
      * Register hooks.
      */
     public static function init()
@@ -28,11 +35,44 @@ class ThaaniyamHub_Order_Splitter
         // Blocks / Store API checkout hook
         add_action('woocommerce_store_api_checkout_order_processed', [__CLASS__, 'maybe_split_from_order'], 50, 1);
 
+        // Early status transition hooks (priority 5 runs BEFORE priority 10 transactional emails are triggered)
+        add_action('woocommerce_order_status_pending_to_processing', [__CLASS__, 'on_status_transition_early'], 5, 2);
+        add_action('woocommerce_order_status_pending_to_completed', [__CLASS__, 'on_status_transition_early'], 5, 2);
+        add_action('woocommerce_order_status_pending_to_on-hold', [__CLASS__, 'on_status_transition_early'], 5, 2);
+        add_action('woocommerce_order_status_failed_to_processing', [__CLASS__, 'on_status_transition_early'], 5, 2);
+        add_action('woocommerce_order_status_cancelled_to_processing', [__CLASS__, 'on_status_transition_early'], 5, 2);
+
         // Synchronize payment completion from primary checkout order to split secondary orders
         add_action('woocommerce_payment_complete', [__CLASS__, 'on_payment_complete'], 20, 1);
 
         // Synchronize status changes from primary checkout order to split secondary orders
         add_action('woocommerce_order_status_changed', [__CLASS__, 'on_order_status_changed'], 20, 4);
+
+        // Prevent resuming previously split or contaminated draft orders
+        add_action('woocommerce_before_checkout_process', [__CLASS__, 'prevent_resuming_split_orders']);
+    }
+
+    /**
+     * Early status transition hook — ensures prepaid order is split BEFORE WooCommerce generates and sends emails.
+     *
+     * @param int            $order_id Order ID.
+     * @param WC_Order|false $order    Order object.
+     */
+    public static function on_status_transition_early($order_id, $order = null)
+    {
+        if ('yes' !== get_option('thaaniyamhub_enable_suborder_split', 'yes')) {
+            return;
+        }
+        if (!$order || !is_a($order, 'WC_Order')) {
+            $order = wc_get_order($order_id);
+        }
+        if (!$order || !is_a($order, 'WC_Order')) {
+            return;
+        }
+        if ($order->get_meta('_thaaniyamhub_order_split_done')) {
+            return;
+        }
+        self::split($order);
     }
 
     // -------------------------------------------------------------------------
@@ -60,6 +100,20 @@ class ThaaniyamHub_Order_Splitter
         if ($order->get_meta('_thaaniyamhub_order_split_done')) {
             return;
         }
+
+        // Cache session vendor rates into order meta during checkout for background webhook fallback
+        self::save_session_vendor_shipping_rates($order);
+
+        // Orders are prepaid: defer splitting until payment succeeds (e.g. payment_complete or processing status).
+        // Splitting here strips other vendors' items from the primary order, shrinking the total before
+        // the payment gateway (Cashfree/Razorpay) reads it, which causes undercharging.
+        if (doing_action('woocommerce_checkout_order_processed') || doing_action('woocommerce_store_api_checkout_order_processed')) {
+            if ($order->needs_payment()) {
+                thaaniyamhub_log(sprintf('Order splitter: Deferring split for Order #%d until payment completion (needs_payment is true).', $order->get_id()));
+                return;
+            }
+        }
+
         self::split($order);
     }
 
@@ -79,7 +133,63 @@ class ThaaniyamHub_Order_Splitter
         if ($order->get_meta('_thaaniyamhub_order_split_done')) {
             return;
         }
+
+        self::save_session_vendor_shipping_rates($order);
+
+        if (doing_action('woocommerce_store_api_checkout_order_processed')) {
+            if ($order->needs_payment()) {
+                thaaniyamhub_log(sprintf('Order splitter: Deferring split for Order #%d until payment completion (needs_payment is true).', $order->get_id()));
+                return;
+            }
+        }
+
         self::split($order);
+    }
+
+    /**
+     * Save vendor shipping rates from session into order metadata for resilient retrieval later.
+     *
+     * @param WC_Order $order
+     */
+    private static function save_session_vendor_shipping_rates(WC_Order $order)
+    {
+        if (!isset(WC()->session)) {
+            return;
+        }
+
+        $chosen_methods = WC()->session->get('chosen_shipping_methods');
+        $chosen_method  = !empty($chosen_methods) ? $chosen_methods[0] : '';
+        $is_low_cost    = (false !== strpos($chosen_method, 'low_cost_shipping'));
+
+        $session_key    = $is_low_cost ? 'thaaniyamhub_low_cost_shipping_vendor_rates' : 'thaaniyamhub_standard_shipping_vendor_rates';
+        $session_rates  = WC()->session->get($session_key);
+        if (!is_array($session_rates)) {
+            $session_rates = WC()->session->get('thaaniyamhub_vendor_shipping_rates');
+        }
+
+        if (is_array($session_rates) && !empty($session_rates)) {
+            $order->update_meta_data('_thaaniyamhub_vendor_shipping_rates', $session_rates);
+            $order->save();
+        }
+    }
+
+    /**
+     * Ensure WooCommerce does not resume an order awaiting payment if it was already processed/split.
+     */
+    public static function prevent_resuming_split_orders()
+    {
+        if (!isset(WC()->session)) {
+            return;
+        }
+
+        $order_id = absint(WC()->session->get('order_awaiting_payment'));
+        if ($order_id) {
+            $order = wc_get_order($order_id);
+            if ($order && $order->get_meta('_thaaniyamhub_order_split_done')) {
+                thaaniyamhub_log(sprintf('Splitter: Clearing order_awaiting_payment session because Order #%d was previously split.', $order_id));
+                WC()->session->set('order_awaiting_payment', null);
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -96,6 +206,15 @@ class ThaaniyamHub_Order_Splitter
         global $wpdb, $WCFMmp;
 
         $primary_order_id = $order->get_id();
+
+        if (isset(self::$is_splitting[$primary_order_id])) {
+            return;
+        }
+        if ($order->get_meta('_thaaniyamhub_order_split_done')) {
+            return;
+        }
+        self::$is_splitting[$primary_order_id] = true;
+
         thaaniyamhub_log("--- START VENDOR ORDER SPLITTING FOR ORDER #{$primary_order_id} ---");
 
         $vendor_groups = self::group_items_by_vendor($order);
@@ -113,12 +232,23 @@ class ThaaniyamHub_Order_Splitter
                 self::assign_vendor_pickup_location($order, $vendor_id);
                 $order->update_meta_data('_order_vendor_id', $vendor_id);
                 $order->update_meta_data('_thaaniyamhub_order_split_done', '1');
+
+                // Ensure shipping item has vendor_id for WCFM
+                foreach ($order->get_items('shipping') as $s_item) {
+                    $s_item->update_meta_data('vendor_id', $vendor_id);
+                    $s_item->save();
+                }
+
                 $order->save();
 
                 if (class_exists('ThaaniyamHub_Ledger')) {
                     ThaaniyamHub_Ledger::record_vendor_order($order, $vendor_id);
                 }
+                if (class_exists('ThaaniyamHub_Order_History')) {
+                    ThaaniyamHub_Order_History::log_order($order);
+                }
             }
+            unset(self::$is_splitting[$primary_order_id]);
             thaaniyamhub_log("--- END ORDER SPLITTING FOR SINGLE VENDOR ORDER #{$primary_order_id} ---");
             return;
         }
@@ -151,6 +281,11 @@ class ThaaniyamHub_Order_Splitter
                     ThaaniyamHub_Ledger::record_vendor_order($new_order, $vendor_id);
                 }
 
+                // Record in Order History
+                if (class_exists('ThaaniyamHub_Order_History')) {
+                    ThaaniyamHub_Order_History::log_order($new_order);
+                }
+
                 thaaniyamhub_log(sprintf('Splitter: Independent standard order #%d created for Vendor #%d.', $new_order_id, $vendor_id));
             } else {
                 thaaniyamhub_log(sprintf('Splitter: Failed to create order for Vendor #%d!', $vendor_id), 'error');
@@ -165,18 +300,39 @@ class ThaaniyamHub_Order_Splitter
             $order->save();
         }
 
-        // Clean up leftover WCFM commission rows for other vendors on the primary order
-        $wpdb->query($wpdb->prepare(
-            "DELETE FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE order_id = %d AND vendor_id != %d",
-            $primary_order_id,
-            $primary_vendor_id
-        ));
+        // Re-process WCFM commission for primary order so its rows in wcfm_marketplace_orders
+        // accurately reflect ONLY primary vendor's items, prorated shipping, and commission
+        if (isset($WCFMmp->wcfmmp_commission) && method_exists($WCFMmp->wcfmmp_commission, 'wcfmmp_commission_order_reset')) {
+            $WCFMmp->wcfmmp_commission->wcfmmp_commission_order_reset($primary_order_id);
+            // Clear in-memory flag on $order as well
+            $order->delete_meta_data('_wcfmmp_order_processed');
+            foreach ($order->get_items('line_item') as $p_item) {
+                $p_item->delete_meta_data('_wcfmmp_order_item_processed');
+            }
+            if (method_exists($WCFMmp->wcfmmp_commission, 'wcfmmp_checkout_order_processed')) {
+                $fresh_primary = wc_get_order($primary_order_id);
+                $WCFMmp->wcfmmp_commission->wcfmmp_checkout_order_processed($primary_order_id, [], $fresh_primary ?: $order);
+            }
+        } else {
+            // Fallback cleanup if reset method not present
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE order_id = %d AND vendor_id != %d",
+                $primary_order_id,
+                $primary_vendor_id
+            ));
+        }
 
         // Record primary order in Financial Ledger
         if (class_exists('ThaaniyamHub_Ledger')) {
             ThaaniyamHub_Ledger::record_vendor_order($order, $primary_vendor_id);
         }
 
+        // Record primary order in Order History
+        if (class_exists('ThaaniyamHub_Order_History')) {
+            ThaaniyamHub_Order_History::log_order($order);
+        }
+
+        unset(self::$is_splitting[$primary_order_id]);
         thaaniyamhub_log("Order splitting completed. Independent orders created: " . implode(', ', $created_order_ids));
         thaaniyamhub_log("--- END VENDOR ORDER SPLITTING FOR ORDER #{$primary_order_id} ---");
     }
@@ -234,6 +390,9 @@ class ThaaniyamHub_Order_Splitter
                 $new_item->set_total_tax($item->get_total_tax());
 
                 foreach ($item->get_meta_data() as $meta) {
+                    if (strpos($meta->key, '_wcfm') === 0) {
+                        continue;
+                    }
                     $new_item->update_meta_data($meta->key, $meta->value);
                 }
                 $new_item->update_meta_data('_vendor_id', $vendor_id);
@@ -308,8 +467,8 @@ class ThaaniyamHub_Order_Splitter
                 $new_order->set_transaction_id($primary_order->get_transaction_id());
             }
 
-            // Set order status to match primary order
-            $new_order->set_status($primary_order->get_status());
+            // Set order status to pending initially so WooCommerce status transition hooks fire when paid
+            $new_order->set_status('pending');
             $new_order->calculate_totals();
             $new_order->save();
 
@@ -395,6 +554,14 @@ class ThaaniyamHub_Order_Splitter
      */
     public static function calculate_prorated_shipping(WC_Order $order, int $vendor_id, array $vendor_items): float
     {
+        // 0. Retrieve rate from order meta (saved during checkout)
+        $saved_rates = $order->get_meta('_thaaniyamhub_vendor_shipping_rates');
+        if (is_array($saved_rates) && isset($saved_rates[$vendor_id])) {
+            $actual_rate = floatval($saved_rates[$vendor_id]);
+            thaaniyamhub_log(sprintf('Splitter: Retrieved saved order shipping rate for Vendor #%d: ₹%s (Order #%d)', $vendor_id, $actual_rate, $order->get_id()));
+            return $actual_rate;
+        }
+
         // 1. Retrieve actual rate calculated for this vendor from WooCommerce session
         if (isset(WC()->session)) {
             $is_low_cost = false;
@@ -604,6 +771,11 @@ class ThaaniyamHub_Order_Splitter
             return;
         }
 
+        // If order hasn't been split yet, split now upon successful payment
+        if (!$order->get_meta('_thaaniyamhub_order_split_done')) {
+            self::split($order);
+        }
+
         $secondary_ids = $order->get_meta('_thaaniyamhub_secondary_order_ids');
         if (empty($secondary_ids) || !is_array($secondary_ids)) {
             return;
@@ -625,12 +797,14 @@ class ThaaniyamHub_Order_Splitter
             if ($payment_title && !$sec_order->get_payment_method_title()) {
                 $sec_order->set_payment_method_title($payment_title);
             }
-            if ($tx_id) {
+            if ($tx_id && !$sec_order->get_transaction_id()) {
                 $sec_order->set_transaction_id($tx_id);
             }
 
-            $sec_order->payment_complete($tx_id);
-            thaaniyamhub_log(sprintf('Order splitter: Synced payment_complete for split order #%d from primary order #%d.', $sec_id, $order_id));
+            if ($sec_order->get_status() !== 'processing' && $sec_order->get_status() !== 'completed') {
+                $sec_order->payment_complete($tx_id);
+                thaaniyamhub_log(sprintf('Order splitter: Synced payment_complete for split order #%d from primary order #%d.', $sec_id, $order_id));
+            }
         }
     }
 
@@ -648,10 +822,20 @@ class ThaaniyamHub_Order_Splitter
             return;
         }
 
+        $clean_old_status = ltrim($old_status, 'wc-');
+        $clean_new_status = ltrim($new_status, 'wc-');
+
         // Do not sync terminal per-vendor statuses like 'refunded' or 'cancelled' across split orders.
         // Each vendor order manages its status based on its own ID independently.
         $terminal_vendor_statuses = array('refunded', 'cancelled', 'wc-refunded', 'wc-cancelled');
-        if (in_array(ltrim($new_status, 'wc-'), array('refunded', 'cancelled'), true)) {
+        if (in_array($clean_new_status, array('refunded', 'cancelled'), true)) {
+            return;
+        }
+
+        // Only synchronize initial checkout payment transitions (e.g. pending -> processing or on-hold).
+        // Post-checkout fulfillment statuses (e.g. processing -> completed) are per-vendor and independent.
+        $initial_unpaid_statuses = array('pending', 'failed', 'cancelled', 'checkout-draft');
+        if (!in_array($clean_old_status, $initial_unpaid_statuses, true)) {
             return;
         }
 
@@ -660,6 +844,13 @@ class ThaaniyamHub_Order_Splitter
         }
         if (!$order) {
             return;
+        }
+
+        // If order hasn't been split yet and transitions to a paid or processing status, split now
+        $target_statuses = array('processing', 'completed', 'on-hold');
+        $clean_status    = ltrim($new_status, 'wc-');
+        if (!$order->get_meta('_thaaniyamhub_order_split_done') && in_array($clean_status, $target_statuses, true)) {
+            self::split($order);
         }
 
         $secondary_ids = $order->get_meta('_thaaniyamhub_secondary_order_ids');
@@ -689,8 +880,13 @@ class ThaaniyamHub_Order_Splitter
                 $sec_order->set_transaction_id($tx_id);
             }
 
-            if ($sec_order->get_status() !== $new_status) {
-                $sec_order->update_status($new_status, sprintf(__('Synced status from checkout order #%d.', 'thaaniyamhub-multi-vendor-orders'), $order_id));
+            $clean_new_status = ltrim($new_status, 'wc-');
+            if ($sec_order->get_status() !== $clean_new_status) {
+                if ('processing' === $clean_new_status && $tx_id) {
+                    $sec_order->payment_complete($tx_id);
+                } else {
+                    $sec_order->update_status($new_status, sprintf(__('Synced status from checkout order #%d.', 'thaaniyamhub-multi-vendor-orders'), $order_id));
+                }
                 thaaniyamhub_log(sprintf('Order splitter: Synced status (%s -> %s) for split order #%d from primary order #%d.', $old_status, $new_status, $sec_id, $order_id));
             } else {
                 $sec_order->save();

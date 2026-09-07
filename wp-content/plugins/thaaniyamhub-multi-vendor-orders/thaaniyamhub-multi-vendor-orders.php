@@ -614,8 +614,11 @@ function init_custom_shiprocket_shipping_method()
         return;
     }
 
+    #[\AllowDynamicProperties]
     class Custom_Shiprocket_Shipping_Method extends Shiprocket_Woocommerce_Shipping_Method
     {
+        public $found_rates = array();
+
         public static function get_shipping_zone_from_pincode( $pincode ) {
             return ThaaniyamHub_Shipping_Helper::get_shipping_zone_from_pincode( $pincode );
         }

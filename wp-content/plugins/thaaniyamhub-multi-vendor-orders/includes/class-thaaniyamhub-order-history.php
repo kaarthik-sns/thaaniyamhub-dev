@@ -33,6 +33,10 @@ class ThaaniyamHub_Order_History {
             $order = wc_get_order( $order_id );
         }
         if ( $order ) {
+            // Defer if order splitting is pending for prepaid order
+            if ( $order->needs_payment() && ! $order->get_meta( '_thaaniyamhub_order_split_done' ) ) {
+                return;
+            }
             self::log_order( $order );
         }
     }
@@ -42,6 +46,10 @@ class ThaaniyamHub_Order_History {
      */
     public static function log_order_history_blocks( $order ) {
         if ( $order && is_a( $order, 'WC_Order' ) ) {
+            // Defer if order splitting is pending for prepaid order
+            if ( $order->needs_payment() && ! $order->get_meta( '_thaaniyamhub_order_split_done' ) ) {
+                return;
+            }
             self::log_order( $order );
         }
     }
