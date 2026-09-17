@@ -176,8 +176,13 @@ if (!function_exists('thaaniyamhub_get_latest_wc_log_file')) {
 if (!function_exists('thaaniyamhub_log')) {
     function thaaniyamhub_log($message, $level = 'info', $source = 'thaaniyamhub-orders-shiprocket')
     {
+        // Do not suppress errors/critical logs, or webhook/payout related messages even during shipping calculation
         if (!empty($GLOBALS['thaaniyamhub_in_shipping_calculation'])) {
-            return;
+            $is_critical_level   = in_array(strtolower((string) $level), ['error', 'critical', 'emergency', 'alert'], true);
+            $is_protected_source = (false !== strpos((string) $source, 'webhook') || false !== strpos((string) $source, 'payout'));
+            if (!$is_critical_level && !$is_protected_source) {
+                return;
+            }
         }
 
         $message_str = is_array($message) || is_object($message) ? print_r($message, true) : $message;
@@ -326,7 +331,9 @@ if (!function_exists('thaaniyamhub_clear_logs_handler')) {
         $log_file = thaaniyamhub_get_latest_wc_log_file();
 
         if ($log_file && file_exists($log_file)) {
-            @file_put_contents($log_file, '');
+            if (false === file_put_contents($log_file, '')) {
+                wp_die(esc_html__('Failed to clear the log file. Please check file permissions.', 'thaaniyamhub-multi-vendor-orders'));
+            }
         }
 
         wp_safe_redirect(admin_url('admin.php?page=wc-settings&tab=thaaniyamhub_settings&section=logs'));

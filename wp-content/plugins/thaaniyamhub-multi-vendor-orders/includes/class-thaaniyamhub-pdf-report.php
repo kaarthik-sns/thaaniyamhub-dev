@@ -65,7 +65,7 @@ class ThaaniyamHub_PDF_Report
         $profitability = sanitize_text_field($_GET['thaaniyamhub_profitability'] ?? 'all');
         $limit         = max(5, min(500, (int) ($_GET['thaaniyamhub_limit'] ?? 25)));
         $paged         = max(1, (int) ($_GET['paged'] ?? 1));
-        $orderby       = sanitize_text_field($_GET['thaaniyamhub_orderby'] ?? $_GET['orderby'] ?? 'sub_order_id');
+        $orderby       = sanitize_text_field($_GET['thaaniyamhub_orderby'] ?? $_GET['orderby'] ?? 'order_id');
         $order         = strtoupper(sanitize_text_field($_GET['thaaniyamhub_order'] ?? $_GET['order'] ?? 'DESC'));
         if (!in_array($order, ['ASC', 'DESC'], true)) {
             $order = 'DESC';
@@ -77,7 +77,7 @@ class ThaaniyamHub_PDF_Report
         // Load all vendors for dropdown
         $vendors = self::get_all_vendors();
 
-        // Build query args — Default sort by order ID DESC (sub_order_id DESC)
+        // Build query args — Default sort by order ID DESC (order_id DESC)
         $query_args = [
             'vendor_id'     => $vendor_id,
             'search'        => $search,
@@ -409,7 +409,7 @@ class ThaaniyamHub_PDF_Report
                     // Helper to generate sortable column header links
                     $get_sort_link = function($column_key, $label) use ($orderby, $order) {
                         $is_active = ($orderby === $column_key) || 
-                                     ('sub_order_id' === $column_key && in_array($orderby, ['order_id', 'parent_order_id', 'sub_order_id'], true)) ||
+                                     ('order_id' === $column_key && in_array($orderby, ['order_id', 'parent_order_id', 'sub_order_id'], true)) ||
                                      ('created_at' === $column_key && in_array($orderby, ['date', 'order_date', 'created_at'], true));
                         $next_order = ($is_active && 'DESC' === $order) ? 'ASC' : 'DESC';
                         $url = add_query_arg([
@@ -456,7 +456,7 @@ class ThaaniyamHub_PDF_Report
                                 </tr>
                                 <!-- Tier 2: Specific Column Headers -->
                                 <tr class="header-col-row">
-                                    <th style="width: 120px;"><?php echo $get_sort_link('sub_order_id', __('Order / Sub', 'thaaniyamhub-multi-vendor-orders')); ?></th>
+                                    <th style="width: 120px;"><?php echo $get_sort_link('order_id', __('Order #', 'thaaniyamhub-multi-vendor-orders')); ?></th>
                                     <th style="width: 125px;"><?php echo $get_sort_link('created_at', __('Date & Customer', 'thaaniyamhub-multi-vendor-orders')); ?></th>
                                     <th style="width: 120px;" class="col-grp-end"><?php esc_html_e('Vendor / Store', 'thaaniyamhub-multi-vendor-orders'); ?></th>
                                     <th style="width: 105px;" class="col-numeric"><?php echo $get_sort_link('gross_sales', __('Product Price', 'thaaniyamhub-multi-vendor-orders')); ?></th>
@@ -474,8 +474,7 @@ class ThaaniyamHub_PDF_Report
                             <tbody>
                                 <?php foreach ($rows as $row): ?>
                                     <?php
-                                    $order_url = get_edit_post_link((int) $row->sub_order_id) ?: admin_url('admin.php?page=wc-orders&action=edit&id=' . $row->sub_order_id);
-                                    $parent_url = get_edit_post_link((int) $row->parent_order_id) ?: admin_url('admin.php?page=wc-orders&action=edit&id=' . $row->parent_order_id);
+                                    $order_url = get_edit_post_link((int) $row->order_id) ?: admin_url('admin.php?page=wc-orders&action=edit&id=' . $row->order_id);
 
                                     $v_name = 'Vendor #' . $row->vendor_id;
                                     if (function_exists('wcfm_get_vendor_store_name')) {
@@ -500,22 +499,16 @@ class ThaaniyamHub_PDF_Report
                                     $shipping_variance = (float) $row->shipping_charge - (float) $row->shiprocket_shipping_cost;
                                     ?>
                                     <tr class="ledger-row" id="row-<?php echo esc_attr($row->id); ?>">
-                                        <!-- 1. Order / Sub Order (with interactive audit caret toggle) -->
+                                        <!-- 1. Order ID (with interactive audit caret toggle) -->
                                         <td>
                                             <div class="order-cell-wrap">
                                                 <button type="button" class="btn-toggle-audit" data-row-id="<?php echo esc_attr($row->id); ?>" title="<?php esc_attr_e('View Financial Calculation Audit', 'thaaniyamhub-multi-vendor-orders'); ?>" aria-expanded="false">
                                                     <span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
                                                 </button>
                                                 <div class="order-id-stack">
-                                                    <a href="<?php echo esc_url($order_url); ?>" class="order-sub-link" title="<?php esc_attr_e('View Sub-Order', 'thaaniyamhub-multi-vendor-orders'); ?>">
-                                                        <strong>#<?php echo esc_html($row->sub_order_id); ?></strong>
+                                                    <a href="<?php echo esc_url($order_url); ?>" class="order-sub-link" title="<?php esc_attr_e('View Order', 'thaaniyamhub-multi-vendor-orders'); ?>">
+                                                        <strong>#<?php echo esc_html($row->order_id); ?></strong>
                                                     </a>
-                                                    <?php if ($row->parent_order_id !== $row->sub_order_id): ?>
-                                                        <span class="parent-ref">
-                                                            <?php esc_html_e('Parent:', 'thaaniyamhub-multi-vendor-orders'); ?>
-                                                            <a href="<?php echo esc_url($parent_url); ?>" class="parent-link">#<?php echo esc_html($row->parent_order_id); ?></a>
-                                                        </span>
-                                                    <?php endif; ?>
                                                     <span class="badge-status-pill badge-status-<?php echo esc_attr($row->order_status); ?>">
                                                         <?php echo esc_html(ucfirst($row->order_status)); ?>
                                                     </span>
@@ -781,7 +774,7 @@ class ThaaniyamHub_PDF_Report
 
                                                         <div class="audit-quick-links">
                                                             <a href="<?php echo esc_url($order_url); ?>" class="button button-small" target="_blank">
-                                                                <span class="dashicons dashicons-external"></span> <?php esc_html_e('Edit WooCommerce Sub-Order', 'thaaniyamhub-multi-vendor-orders'); ?>
+                                                                <span class="dashicons dashicons-external"></span> <?php esc_html_e('Edit WooCommerce Order', 'thaaniyamhub-multi-vendor-orders'); ?>
                                                             </a>
                                                             <?php if (!empty($row->shiprocket_awb)): ?>
                                                                 <a href="https://shiprocket.co/tracking/<?php echo esc_attr($row->shiprocket_awb); ?>" class="button button-small" target="_blank">
@@ -924,7 +917,7 @@ class ThaaniyamHub_PDF_Report
         $order_status  = sanitize_text_field($_GET['thaaniyamhub_order_status'] ?? '');
         $payout_status = sanitize_text_field($_GET['thaaniyamhub_payout_status'] ?? '');
         $profitability = sanitize_text_field($_GET['thaaniyamhub_profitability'] ?? 'all');
-        $orderby       = sanitize_text_field($_GET['thaaniyamhub_orderby'] ?? $_GET['orderby'] ?? 'sub_order_id');
+        $orderby       = sanitize_text_field($_GET['thaaniyamhub_orderby'] ?? $_GET['orderby'] ?? 'order_id');
         $order         = sanitize_text_field($_GET['thaaniyamhub_order'] ?? $_GET['order'] ?? 'DESC');
 
         $query_args = [
@@ -1083,7 +1076,7 @@ class ThaaniyamHub_PDF_Report
                     <tbody>
                         <?php foreach ($rows as $r): ?>
                             <tr>
-                                <td>#<?php echo esc_html($r->sub_order_id); ?></td>
+                                <td>#<?php echo esc_html($r->order_id); ?></td>
                                 <td><?php echo esc_html(date_i18n('d M Y', strtotime($r->created_at))); ?></td>
                                 <td><?php echo esc_html('Store #' . $r->vendor_id); ?></td>
                                 <td class="col-r"><?php echo wp_strip_all_tags(wc_price((float)$r->item_subtotal > 0 ? $r->item_subtotal : ((float)$r->gross_sales + (float)$r->discount_total))); ?></td>

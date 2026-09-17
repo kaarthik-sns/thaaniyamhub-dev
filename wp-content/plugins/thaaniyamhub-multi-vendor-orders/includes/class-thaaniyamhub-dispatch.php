@@ -8,7 +8,7 @@
  *
  * Hook: woocommerce_order_status_processing @ priority 25
  *
- * Only acts on sub-orders created by ThaaniyamHub_Order_Splitter (meta _is_thaaniyamhub_suborder = 1).
+ * Only acts on sub-orders created by ThaaniyamHub_Order_Splitter (meta _thaaniyamhub_order_split_done = 1 / _order_vendor_id).
  * Parent orders are silently skipped.
  *
  * Retry: wp_thaaniyamhub_sf_retry_failed_dispatches (hourly WP-Cron job).
@@ -107,14 +107,14 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
                 return;
             }
 
-            thaaniyamhub_log("ThaaniyamHub_Dispatch: Auto-cancelling Shiprocket order #{$record->shiprocket_order_id} for sub-order #{$order_id} because order status changed to cancelled.");
+            thaaniyamhub_log("ThaaniyamHub_Dispatch: Auto-cancelling Shiprocket order #{$record->shiprocket_order_id} for order #{$order_id} because order status changed to cancelled.");
 
             $api = new ThaaniyamHub_Shiprocket_API();
             $result = $api->cancel_order([$record->shiprocket_order_id], $order_id);
 
             if (is_wp_error($result)) {
                 $error_msg = $result->get_error_message();
-                thaaniyamhub_log("ThaaniyamHub_Dispatch: Auto-cancel Shiprocket API error for sub-order #{$order_id} — {$error_msg}", 'error');
+                thaaniyamhub_log("ThaaniyamHub_Dispatch: Auto-cancel Shiprocket API error for order #{$order_id} — {$error_msg}", 'error');
                 $order = wc_get_order($order_id);
                 if ($order) {
                     $order->add_order_note(sprintf(__('⚠️ Shiprocket auto-cancellation failed: %s. Please cancel manually.', 'thaaniyamhub-shiprocket-fulfillment'), $error_msg));
@@ -123,7 +123,7 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             }
 
             ThaaniyamHub_Shiprocket_API::update_status($order_id, 'cancelled');
-            thaaniyamhub_log("ThaaniyamHub_Dispatch: Auto-cancel Shiprocket order #{$record->shiprocket_order_id} succeeded for sub-order #{$order_id}. Updated local status to cancelled.");
+            thaaniyamhub_log("ThaaniyamHub_Dispatch: Auto-cancel Shiprocket order #{$record->shiprocket_order_id} succeeded for order #{$order_id}. Updated local status to cancelled.");
             $order = wc_get_order($order_id);
             if ($order) {
                 $order->add_order_note(__('❌ Shiprocket shipment automatically cancelled because order was cancelled in WooCommerce/WCFM.', 'thaaniyamhub-shiprocket-fulfillment'));
@@ -145,14 +145,14 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             thaaniyamhub_log("--- START SHIPROCKET DISPATCH FOR ORDER #{$order_id} ---");
             $order = wc_get_order($order_id);
             if (!$order) {
-                thaaniyamhub_log("Shiprocket Dispatch: Order/Sub-order #{$order_id} not found in database.", 'error');
+                thaaniyamhub_log("Shiprocket Dispatch: Order #{$order_id} not found in database.", 'error');
                 thaaniyamhub_log("--- END SHIPROCKET DISPATCH FOR ORDER #{$order_id} ---");
                 return;
             }
 
-            // Only dispatch sub-orders or single-vendor orders.
+            // Only dispatch eligible orders.
             if (!self::is_order_eligible_for_fulfillment($order)) {
-                thaaniyamhub_log("Shiprocket Dispatch: Order #{$order_id} is not eligible for Shiprocket fulfillment (likely a multi-vendor parent/master order that was split). Skipping.");
+                thaaniyamhub_log("Shiprocket Dispatch: Order #{$order_id} is not eligible for Shiprocket fulfillment. Skipping.");
                 thaaniyamhub_log("--- END SHIPROCKET DISPATCH FOR ORDER #{$order_id} ---");
                 return;
             }
@@ -160,12 +160,12 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             // Skip if already dispatched successfully (and not cancelled).
             $existing = ThaaniyamHub_Shiprocket_API::get_fulfillment($order_id);
             if ($existing && !empty($existing->shiprocket_order_id) && 'cancelled' !== $existing->fulfillment_status) {
-                thaaniyamhub_log("Shiprocket Dispatch: Order/Sub-order #{$order_id} already dispatched (Shiprocket Order ID: {$existing->shiprocket_order_id}, Status: {$existing->fulfillment_status}) — skipping.");
+                thaaniyamhub_log("Shiprocket Dispatch: Order #{$order_id} already dispatched (Shiprocket Order ID: {$existing->shiprocket_order_id}, Status: {$existing->fulfillment_status}) — skipping.");
                 thaaniyamhub_log("--- END SHIPROCKET DISPATCH FOR ORDER #{$order_id} ---");
                 return;
             }
 
-            thaaniyamhub_log("Shiprocket Dispatch: Preparing data to dispatch order/sub-order #{$order_id} to Shiprocket.");
+            thaaniyamhub_log("Shiprocket Dispatch: Preparing data to dispatch order #{$order_id} to Shiprocket.");
 
             $vendor_id = self::get_order_vendor_id($order);
             thaaniyamhub_log("Shiprocket Dispatch: Order vendor ID resolved as #{$vendor_id}.");
@@ -217,11 +217,11 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
 
             if (is_wp_error($result)) {
                 $error_msg = $result->get_error_message();
-                thaaniyamhub_log("Shiprocket Dispatch: Shiprocket API returned error for sub-order #{$order_id} — {$error_msg}", 'error');
+                thaaniyamhub_log("Shiprocket Dispatch: Shiprocket API returned error for order #{$order_id} — {$error_msg}", 'error');
                 self::flag_failed($order, $error_msg);
                 $order->add_order_note(
                     sprintf(
-                        __('Shiprocket dispatch FAILED: %s. Sub-order will be retried automatically.', 'thaaniyamhub-shiprocket-fulfillment'),
+                        __('Shiprocket dispatch FAILED: %s. Order will be retried automatically.', 'thaaniyamhub-shiprocket-fulfillment'),
                         $error_msg
                     )
                 );
@@ -236,7 +236,7 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             $sr_shipment_id = (string) ($result['shipment_id'] ?? '');
 
             if (!$sr_order_id) {
-                thaaniyamhub_log("Shiprocket Dispatch: Shiprocket returned no order_id for sub-order #{$order_id}!", 'error');
+                thaaniyamhub_log("Shiprocket Dispatch: Shiprocket returned no order_id for order #{$order_id}!", 'error');
                 self::flag_failed($order, 'NO_ORDER_ID_IN_RESPONSE');
                 thaaniyamhub_log("--- END SHIPROCKET DISPATCH FOR ORDER #{$order_id} ---");
                 return;
@@ -285,7 +285,7 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             );
 
             thaaniyamhub_log(
-                "Shiprocket Dispatch: Sub-order #{$order_id} successfully dispatched. SR Order: {$sr_order_id} | Shipment: {$sr_shipment_id}"
+                "Shiprocket Dispatch: Order #{$order_id} successfully dispatched. SR Order: {$sr_order_id} | Shipment: {$sr_shipment_id}"
             );
             thaaniyamhub_log("--- END SHIPROCKET DISPATCH FOR ORDER #{$order_id} ---");
         }
@@ -319,7 +319,7 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             }
 
             if (empty($order_items)) {
-                thaaniyamhub_log("ThaaniyamHub_Dispatch::build_payload: No order items for sub-order #{$order_id}.");
+                thaaniyamhub_log("ThaaniyamHub_Dispatch::build_payload: No order items for order #{$order_id}.");
                 return null;
             }
 
@@ -347,7 +347,7 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             global $wpdb;
             $attempt_count = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$wpdb->prefix}thaaniyamhub_shiprocket_api_logs 
-              WHERE sub_order_id = %d AND endpoint_requested LIKE '%%orders/create/adhoc%%'",
+              WHERE order_id = %d AND endpoint_requested LIKE '%%orders/create/adhoc%%'",
                 $order_id
             ));
             $unique_order_id = $attempt_count > 0 ? $order_id . '-R' . $attempt_count : (string) $order_id;
@@ -540,7 +540,7 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
                 return;
             }
 
-            thaaniyamhub_log('ThaaniyamHub_Dispatch: Cron retry — ' . count($failed_orders) . ' failed sub-order(s) found.');
+            thaaniyamhub_log('ThaaniyamHub_Dispatch: Cron retry — ' . count($failed_orders) . ' failed order(s) found.');
 
             foreach ($failed_orders as $order) {
                 self::push_to_shiprocket($order->get_id());

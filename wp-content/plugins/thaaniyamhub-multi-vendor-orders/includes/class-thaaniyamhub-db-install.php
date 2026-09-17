@@ -18,7 +18,7 @@ class ThaaniyamHub_DB_Install {
     /**
      * Current schema version. Bump this whenever a column is added/changed.
      */
-    const SCHEMA_VERSION = '2.4.0';
+    const SCHEMA_VERSION = '2.5.0';
 
     /**
      * Option key used to store the installed schema version.
@@ -34,6 +34,7 @@ class ThaaniyamHub_DB_Install {
      */
     public static function run() {
         self::migrate_legacy_data();
+        self::migrate_to_single_level_orders();
         self::create_tables();
         self::seed_defaults();
         update_option( self::VERSION_OPTION, self::SCHEMA_VERSION );
@@ -46,6 +47,7 @@ class ThaaniyamHub_DB_Install {
         $installed = get_option( self::VERSION_OPTION, '0.0.0' );
         if ( version_compare( $installed, self::SCHEMA_VERSION, '<' ) ) {
             self::migrate_legacy_data();
+            self::migrate_to_single_level_orders();
             self::create_tables();
             self::seed_defaults();
             update_option( self::VERSION_OPTION, self::SCHEMA_VERSION );
@@ -197,6 +199,103 @@ class ThaaniyamHub_DB_Install {
         $wpdb->query( "UPDATE {$wpdb->postmeta} SET meta_key = '_thaaniyamhub_suborders_created' WHERE meta_key = '_ag_suborders_created'" );
     }
 
+    /**
+     * Migrate tables to pure single-level order architecture (order_id everywhere).
+     * Eliminates sub_order_id and parent_order_id.
+     */
+    public static function migrate_to_single_level_orders() {
+        global $wpdb;
+
+        // 1. Table: wp_thaaniyamhub_vendor_ledger
+        $ledger_table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$ledger_table}'" ) === $ledger_table ) {
+            $cols = $wpdb->get_col( "DESCRIBE `{$ledger_table}`" );
+            if ( in_array( 'sub_order_id', $cols, true ) ) {
+                if ( ! in_array( 'order_id', $cols, true ) ) {
+                    $wpdb->query( "ALTER TABLE `{$ledger_table}` CHANGE `sub_order_id` `order_id` BIGINT(20) NOT NULL" );
+                } else {
+                    $wpdb->query( "ALTER TABLE `{$ledger_table}` DROP COLUMN `sub_order_id`" );
+                }
+            }
+            if ( in_array( 'parent_order_id', $cols, true ) ) {
+                $indices = $wpdb->get_results( "SHOW INDEX FROM `{$ledger_table}` WHERE Key_name = 'parent_order_id'" );
+                if ( ! empty( $indices ) ) {
+                    $wpdb->query( "ALTER TABLE `{$ledger_table}` DROP INDEX `parent_order_id`" );
+                }
+                $wpdb->query( "ALTER TABLE `{$ledger_table}` DROP COLUMN `parent_order_id`" );
+            }
+            $sub_vendor_idx = $wpdb->get_results( "SHOW INDEX FROM `{$ledger_table}` WHERE Key_name = 'sub_order_vendor'" );
+            if ( ! empty( $sub_vendor_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$ledger_table}` DROP INDEX `sub_order_vendor`" );
+            }
+            $order_vendor_idx = $wpdb->get_results( "SHOW INDEX FROM `{$ledger_table}` WHERE Key_name = 'order_vendor'" );
+            if ( empty( $order_vendor_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$ledger_table}` ADD UNIQUE KEY `order_vendor` (`order_id`, `vendor_id`)" );
+            }
+            $order_id_idx = $wpdb->get_results( "SHOW INDEX FROM `{$ledger_table}` WHERE Key_name = 'order_id'" );
+            if ( empty( $order_id_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$ledger_table}` ADD KEY `order_id` (`order_id`)" );
+            }
+        }
+
+        // 2. Table: wp_thaaniyamhub_order_history
+        $history_table = $wpdb->prefix . 'thaaniyamhub_order_history';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$history_table}'" ) === $history_table ) {
+            $cols = $wpdb->get_col( "DESCRIBE `{$history_table}`" );
+            if ( in_array( 'sub_order_id', $cols, true ) ) {
+                $sub_idx = $wpdb->get_results( "SHOW INDEX FROM `{$history_table}` WHERE Key_name = 'sub_order_id'" );
+                if ( ! empty( $sub_idx ) ) {
+                    $wpdb->query( "ALTER TABLE `{$history_table}` DROP INDEX `sub_order_id`" );
+                }
+                $wpdb->query( "ALTER TABLE `{$history_table}` DROP COLUMN `sub_order_id`" );
+            }
+        }
+
+        // 3. Table: wp_thaaniyamhub_shiprocket_fulfillment
+        $fulfillment_table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$fulfillment_table}'" ) === $fulfillment_table ) {
+            $cols = $wpdb->get_col( "DESCRIBE `{$fulfillment_table}`" );
+            if ( in_array( 'sub_order_id', $cols, true ) ) {
+                if ( ! in_array( 'order_id', $cols, true ) ) {
+                    $wpdb->query( "ALTER TABLE `{$fulfillment_table}` CHANGE `sub_order_id` `order_id` BIGINT(20) NOT NULL" );
+                } else {
+                    $wpdb->query( "ALTER TABLE `{$fulfillment_table}` DROP COLUMN `sub_order_id`" );
+                }
+            }
+            $sub_idx = $wpdb->get_results( "SHOW INDEX FROM `{$fulfillment_table}` WHERE Key_name = 'sub_order_id'" );
+            if ( ! empty( $sub_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$fulfillment_table}` DROP INDEX `sub_order_id`" );
+            }
+            $ord_idx = $wpdb->get_results( "SHOW INDEX FROM `{$fulfillment_table}` WHERE Key_name = 'order_id'" );
+            if ( empty( $ord_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$fulfillment_table}` ADD UNIQUE KEY `order_id` (`order_id`)" );
+            }
+        }
+
+        // 4. Table: wp_thaaniyamhub_shiprocket_api_logs
+        $api_logs_table = $wpdb->prefix . 'thaaniyamhub_shiprocket_api_logs';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$api_logs_table}'" ) === $api_logs_table ) {
+            $cols = $wpdb->get_col( "DESCRIBE `{$api_logs_table}`" );
+            if ( in_array( 'sub_order_id', $cols, true ) ) {
+                if ( ! in_array( 'order_id', $cols, true ) ) {
+                    $wpdb->query( "ALTER TABLE `{$api_logs_table}` CHANGE `sub_order_id` `order_id` BIGINT(20) DEFAULT NULL" );
+                } else {
+                    $wpdb->query( "ALTER TABLE `{$api_logs_table}` DROP COLUMN `sub_order_id`" );
+                }
+            }
+            $sub_idx = $wpdb->get_results( "SHOW INDEX FROM `{$api_logs_table}` WHERE Key_name = 'sub_order_id'" );
+            if ( ! empty( $sub_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$api_logs_table}` DROP INDEX `sub_order_id`" );
+            }
+            $ord_idx = $wpdb->get_results( "SHOW INDEX FROM `{$api_logs_table}` WHERE Key_name = 'order_id'" );
+            if ( empty( $ord_idx ) ) {
+                $wpdb->query( "ALTER TABLE `{$api_logs_table}` ADD KEY `order_id` (`order_id`)" );
+            }
+        }
+
+        thaaniyamhub_log( 'ThaaniyamHub_DB_Install: Migrated tables to single-level order_id schema' );
+    }
+
     // -------------------------------------------------------------------------
     // Private: DDL
     // -------------------------------------------------------------------------
@@ -216,8 +315,7 @@ class ThaaniyamHub_DB_Install {
         // -----------------------------------------------------------------
         $sql_ledger = "CREATE TABLE {$wpdb->prefix}thaaniyamhub_vendor_ledger (
             id BIGINT(20) NOT NULL AUTO_INCREMENT,
-            parent_order_id BIGINT(20) NOT NULL,
-            sub_order_id BIGINT(20) NOT NULL,
+            order_id BIGINT(20) NOT NULL,
             vendor_id BIGINT(20) NOT NULL,
             item_subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             discount_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -248,9 +346,9 @@ class ThaaniyamHub_DB_Install {
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
-            UNIQUE KEY sub_order_vendor (sub_order_id, vendor_id),
+            UNIQUE KEY order_vendor (order_id, vendor_id),
             KEY vendor_id (vendor_id),
-            KEY parent_order_id (parent_order_id),
+            KEY order_id (order_id),
             KEY payout_status (payout_status),
             KEY order_status (order_status),
             KEY created_at (created_at)
@@ -264,7 +362,6 @@ class ThaaniyamHub_DB_Install {
         $sql_history = "CREATE TABLE {$wpdb->prefix}thaaniyamhub_order_history (
             id BIGINT(20) NOT NULL AUTO_INCREMENT,
             order_id BIGINT(20) NOT NULL,
-            sub_order_id BIGINT(20) NOT NULL DEFAULT 0,
             customer_id BIGINT(20) NOT NULL,
             vendor_id BIGINT(20) NOT NULL,
             product_id BIGINT(20) NOT NULL,
@@ -290,7 +387,6 @@ class ThaaniyamHub_DB_Install {
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY order_id (order_id),
-            KEY sub_order_id (sub_order_id),
             KEY vendor_id (vendor_id),
             KEY product_id (product_id)
         ) $charset;";
@@ -302,7 +398,7 @@ class ThaaniyamHub_DB_Install {
         // -----------------------------------------------------------------
         $sql_fulfillment = "CREATE TABLE {$wpdb->prefix}thaaniyamhub_shiprocket_fulfillment (
             id BIGINT(20) NOT NULL AUTO_INCREMENT,
-            sub_order_id BIGINT(20) NOT NULL,
+            order_id BIGINT(20) NOT NULL,
             vendor_id BIGINT(20) NOT NULL,
             shiprocket_order_id VARCHAR(100) NOT NULL DEFAULT '',
             shiprocket_shipment_id VARCHAR(100) NOT NULL DEFAULT '',
@@ -317,7 +413,7 @@ class ThaaniyamHub_DB_Install {
             fulfillment_status VARCHAR(100) NOT NULL DEFAULT 'dispatched',
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
-            UNIQUE KEY sub_order_id (sub_order_id),
+            UNIQUE KEY order_id (order_id),
             KEY vendor_id (vendor_id),
             KEY shiprocket_order_id (shiprocket_order_id)
         ) $charset;";
@@ -329,14 +425,14 @@ class ThaaniyamHub_DB_Install {
         // -----------------------------------------------------------------
         $sql_api_logs = "CREATE TABLE {$wpdb->prefix}thaaniyamhub_shiprocket_api_logs (
             id BIGINT(20) NOT NULL AUTO_INCREMENT,
-            sub_order_id BIGINT(20) DEFAULT NULL,
+            order_id BIGINT(20) DEFAULT NULL,
             endpoint_requested VARCHAR(255) NOT NULL DEFAULT '',
             payload_sent LONGTEXT NOT NULL,
             payload_received LONGTEXT NOT NULL,
             http_status_code INT(5) NOT NULL DEFAULT 0,
             executed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
-            KEY sub_order_id (sub_order_id),
+            KEY order_id (order_id),
             KEY http_status_code (http_status_code)
         ) $charset;";
 

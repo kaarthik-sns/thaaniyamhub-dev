@@ -2,6 +2,7 @@
 defined('ABSPATH') || exit;
 
 if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfree_Payments_Wrapper')) {
+    #[\AllowDynamicProperties]
     class ThaaniyamHub_WC_Cashfree_Payments_Wrapper extends WC_Payment_Gateway
     {
         /**
@@ -53,7 +54,12 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
             if ($this->inner_gateway && isset($this->inner_gateway->$name)) {
                 return $this->inner_gateway->$name;
             }
-            return isset($this->$name) ? $this->$name : null;
+            // Use property_exists() instead of isset($this->$name) to avoid triggering
+            // __isset() which would call isset($this->$name) again — infinite recursion.
+            if (property_exists($this, $name)) {
+                return $this->$name;
+            }
+            return null;
         }
 
         /**
@@ -72,7 +78,7 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
          */
         public function __isset($name)
         {
-            return ($this->inner_gateway && isset($this->inner_gateway->$name)) || isset($this->$name);
+            return ($this->inner_gateway && isset($this->inner_gateway->$name)) || (property_exists($this, $name) && $this->$name !== null);
         }
 
         /**
@@ -284,14 +290,14 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
             }
 
             // 2. Resolve Primary Cashfree Transaction Order ID:
-            // For split secondary orders, the Cashfree charge lives under the primary order ID.
+            // For multi-vendor split orders, the Cashfree transaction lives under the primary order ID.
             $primary_order_id = (int) $order->get_meta('_thaaniyamhub_primary_order_id');
-            $is_sub_order     = ($primary_order_id > 0 && $primary_order_id !== (int) $order_id);
-            if (!$is_sub_order) {
+            $is_split_order   = ($primary_order_id > 0 && $primary_order_id !== (int) $order_id);
+            if (!$is_split_order) {
                 $primary_order_id = (int) $order_id;
             }
 
-            $primary_order = $is_sub_order ? wc_get_order($primary_order_id) : $order;
+            $primary_order = $is_split_order ? wc_get_order($primary_order_id) : $order;
             $cf_order_id   = $primary_order ? ($primary_order->get_meta('_cf_order_id') ?: $primary_order->get_meta('_cashfree_order_id')) : '';
 
             $settings       = is_array($this->settings) ? $this->settings : get_option('woocommerce_cashfree_settings', []);
@@ -309,7 +315,7 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
             }
 
             // Generate a unique, isolated refund ID per attempt
-            $prefix_tag = $is_sub_order ? 'sub_' : 'pri_';
+            $prefix_tag = $is_split_order ? 'split_' : 'ord_';
             $refund_id  = $prefix_tag . $order_id . '-' . time() . '-' . wp_rand(100, 999);
 
             $refund_processed = false;

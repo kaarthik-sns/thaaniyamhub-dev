@@ -302,7 +302,7 @@ class ThaaniyamHub_Ledger
 
         // Check local fulfillment table
         $fulfillment = $wpdb->get_row( $wpdb->prepare(
-            "SELECT awb_code, courier_name, shiprocket_order_id, fulfillment_status FROM {$wpdb->prefix}thaaniyamhub_shiprocket_fulfillment WHERE sub_order_id = %d LIMIT 1",
+            "SELECT awb_code, courier_name, shiprocket_order_id, fulfillment_status FROM {$wpdb->prefix}thaaniyamhub_shiprocket_fulfillment WHERE order_id = %d LIMIT 1",
             $order_id
         ) );
         if ( $fulfillment ) {
@@ -396,7 +396,7 @@ class ThaaniyamHub_Ledger
 
         // Check existing payout status
         $existing_payout_status = $wpdb->get_var( $wpdb->prepare(
-            "SELECT payout_status FROM {$wpdb->prefix}thaaniyamhub_vendor_ledger WHERE sub_order_id = %d AND vendor_id = %d LIMIT 1",
+            "SELECT payout_status FROM {$wpdb->prefix}thaaniyamhub_vendor_ledger WHERE order_id = %d AND vendor_id = %d LIMIT 1",
             $order_id,
             $vendor_id
         ) );
@@ -413,8 +413,7 @@ class ThaaniyamHub_Ledger
         // ---------------------------------------------------------------------
         $table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
         $data = [
-            'parent_order_id'          => $order_id,
-            'sub_order_id'             => $order_id,
+            'order_id'                 => $order_id,
             'vendor_id'                => $vendor_id,
             'item_subtotal'            => $item_subtotal,
             'discount_total'           => $discount_total,
@@ -500,8 +499,7 @@ class ThaaniyamHub_Ledger
         $table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
 
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$table} WHERE sub_order_id = %d OR parent_order_id = %d",
-            $order_id,
+            "SELECT * FROM {$table} WHERE order_id = %d",
             $order_id
         ) );
 
@@ -576,17 +574,15 @@ class ThaaniyamHub_Ledger
 
         if ( in_array( $new_status, [ 'trash', 'wc-trash' ], true ) ) {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$table} SET order_status = 'trash' WHERE sub_order_id = %d OR parent_order_id = %d",
-                $order_id,
+                "UPDATE {$table} SET order_status = 'trash' WHERE order_id = %d",
                 $order_id
             ) );
         } elseif ( 'refunded' === $new_status || 'wc-refunded' === $new_status ) {
             self::recalculate_order_ledger( (int) $order_id );
         } else {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$table} SET order_status = %s WHERE sub_order_id = %d OR parent_order_id = %d",
+                "UPDATE {$table} SET order_status = %s WHERE order_id = %d",
                 $new_status,
-                $order_id,
                 $order_id
             ) );
         }
@@ -659,11 +655,17 @@ class ThaaniyamHub_Ledger
      */
     public static function on_order_trashed( $order_id )
     {
+        static $processed = [];
+        $key = 'trashed_' . (int) $order_id;
+        if ( isset( $processed[ $key ] ) ) {
+            return;
+        }
+        $processed[ $key ] = true;
+
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
         $wpdb->query( $wpdb->prepare(
-            "UPDATE {$table} SET order_status = 'trash' WHERE sub_order_id = %d OR parent_order_id = %d",
-            (int) $order_id,
+            "UPDATE {$table} SET order_status = 'trash' WHERE order_id = %d",
             (int) $order_id
         ) );
     }
@@ -673,15 +675,21 @@ class ThaaniyamHub_Ledger
      */
     public static function on_order_untrashed( $order_id )
     {
+        static $processed = [];
+        $key = 'untrashed_' . (int) $order_id;
+        if ( isset( $processed[ $key ] ) ) {
+            return;
+        }
+        $processed[ $key ] = true;
+
         $order = wc_get_order( (int) $order_id );
         if ( $order ) {
             $status = $order->get_status();
             global $wpdb;
             $table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$table} SET order_status = %s WHERE sub_order_id = %d OR parent_order_id = %d",
+                "UPDATE {$table} SET order_status = %s WHERE order_id = %d",
                 $status,
-                (int) $order_id,
                 (int) $order_id
             ) );
         }
@@ -692,11 +700,17 @@ class ThaaniyamHub_Ledger
      */
     public static function on_order_deleted( $order_id )
     {
+        static $processed = [];
+        $key = 'deleted_' . (int) $order_id;
+        if ( isset( $processed[ $key ] ) ) {
+            return;
+        }
+        $processed[ $key ] = true;
+
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
         $wpdb->query( $wpdb->prepare(
-            "DELETE FROM {$table} WHERE sub_order_id = %d OR parent_order_id = %d",
-            (int) $order_id,
+            "DELETE FROM {$table} WHERE order_id = %d",
             (int) $order_id
         ) );
     }
@@ -704,16 +718,16 @@ class ThaaniyamHub_Ledger
     /**
      * Mark a ledger row as disbursed (called from payout flow).
      *
-     * @param int $sub_order_id
+     * @param int $order_id
      * @return bool
      */
-    public static function mark_disbursed( int $sub_order_id ): bool
+    public static function mark_disbursed( int $order_id ): bool
     {
         global $wpdb;
         $rows = $wpdb->update(
             $wpdb->prefix . 'thaaniyamhub_vendor_ledger',
             [ 'payout_status' => 'disbursed' ],
-            [ 'sub_order_id' => $sub_order_id ],
+            [ 'order_id' => $order_id ],
             [ '%s' ],
             [ '%d' ]
         );
@@ -743,7 +757,7 @@ class ThaaniyamHub_Ledger
             'order_status'  => '',
             'payout_status' => '',
             'profitability' => 'all',
-            'orderby'       => 'sub_order_id',
+            'orderby'       => 'order_id',
             'order'         => 'DESC',
             'limit'         => 50,
             'paged'         => 1,
@@ -757,12 +771,12 @@ class ThaaniyamHub_Ledger
             $where_clauses[] = $wpdb->prepare( 'vendor_id = %d', (int) $params['vendor_id'] );
         }
 
-        // 2. Search Term (Order ID, Sub-order ID, Customer, Coupon, AWB)
+        // 2. Search Term (Order ID, Customer, Coupon, AWB)
         if ( ! empty( $params['search'] ) ) {
             $s = '%' . $wpdb->esc_like( trim( $params['search'] ) ) . '%';
             $where_clauses[] = $wpdb->prepare(
-                '(parent_order_id LIKE %s OR sub_order_id LIKE %s OR customer_name LIKE %s OR customer_city LIKE %s OR coupon_codes LIKE %s OR shiprocket_awb LIKE %s OR shiprocket_courier_name LIKE %s)',
-                $s, $s, $s, $s, $s, $s, $s
+                '(order_id LIKE %s OR customer_name LIKE %s OR customer_city LIKE %s OR coupon_codes LIKE %s OR shiprocket_awb LIKE %s OR shiprocket_courier_name LIKE %s)',
+                $s, $s, $s, $s, $s, $s
             );
         }
 
@@ -804,9 +818,7 @@ class ThaaniyamHub_Ledger
             'created_at',
             'date',
             'order_date',
-            'parent_order_id',
             'order_id',
-            'sub_order_id',
             'item_subtotal',
             'discount_total',
             'gross_sales',
@@ -818,18 +830,18 @@ class ThaaniyamHub_Ledger
             'net_profit',
             'profit_margin',
         ];
-        $raw_orderby = $params['orderby'] ?? 'sub_order_id';
-        $orderby     = in_array( $raw_orderby, $allowed_order_by, true ) ? $raw_orderby : 'sub_order_id';
+        $raw_orderby = $params['orderby'] ?? 'order_id';
+        $orderby     = in_array( $raw_orderby, $allowed_order_by, true ) ? $raw_orderby : 'order_id';
         $order       = ( 'ASC' === strtoupper( (string) ( $params['order'] ?? 'DESC' ) ) ) ? 'ASC' : 'DESC';
 
-        if ( in_array( $orderby, [ 'sub_order_id', 'order_id', 'parent_order_id' ], true ) ) {
-            $order_sql = "sub_order_id {$order}, parent_order_id {$order}, id {$order}";
+        if ( 'order_id' === $orderby ) {
+            $order_sql = "order_id {$order}, id {$order}";
         } elseif ( in_array( $orderby, [ 'created_at', 'date', 'order_date' ], true ) ) {
-            $order_sql = "created_at {$order}, sub_order_id {$order}, parent_order_id {$order}, id {$order}";
+            $order_sql = "created_at {$order}, order_id {$order}, id {$order}";
         } elseif ( 'id' === $orderby ) {
-            $order_sql = "sub_order_id {$order}, id {$order}";
+            $order_sql = "order_id {$order}, id {$order}";
         } else {
-            $order_sql = "{$orderby} {$order}, sub_order_id DESC, id DESC";
+            $order_sql = "{$orderby} {$order}, order_id DESC, id DESC";
         }
 
         $limit  = max( 1, (int) $params['limit'] );
@@ -883,8 +895,8 @@ class ThaaniyamHub_Ledger
         if ( ! empty( $params['search'] ) ) {
             $s = '%' . $wpdb->esc_like( trim( $params['search'] ) ) . '%';
             $where_clauses[] = $wpdb->prepare(
-                '(parent_order_id LIKE %s OR sub_order_id LIKE %s OR customer_name LIKE %s OR customer_city LIKE %s OR coupon_codes LIKE %s OR shiprocket_awb LIKE %s OR shiprocket_courier_name LIKE %s)',
-                $s, $s, $s, $s, $s, $s, $s
+                '(order_id LIKE %s OR customer_name LIKE %s OR customer_city LIKE %s OR coupon_codes LIKE %s OR shiprocket_awb LIKE %s OR shiprocket_courier_name LIKE %s)',
+                $s, $s, $s, $s, $s, $s
             );
         }
         if ( ! empty( $params['from'] ) ) {
@@ -1182,7 +1194,7 @@ class ThaaniyamHub_Ledger
             'order_status'  => sanitize_text_field( $_GET['thaaniyamhub_order_status'] ?? '' ),
             'payout_status' => sanitize_text_field( $_GET['thaaniyamhub_payout_status'] ?? '' ),
             'profitability' => sanitize_text_field( $_GET['thaaniyamhub_profitability'] ?? 'all' ),
-            'orderby'       => sanitize_text_field( $_GET['thaaniyamhub_orderby'] ?? $_GET['orderby'] ?? 'sub_order_id' ),
+            'orderby'       => sanitize_text_field( $_GET['thaaniyamhub_orderby'] ?? $_GET['orderby'] ?? 'order_id' ),
             'order'         => sanitize_text_field( $_GET['thaaniyamhub_order'] ?? $_GET['order'] ?? 'DESC' ),
             'limit'         => 10000, // Export all matching
             'paged'         => 1,
@@ -1206,8 +1218,7 @@ class ThaaniyamHub_Ledger
         fputcsv( $output, [
             'Ledger ID',
             'Order Date',
-            'Parent Order #',
-            'Sub Order #',
+            'Order #',
             'Vendor ID',
             'Vendor Name',
             'Customer Name',
@@ -1255,8 +1266,7 @@ class ThaaniyamHub_Ledger
             fputcsv( $output, [
                 $r->id,
                 date( 'Y-m-d H:i:s', strtotime( $r->created_at ) ),
-                $r->parent_order_id,
-                $r->sub_order_id,
+                $r->order_id,
                 $r->vendor_id,
                 $vendor_name,
                 $r->customer_name,

@@ -307,10 +307,10 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
                  SET payout_status = %s 
-                 WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
+                 WHERE vendor_id = %d AND order_id IN ($order_placeholders)",
                 $payout_status,
                 $vendor_id,
-                ...array_merge( $order_ids, $order_ids )
+                ...$order_ids
             ) );
         }
     }

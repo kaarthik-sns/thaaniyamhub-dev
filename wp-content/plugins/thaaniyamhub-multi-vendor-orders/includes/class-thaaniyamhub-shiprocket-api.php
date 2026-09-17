@@ -115,11 +115,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/orders/create/adhoc
      *
      * @param array $payload Order details payload.
-     * @param int   $sub_order_id Local sub-order ID for logger correlation.
+     * @param int   $order_id Local order ID for logger correlation.
      * @return array|WP_Error Response data or WP_Error.
      */
-    public function create_order( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'orders/create/adhoc', $payload, $sub_order_id );
+    public function create_order( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'orders/create/adhoc', $payload, $order_id );
     }
 
     /**
@@ -127,11 +127,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/orders/create/return
      *
      * @param array $payload Return order details.
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function create_return_order( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'orders/create/return', $payload, $sub_order_id );
+    public function create_return_order( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'orders/create/return', $payload, $order_id );
     }
 
     /**
@@ -139,12 +139,12 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/orders/cancel
      *
      * @param array $ids List of Shiprocket order IDs to cancel.
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function cancel_order( array $ids, int $sub_order_id ) {
+    public function cancel_order( array $ids, int $order_id ) {
         $payload = [ 'ids' => $ids ];
-        return $this->request( 'POST', 'orders/cancel', $payload, $sub_order_id );
+        return $this->request( 'POST', 'orders/cancel', $payload, $order_id );
     }
 
     /**
@@ -164,10 +164,10 @@ class ThaaniyamHub_Shiprocket_API {
      *
      * @param array  $order_ids List of Shiprocket order IDs.
      * @param string $pickup_nickname Nickname matching registered pickup location.
-     * @param int    $sub_order_id Local sub-order ID.
+     * @param int    $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function update_order_pickup_location( array $order_ids, string $pickup_nickname, int $sub_order_id ) {
+    public function update_order_pickup_location( array $order_ids, string $pickup_nickname, int $order_id ) {
         $payload = [
             'order_id'        => $order_ids,
             'pickup_location' => $pickup_nickname,
@@ -175,7 +175,7 @@ class ThaaniyamHub_Shiprocket_API {
         
         $retries = 3;
         for ($i = 0; $i < $retries; $i++) {
-            $res = $this->request( 'PATCH', 'orders/address/pickup', $payload, $sub_order_id );
+            $res = $this->request( 'PATCH', 'orders/address/pickup', $payload, $order_id );
             if (!is_wp_error($res)) {
                 return $res;
             }
@@ -219,11 +219,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: GET external/courier/track/awb/{awb_code}
      *
      * @param string $awb AWB number.
-     * @param int    $sub_order_id Local sub-order ID.
+     * @param int    $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function track_awb( string $awb, int $sub_order_id ) {
-        return $this->request( 'GET', 'courier/track/awb/' . rawurlencode( $awb ), [], $sub_order_id );
+    public function track_awb( string $awb, int $order_id ) {
+        return $this->request( 'GET', 'courier/track/awb/' . rawurlencode( $awb ), [], $order_id );
     }
 
     /**
@@ -231,11 +231,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/courier/assign/awb
      *
      * @param array $payload AWB request parameters.
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function assign_awb( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'courier/assign/awb', $payload, $sub_order_id );
+    public function assign_awb( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'courier/assign/awb', $payload, $order_id );
     }
 
     /**
@@ -243,11 +243,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/courier/generate/pickup
      *
      * @param array $payload Pickup details.
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function request_pickup( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'courier/generate/pickup', $payload, $sub_order_id );
+    public function request_pickup( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'courier/generate/pickup', $payload, $order_id );
     }
 
     /**
@@ -255,11 +255,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/courier/generate/label
      *
      * @param array $payload Label details.
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function generate_label( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'courier/generate/label', $payload, $sub_order_id );
+    public function generate_label( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'courier/generate/label', $payload, $order_id );
     }
 
     /**
@@ -267,11 +267,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/courier/generate/invoice
      *
      * @param array $payload Invoice details.
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function generate_invoice( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'orders/print/invoice', $payload, $sub_order_id );
+    public function generate_invoice( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'orders/print/invoice', $payload, $order_id );
     }
 
     /**
@@ -279,11 +279,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/manifests/generate
      *
      * @param array $payload Manifest details (e.g. ['shipment_id' => [12345]]).
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function generate_manifest( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'manifests/generate', $payload, $sub_order_id );
+    public function generate_manifest( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'manifests/generate', $payload, $order_id );
     }
 
     /**
@@ -291,11 +291,11 @@ class ThaaniyamHub_Shiprocket_API {
      * Endpoint: POST external/manifests/print
      *
      * @param array $payload Print details (e.g. ['order_ids' => [12345]]).
-     * @param int   $sub_order_id Local sub-order ID.
+     * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
-    public function print_manifest( array $payload, int $sub_order_id ) {
-        return $this->request( 'POST', 'manifests/print', $payload, $sub_order_id );
+    public function print_manifest( array $payload, int $order_id ) {
+        return $this->request( 'POST', 'manifests/print', $payload, $order_id );
     }
 
     // =========================================================================
@@ -308,11 +308,11 @@ class ThaaniyamHub_Shiprocket_API {
      * @param string $method HTTP method (GET, POST, PATCH, etc.)
      * @param string $endpoint Sub-resource path relative to API base.
      * @param array  $payload Payload array (sent as JSON body for write, query string for GET).
-     * @param int|null $sub_order_id Correlation suborder ID.
+     * @param int|null $order_id Correlation order ID.
      * @return array|WP_Error Response or WP_Error.
      */
-    private function request( string $method, string $endpoint, array $payload = [], ?int $sub_order_id = null ) {
-        thaaniyamhub_log("Shiprocket API: Requesting {$method} on '{$endpoint}'" . ($sub_order_id ? " (Sub-order #{$sub_order_id})" : "") . ". Payload: " . wp_json_encode($payload));
+    private function request( string $method, string $endpoint, array $payload = [], ?int $order_id = null ) {
+        thaaniyamhub_log("Shiprocket API: Requesting {$method} on '{$endpoint}'" . ($order_id ? " (Order #{$order_id})" : "") . ". Payload: " . wp_json_encode($payload));
         $token = $this->get_token();
         if ( is_wp_error( $token ) ) {
             thaaniyamhub_log("Shiprocket API Token retrieval failed: " . $token->get_error_message(), 'error');
@@ -340,7 +340,7 @@ class ThaaniyamHub_Shiprocket_API {
         $response = wp_remote_request( $url, $args );
 
         // Failsafe log in custom database table
-        self::log_api_call( $sub_order_id, $endpoint, $payload, $response );
+        self::log_api_call( $order_id, $endpoint, $payload, $response );
 
         if ( is_wp_error( $response ) ) {
             thaaniyamhub_log("Shiprocket API HTTP request failed: " . $response->get_error_message(), 'error');
@@ -368,23 +368,23 @@ class ThaaniyamHub_Shiprocket_API {
     /**
      * Retrieve local shipment record.
      */
-    public static function get_fulfillment( int $sub_order_id ) {
+    public static function get_fulfillment( int $order_id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
-        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE sub_order_id = %d LIMIT 1", $sub_order_id ) );
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE order_id = %d LIMIT 1", $order_id ) );
     }
 
     /**
      * Save local shipment record.
      */
-    public static function save_fulfillment( int $sub_order_id, int $vendor_id, string $sr_order_id, string $sr_shipment_id, string $pickup_name ) {
+    public static function save_fulfillment( int $order_id, int $vendor_id, string $sr_order_id, string $sr_shipment_id, string $pickup_name ) {
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
 
         $wpdb->replace(
             $table,
             [
-                'sub_order_id'             => $sub_order_id,
+                'order_id'                 => $order_id,
                 'vendor_id'                => $vendor_id,
                 'shiprocket_order_id'      => $sr_order_id,
                 'shiprocket_shipment_id'   => $sr_shipment_id,
@@ -398,18 +398,18 @@ class ThaaniyamHub_Shiprocket_API {
     /**
      * Update local shipment status and metadata.
      */
-    public static function update_status( int $sub_order_id, string $status, array $extra_fields = [] ) {
+    public static function update_status( int $order_id, string $status, array $extra_fields = [] ) {
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
 
         $data = array_merge( [ 'fulfillment_status' => $status ], $extra_fields );
-        $wpdb->update( $table, $data, [ 'sub_order_id' => $sub_order_id ] );
+        $wpdb->update( $table, $data, [ 'order_id' => $order_id ] );
     }
 
     /**
      * Logs raw request/response details for failsafe debugging.
      */
-    private static function log_api_call( ?int $sub_order_id, string $endpoint, array $payload, $response ) {
+    private static function log_api_call( ?int $order_id, string $endpoint, array $payload, $response ) {
         if ( ! empty( $GLOBALS['thaaniyamhub_in_shipping_calculation'] ) ) {
             return;
         }
@@ -438,7 +438,7 @@ class ThaaniyamHub_Shiprocket_API {
         $wpdb->insert(
             $table,
             [
-                'sub_order_id'        => $sub_order_id,
+                'order_id'            => $order_id,
                 'endpoint_requested'  => sanitize_text_field( $endpoint ),
                 'payload_sent'        => $payload_str,
                 'payload_received'    => $body,

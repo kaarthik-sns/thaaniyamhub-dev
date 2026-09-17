@@ -127,37 +127,51 @@ class ThaaniyamHub_Payout_Scheduler {
      * @return int UTC timestamp
      */
     public static function calculate_next_run_timestamp( $schedule = 'weekly', $time_str = '02:00', $day_of_week = 'monday' ): int {
-        $now = current_time( 'timestamp' );
+        // Use the WordPress site timezone (wp_timezone() since WP 5.3) so that the
+        // scheduled time is always anchored to wall-clock local time, not UTC.
+        // The old current_time('timestamp') + manual gmt_offset arithmetic was
+        // unreliable near midnight because it could use the wrong calendar day.
+        $wp_tz  = wp_timezone();
+        $now_dt = new DateTime( 'now', $wp_tz );
+        $now_ts = (int) $now_dt->format( 'U' ); // true UTC Unix timestamp
+
         list( $hour, $minute ) = array_pad( explode( ':', $time_str ), 2, '00' );
         $hour   = (int) $hour;
         $minute = (int) $minute;
 
-        $today_run = mktime( $hour, $minute, 0, (int) date( 'n', $now ), (int) date( 'j', $now ), (int) date( 'Y', $now ) );
+        // Build "today's target time" in local timezone, then get its UTC equivalent.
+        $today_run_dt = clone $now_dt;
+        $today_run_dt->setTime( $hour, $minute, 0 );
+        $today_run_ts = (int) $today_run_dt->format( 'U' );
 
         if ( 'daily' === $schedule ) {
-            $target = ( $today_run > $now ) ? $today_run : ( $today_run + DAY_IN_SECONDS );
+            $target = ( $today_run_ts > $now_ts ) ? $today_run_ts : ( $today_run_ts + DAY_IN_SECONDS );
         } elseif ( 'monthly' === $schedule ) {
-            $month_run = mktime( $hour, $minute, 0, (int) date( 'n', $now ), 1, (int) date( 'Y', $now ) );
-            if ( $month_run > $now ) {
-                $target = $month_run;
+            $month_run_dt = clone $now_dt;
+            $month_run_dt->setDate( (int) $now_dt->format( 'Y' ), (int) $now_dt->format( 'n' ), 1 );
+            $month_run_dt->setTime( $hour, $minute, 0 );
+            $month_run_ts = (int) $month_run_dt->format( 'U' );
+            if ( $month_run_ts > $now_ts ) {
+                $target = $month_run_ts;
             } else {
-                $target = mktime( $hour, $minute, 0, (int) date( 'n', $now ) + 1, 1, (int) date( 'Y', $now ) );
+                $next_month_dt = clone $month_run_dt;
+                $next_month_dt->modify( '+1 month' );
+                $target = (int) $next_month_dt->format( 'U' );
             }
         } else {
             // Weekly (default)
             $target_day_num  = self::get_day_number( $day_of_week );
-            $current_day_num = (int) date( 'N', $now );
+            $current_day_num = (int) $now_dt->format( 'N' );
             $days_diff       = ( $target_day_num - $current_day_num + 7 ) % 7;
 
-            $target = $today_run + ( $days_diff * DAY_IN_SECONDS );
-            if ( 0 === $days_diff && $today_run <= $now ) {
+            $target = $today_run_ts + ( $days_diff * DAY_IN_SECONDS );
+            if ( 0 === $days_diff && $today_run_ts <= $now_ts ) {
                 $target += 7 * DAY_IN_SECONDS;
             }
         }
 
-        // Convert local time timestamp to UTC timestamp for wp_schedule_event
-        $time_diff = get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
-        return $target - $time_diff;
+        // $target is already a correct UTC Unix timestamp — no manual offset subtraction needed.
+        return $target;
     }
 
     /**
@@ -189,9 +203,14 @@ class ThaaniyamHub_Payout_Scheduler {
         if ( ! $timestamp ) {
             return __( 'Not scheduled (Feature disabled)', 'thaaniyamhub-multi-vendor-orders' );
         }
-        $time_diff = get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
-        $local_time = $timestamp + $time_diff;
-        return date_i18n( 'Y-m-d H:i:s (l)', $local_time );
+        // wp_next_scheduled returns a UTC Unix timestamp. Convert to local for display.
+        try {
+            $dt = new DateTime( '@' . $timestamp );
+            $dt->setTimezone( wp_timezone() );
+            return $dt->format( 'Y-m-d H:i:s (l)' );
+        } catch ( \Exception $e ) {
+            return date_i18n( 'Y-m-d H:i:s (l)', $timestamp + (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) );
+        }
     }
 
     /**
@@ -411,6 +430,20 @@ class ThaaniyamHub_Payout_Scheduler {
     private static function disburse_vendor_batch( int $vendor_id, float $amount, array $commission_ids, array $order_ids, array $payout_profile, string $source = 'cron' ): array {
         global $wpdb, $WCFMmp;
 
+        $order_ids          = array_values( array_filter( array_unique( array_map( 'intval', $order_ids ) ), function( $id ) { return $id > 0; } ) );
+        $commission_ids     = array_values( array_filter( array_unique( array_map( 'intval', $commission_ids ) ), function( $id ) { return $id > 0; } ) );
+
+        if ( empty( $commission_ids ) ) {
+            return [
+                'success'     => false,
+                'error'       => 'Empty commission IDs set',
+                'vendor_id'   => $vendor_id,
+                'transfer_id' => '',
+                'status'      => 'FAILED',
+                'utr'         => '',
+            ];
+        }
+
         $order_ids_str      = implode( ',', $order_ids );
         $commission_ids_str = implode( ',', $commission_ids );
         $comm_placeholders  = implode( ',', array_fill( 0, count( $commission_ids ), '%d' ) );
@@ -436,9 +469,9 @@ class ThaaniyamHub_Payout_Scheduler {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
                  SET payout_status = 'processing' 
-                 WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders)) AND payout_status = 'pending'",
+                 WHERE vendor_id = %d AND order_id IN ($order_placeholders) AND payout_status = 'pending'",
                 $vendor_id,
-                ...array_merge( $order_ids, $order_ids )
+                ...$order_ids
             ) );
         }
 
@@ -578,9 +611,9 @@ class ThaaniyamHub_Payout_Scheduler {
                     $wpdb->query( $wpdb->prepare(
                         "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
                          SET payout_status = 'failed' 
-                         WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
+                         WHERE vendor_id = %d AND order_id IN ($order_placeholders)",
                         $vendor_id,
-                        ...array_merge( $order_ids, $order_ids )
+                        ...$order_ids
                     ) );
                 }
 
@@ -610,7 +643,7 @@ class ThaaniyamHub_Payout_Scheduler {
             $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_reference_id', $reference_id );
             $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_utr', $utr );
             $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_status', $transfer_status );
-            $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_transfer_mode', $transfer_data['transferMode'] );
+            $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_transfer_mode', $transfer_data['transferMode'] ?? '' );
             $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'scheduled_payout', '1' );
         }
 
@@ -637,9 +670,9 @@ class ThaaniyamHub_Payout_Scheduler {
                 $wpdb->query( $wpdb->prepare(
                     "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
                      SET payout_status = 'disbursed' 
-                     WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
+                     WHERE vendor_id = %d AND order_id IN ($order_placeholders)",
                     $vendor_id,
-                    ...array_merge( $order_ids, $order_ids )
+                    ...$order_ids
                 ) );
             }
         } else {
@@ -676,9 +709,10 @@ class ThaaniyamHub_Payout_Scheduler {
     public static function get_all_eligible_commissions_grouped_by_vendor( int $delay_days = 4 ): array {
         global $wpdb;
 
-        $sql = "SELECT c.*, o.post_date, o.post_status 
+        // Query wcfm_marketplace_orders directly — fully compatible with HPOS
+        // (Order details, status, and dates are loaded via wc_get_order() below).
+        $sql = "SELECT c.* 
                 FROM {$wpdb->prefix}wcfm_marketplace_orders AS c
-                INNER JOIN {$wpdb->posts} AS o ON c.order_id = o.ID
                 WHERE c.withdraw_status = 'pending'
                   AND c.is_withdrawable = 1
                   AND c.is_refunded = 0
@@ -691,7 +725,7 @@ class ThaaniyamHub_Payout_Scheduler {
             return [];
         }
 
-        $now_ts    = current_time( 'timestamp' );
+        $now_ts    = time();
         $cutoff_ts = $now_ts - ( $delay_days * DAY_IN_SECONDS );
 
         $grouped = [];
@@ -705,27 +739,10 @@ class ThaaniyamHub_Payout_Scheduler {
                 continue;
             }
 
-            // Check order status: must be completed
+            // Check order status: must be completed (single-level independent order)
             $status = $order->get_status();
             if ( 'completed' !== $status ) {
-                // If this is a split parent order, verify if this specific vendor's sub-order is completed
-                $sub_orders = $order->get_meta( '_thaaniyamhub_suborders', true );
-                $sub_completed = false;
-                if ( is_array( $sub_orders ) && ! empty( $sub_orders ) ) {
-                    foreach ( $sub_orders as $sub_id ) {
-                        $sub = wc_get_order( $sub_id );
-                        if ( $sub && (int) $sub->get_meta( '_thaaniyamhub_vendor_id', true ) === $vendor_id ) {
-                            if ( 'completed' === $sub->get_status() ) {
-                                $sub_completed = true;
-                                $order = $sub; // Use sub-order for date_completed check
-                                break;
-                            }
-                        }
-                    }
-                }
-                if ( ! $sub_completed ) {
-                    continue;
-                }
+                continue;
             }
 
             // Check Maturity Delay: Order completion date must be <= $cutoff_ts
@@ -747,10 +764,9 @@ class ThaaniyamHub_Payout_Scheduler {
             // Verify against ThaaniyamHub vendor ledger status
             $ledger_status = $wpdb->get_var( $wpdb->prepare(
                 "SELECT payout_status FROM {$wpdb->prefix}thaaniyamhub_vendor_ledger 
-                 WHERE vendor_id = %d AND (sub_order_id = %d OR parent_order_id = %d) 
+                 WHERE vendor_id = %d AND order_id = %d 
                  ORDER BY id DESC LIMIT 1",
                 $vendor_id,
-                $order->get_id(),
                 $order_id
             ) );
 

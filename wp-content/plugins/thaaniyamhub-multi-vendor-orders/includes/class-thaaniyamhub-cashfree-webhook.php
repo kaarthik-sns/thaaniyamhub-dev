@@ -36,9 +36,10 @@ class ThaaniyamHub_Cashfree_Webhook {
     }
 
     /**
-     * Constructor.
+     * Constructor — private to enforce singleton via get_instance().
+     * Use ThaaniyamHub_Cashfree_Webhook::get_instance() to obtain the instance.
      */
-    public function __construct() {
+    private function __construct() {
         add_action( 'rest_api_init', [ $this, 'register_webhook_route' ] );
         add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
         add_action( 'thaaniyamhub_cashfree_payout_sync_pending', [ $this, 'sync_pending_transfers' ] );
@@ -251,9 +252,9 @@ class ThaaniyamHub_Cashfree_Webhook {
                         $wpdb->query( $wpdb->prepare(
                             "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
                              SET payout_status = 'disbursed' 
-                             WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
+                             WHERE vendor_id = %d AND order_id IN ($order_placeholders)",
                             $vendor_id,
-                            ...array_merge( $order_ids, $order_ids )
+                            ...$order_ids
                         ) );
                     }
                 }
@@ -325,9 +326,9 @@ class ThaaniyamHub_Cashfree_Webhook {
                         $wpdb->query( $wpdb->prepare(
                             "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
                              SET payout_status = 'pending' 
-                             WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
+                             WHERE vendor_id = %d AND order_id IN ($order_placeholders)",
                             $vendor_id,
-                            ...array_merge( $order_ids, $order_ids )
+                            ...$order_ids
                         ) );
                     }
                 }

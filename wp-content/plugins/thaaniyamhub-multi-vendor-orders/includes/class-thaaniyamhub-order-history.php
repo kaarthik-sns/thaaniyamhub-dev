@@ -89,7 +89,7 @@ class ThaaniyamHub_Order_History {
         $customer_id = $order->get_customer_id();
         $payment_method = $order->get_payment_method();
         $delivery_location = self::get_delivery_location_string( $order );
-        $courier_info = self::resolve_courier_details( $order, $order );
+        $courier_info = self::resolve_courier_details( $order );
         $order_total = (float) $order->get_total();
 
         $items = $order->get_items();
@@ -159,7 +159,6 @@ class ThaaniyamHub_Order_History {
                 $history_table,
                 [
                     'order_id'              => $order_id,
-                    'sub_order_id'          => $order_id,
                     'customer_id'           => $customer_id,
                     'vendor_id'             => $vendor_id,
                     'product_id'            => $product_id,
@@ -184,7 +183,7 @@ class ThaaniyamHub_Order_History {
                     'payment_method'        => $payment_method,
                 ],
                 [
-                    '%d', '%d', '%d', '%d', '%d',
+                    '%d', '%d', '%d', '%d',
                     '%f', '%f', '%f', '%f', '%f', '%f',
                     '%s', '%s', '%s', '%s',
                     '%f', '%f', '%f', '%f', '%f',
@@ -249,18 +248,10 @@ class ThaaniyamHub_Order_History {
     /**
      * Resolves the selected courier partner name and ID from order/shipping meta.
      */
-    public static function resolve_courier_details( WC_Order $order, WC_Order $parent_order ) {
-        // Try directly from the order/suborder meta
+    public static function resolve_courier_details( WC_Order $order ) {
+        // Try directly from the order meta
         $courier_id = $order->get_meta( '_shiprocket_selected_courier_id' );
         $courier_name = $order->get_meta( '_shiprocket_selected_courier_name' );
-
-        // If empty, try parent order meta
-        if ( ! $courier_id ) {
-            $courier_id = $parent_order->get_meta( '_shiprocket_selected_courier_id' );
-        }
-        if ( ! $courier_name ) {
-            $courier_name = $parent_order->get_meta( '_shiprocket_selected_courier_name' );
-        }
 
         // Try from shipping items metadata
         if ( ! $courier_id || ! $courier_name ) {

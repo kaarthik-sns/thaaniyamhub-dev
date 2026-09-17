@@ -130,7 +130,7 @@ class ThaaniyamHub_Tracker {
             if ( false !== ($pos = strpos($clean_order_id, '-R')) ) {
                 $clean_order_id = substr($clean_order_id, 0, $pos);
             }
-            $record = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE shiprocket_order_id = %s OR sub_order_id = %d", $order_id, (int)$clean_order_id ) );
+            $record = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE shiprocket_order_id = %s OR order_id = %d", $order_id, (int)$clean_order_id ) );
         }
 
         if ( ! $record ) {
@@ -138,14 +138,14 @@ class ThaaniyamHub_Tracker {
             return new WP_Error( 'record_not_found', "Fulfillment record not found for AWB: {$awb} / Shipment: {$shipment_id} / Order: {$order_id}" );
         }
 
-        $sub_order_id = (int) $record->sub_order_id;
-        thaaniyamhub_log( "Tracker Sync: Found local fulfillment record. Matched Sub-order ID: #{$sub_order_id}, Vendor: #{$record->vendor_id}, Old Status: '{$record->fulfillment_status}'." );
+        $order_id_found = (int) $record->order_id;
+        thaaniyamhub_log( "Tracker Sync: Found local fulfillment record. Matched Order ID: #{$order_id_found}, Vendor: #{$record->vendor_id}, Old Status: '{$record->fulfillment_status}'." );
 
-        $order        = wc_get_order( $sub_order_id );
+        $order          = wc_get_order( $order_id_found );
 
         if ( ! $order ) {
-            thaaniyamhub_log( "Tracker Sync: WooCommerce sub-order #{$sub_order_id} not found in database.", 'error' );
-            return new WP_Error( 'order_not_found', "WooCommerce sub-order #{$sub_order_id} not found." );
+            thaaniyamhub_log( "Tracker Sync: WooCommerce order #{$order_id_found} not found in database.", 'error' );
+            return new WP_Error( 'order_not_found', "WooCommerce order #{$order_id_found} not found." );
         }
 
         // Get status fields from payload.
@@ -245,7 +245,7 @@ class ThaaniyamHub_Tracker {
 
         // If nothing changed, skip adding duplicate order notes and saving the order
         if ( ! $status_changed && ! $fulfillment_changed && ! $wc_status_changed && ! $awb_changed && ! $courier_changed ) {
-            thaaniyamhub_log( "Tracker Sync: No status change detected for Sub-order #{$sub_order_id} (Status: '{$status_str}', Fulfillment: '{$fulfillment_status}'). Skipping duplicate note." );
+            thaaniyamhub_log( "Tracker Sync: No status change detected for Order #{$order_id_found} (Status: '{$status_str}', Fulfillment: '{$fulfillment_status}'). Skipping duplicate note." );
             return true;
         }
 
@@ -263,7 +263,7 @@ class ThaaniyamHub_Tracker {
         $wpdb->update(
             $table,
             $db_data,
-            [ 'sub_order_id' => $sub_order_id ],
+            [ 'order_id' => $order_id_found ],
             null,
             [ '%d' ]
         );
@@ -296,11 +296,11 @@ class ThaaniyamHub_Tracker {
         // 4. Update WooCommerce order status if transition is set.
         if ( ! empty( $wc_status_to ) && $order->get_status() !== $wc_status_to ) {
             $order->update_status( $wc_status_to, sprintf( __( 'Auto-status sync from Shiprocket tracking (AWB: %s).', 'thaaniyamhub-multi-vendor-orders' ), $awb ) );
-            thaaniyamhub_log( "Tracker Sync: WooCommerce order #{$sub_order_id} status updated to '{$wc_status_to}'" );
+            thaaniyamhub_log( "Tracker Sync: WooCommerce order #{$order_id_found} status updated to '{$wc_status_to}'" );
         }
 
         $order->save();
-        thaaniyamhub_log( "Tracker Sync: Sub-order #{$sub_order_id} successfully saved with updated status '{$status_str}' / '{$fulfillment_status}'." );
+        thaaniyamhub_log( "Tracker Sync: Order #{$order_id_found} successfully saved with updated status '{$status_str}' / '{$fulfillment_status}'." );
 
         return true;
     }
@@ -314,7 +314,7 @@ class ThaaniyamHub_Tracker {
         $table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
 
         $active_shipments = $wpdb->get_results(
-            "SELECT sub_order_id, awb_code, shiprocket_shipment_id, shiprocket_order_id
+            "SELECT order_id, awb_code, shiprocket_shipment_id, shiprocket_order_id
              FROM {$table}
              WHERE fulfillment_status NOT IN ('delivered', 'cancelled', 'rto', 'returned', 'return_cancelled')
                AND awb_code IS NOT NULL AND awb_code != ''
@@ -332,12 +332,12 @@ class ThaaniyamHub_Tracker {
         $api = new ThaaniyamHub_Shiprocket_API();
 
         foreach ( $active_shipments as $shipment ) {
-            $sub_order_id = (int) $shipment->sub_order_id;
+            $order_id_val = (int) $shipment->order_id;
             $awb          = $shipment->awb_code;
 
-            thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: Fetching tracking data for AWB: {$awb} (Sub-order #{$sub_order_id})" );
+            thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: Fetching tracking data for AWB: {$awb} (Order #{$order_id_val})" );
 
-            $response = $api->track_awb( $awb, $sub_order_id );
+            $response = $api->track_awb( $awb, $order_id_val );
 
             if ( is_wp_error( $response ) ) {
                 thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: API error for AWB {$awb} — " . $response->get_error_message() );

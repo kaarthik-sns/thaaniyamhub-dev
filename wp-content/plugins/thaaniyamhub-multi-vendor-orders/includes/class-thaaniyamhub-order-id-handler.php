@@ -15,7 +15,7 @@ class ThaaniyamHub_Order_ID_Handler
     public static function init()
     {
         // Allow re-sending new order emails for testing & manual admin resend actions
-        add_filter('woocommerce_new_order_email_allows_resend', '__return_false');
+        add_filter('woocommerce_new_order_email_allows_resend', '__return_true');
 
         // Append Vendor Name under Product Name in Order Item tables (emails and order details)
         add_filter('woocommerce_order_item_name', [__CLASS__, 'append_vendor_name_to_order_item_name'], 10, 3);
@@ -34,6 +34,12 @@ class ThaaniyamHub_Order_ID_Handler
      */
     public static function append_vendor_name_to_order_item_name($item_name, $item, $is_visible = true)
     {
+        // Do not inject HTML markup into non-HTML contexts such as REST API responses,
+        // Shiprocket API payloads, or CSV exports — they expect plain-text product names.
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return $item_name;
+        }
+
         if (!is_object($item) || !method_exists($item, 'get_product')) {
             return $item_name;
         }
@@ -88,12 +94,23 @@ class ThaaniyamHub_Order_ID_Handler
     {
         if (is_a($order, 'WC_Order')) {
             $real_order_number = $order->get_order_number();
-            $subject = preg_replace('/\(\d+\)/', '(' . $real_order_number . ')', $subject);
-        }
+            // Replace only the LAST occurrence of (\d+) so store names that happen to
+            // contain parenthesized numbers (e.g. "(2026 Edition)") are not corrupted.
+            $subject = preg_replace('/\(\d+\)(?!.*\(\d+\))/', '(' . $real_order_number . ')', $subject);
 
-        if (is_object($email_obj)) {
-            $email_obj->find    = [];
-            $email_obj->replace = [];
+            if (is_object($email_obj)) {
+                // Correctly update {order_number} token without wiping out other placeholders ({site_title}, {store_name}, etc.)
+                if (isset($email_obj->find, $email_obj->replace) && is_array($email_obj->find) && is_array($email_obj->replace)) {
+                    foreach ($email_obj->find as $idx => $token) {
+                        if ('{order_number}' === $token) {
+                            $email_obj->replace[$idx] = $real_order_number;
+                        }
+                    }
+                }
+                if (isset($email_obj->placeholders) && is_array($email_obj->placeholders)) {
+                    $email_obj->placeholders['{order_number}'] = $real_order_number;
+                }
+            }
         }
 
         return $subject;

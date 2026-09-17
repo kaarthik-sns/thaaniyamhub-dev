@@ -470,12 +470,12 @@ class ThaaniyamHub_Dashboard
             return $redirect_to;
         }
 
-        $sub_order_ids = array_filter($ids, function ($id) {
+        $order_ids_to_process = array_filter($ids, function ($id) {
             $order = wc_get_order($id);
             return $order && ThaaniyamHub_Dispatch::is_order_eligible_for_fulfillment($order) && self::current_user_can_manage_order((int) $id);
         });
 
-        if (empty($sub_order_ids)) {
+        if (empty($order_ids_to_process)) {
             return add_query_arg('thaaniyamhub_sf_err_no_suborders', 1, $redirect_to);
         }
 
@@ -484,10 +484,10 @@ class ThaaniyamHub_Dashboard
 
         switch ($action) {
             case 'thaaniyamhub_sf_bulk_push':
-                thaaniyamhub_log("Bulk Action: Push to Shiprocket initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
+                thaaniyamhub_log("Bulk Action: Push to Shiprocket initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
                 $success = 0;
                 $fail = 0;
-                foreach ($sub_order_ids as $id) {
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if (!$record || empty($record->shiprocket_order_id)) {
                         ThaaniyamHub_Dispatch::push_to_shiprocket($id);
@@ -503,14 +503,14 @@ class ThaaniyamHub_Dashboard
                 return add_query_arg(['thaaniyamhub_sf_bulk_pushed' => $success, 'thaaniyamhub_sf_bulk_push_failed' => $fail], $redirect_to);
 
             case 'thaaniyamhub_sf_bulk_awb':
-                thaaniyamhub_log("Bulk Action: Generate AWBs initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
+                thaaniyamhub_log("Bulk Action: Generate AWBs initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
                 $success = 0;
                 $fail = 0;
-                foreach ($sub_order_ids as $id) {
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if ($record && !empty($record->shiprocket_shipment_id) && empty($record->awb_code) && 'cancelled' !== $record->fulfillment_status) {
-                        $sub_order = wc_get_order($id);
-                        $courier_id = $sub_order ? (int) $sub_order->get_meta('_shiprocket_selected_courier_id') : 0;
+                        $order_obj = wc_get_order($id);
+                        $courier_id = $order_obj ? (int) $order_obj->get_meta('_shiprocket_selected_courier_id') : 0;
                         $result = $api->assign_awb([
                             'shipment_id' => [(int) $record->shiprocket_shipment_id],
                             'courier_id' => $courier_id ?: null,
@@ -597,9 +597,9 @@ class ThaaniyamHub_Dashboard
                 return add_query_arg(['thaaniyamhub_sf_bulk_awb_ok' => $success, 'thaaniyamhub_sf_bulk_awb_fail' => $fail], $redirect_to);
 
             case 'thaaniyamhub_sf_bulk_label':
-                thaaniyamhub_log("Bulk Action: Print Labels initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
+                thaaniyamhub_log("Bulk Action: Print Labels initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
                 $shipment_ids = [];
-                foreach ($sub_order_ids as $id) {
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if ($record && !empty($record->shiprocket_shipment_id) && !empty($record->awb_code)) {
                         $shipment_ids[] = (int) $record->shiprocket_shipment_id;
@@ -607,9 +607,9 @@ class ThaaniyamHub_Dashboard
                 }
                 if (!empty($shipment_ids)) {
                     thaaniyamhub_log("Bulk Action: Requesting label generation from Shiprocket for Shipment IDs: [" . implode(', ', $shipment_ids) . "]");
-                    $result = $api->generate_label(['shipment_id' => $shipment_ids], $sub_order_ids[0]);
+                    $result = $api->generate_label(['shipment_id' => $shipment_ids], $order_ids_to_process[0]);
                     if (!is_wp_error($result) && !empty($result['label_url'])) {
-                        foreach ($sub_order_ids as $id) {
+                        foreach ($order_ids_to_process as $id) {
                             ThaaniyamHub_Shiprocket_API::update_status($id, 'manifested', ['shipping_label_url' => $result['label_url']]);
                         }
                         thaaniyamhub_log("Bulk Action: Print Labels succeeded. Label URL: {$result['label_url']}");
@@ -624,19 +624,19 @@ class ThaaniyamHub_Dashboard
                 return add_query_arg('thaaniyamhub_sf_bulk_label_fail', 1, $redirect_to);
 
             case 'thaaniyamhub_sf_bulk_invoice':
-                thaaniyamhub_log("Bulk Action: Print Invoices initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
-                $order_ids = [];
-                foreach ($sub_order_ids as $id) {
+                thaaniyamhub_log("Bulk Action: Print Invoices initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
+                $sr_order_ids = [];
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if ($record && !empty($record->shiprocket_order_id)) {
-                        $order_ids[] = (int) $record->shiprocket_order_id;
+                        $sr_order_ids[] = (int) $record->shiprocket_order_id;
                     }
                 }
-                if (!empty($order_ids)) {
-                    thaaniyamhub_log("Bulk Action: Requesting invoice generation from Shiprocket for Shiprocket Order IDs: [" . implode(', ', $order_ids) . "]");
-                    $result = $api->generate_invoice(['ids' => $order_ids], $sub_order_ids[0]);
+                if (!empty($sr_order_ids)) {
+                    thaaniyamhub_log("Bulk Action: Requesting invoice generation from Shiprocket for Shiprocket Order IDs: [" . implode(', ', $sr_order_ids) . "]");
+                    $result = $api->generate_invoice(['ids' => $sr_order_ids], $order_ids_to_process[0]);
                     if (!is_wp_error($result) && !empty($result['invoice_url'])) {
-                        foreach ($sub_order_ids as $id) {
+                        foreach ($order_ids_to_process as $id) {
                             ThaaniyamHub_Shiprocket_API::update_status($id, 'manifested', ['commercial_invoice_url' => $result['invoice_url']]);
                         }
                         thaaniyamhub_log("Bulk Action: Print Invoices succeeded. Invoice URL: {$result['invoice_url']}");
@@ -651,32 +651,32 @@ class ThaaniyamHub_Dashboard
                 return add_query_arg('thaaniyamhub_sf_bulk_invoice_fail', 1, $redirect_to);
 
             case 'thaaniyamhub_sf_bulk_manifest':
-                thaaniyamhub_log("Bulk Action: Download Manifests initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
+                thaaniyamhub_log("Bulk Action: Download Manifests initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
                 $shipment_ids = [];
-                $order_ids = [];
-                foreach ($sub_order_ids as $id) {
+                $sr_order_ids = [];
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if ($record && !empty($record->shiprocket_shipment_id) && !empty($record->awb_code)) {
                         $shipment_ids[] = (int) $record->shiprocket_shipment_id;
                         if (!empty($record->shiprocket_order_id)) {
-                            $order_ids[] = (int) $record->shiprocket_order_id;
+                            $sr_order_ids[] = (int) $record->shiprocket_order_id;
                         }
                     }
                 }
                 if (!empty($shipment_ids)) {
                     thaaniyamhub_log("Bulk Action: Requesting manifest generation from Shiprocket for Shipment IDs: [" . implode(', ', $shipment_ids) . "]");
-                    $result = $api->generate_manifest(['shipment_id' => $shipment_ids], $sub_order_ids[0]);
+                    $result = $api->generate_manifest(['shipment_id' => $shipment_ids], $order_ids_to_process[0]);
                     $manifest_url = (!is_wp_error($result) && !empty($result['manifest_url'])) ? $result['manifest_url'] : '';
 
-                    if (!$manifest_url && !empty($order_ids)) {
-                        $print_result = $api->print_manifest(['order_ids' => $order_ids], $sub_order_ids[0]);
+                    if (!$manifest_url && !empty($sr_order_ids)) {
+                        $print_result = $api->print_manifest(['order_ids' => $sr_order_ids], $order_ids_to_process[0]);
                         if (!is_wp_error($print_result) && !empty($print_result['manifest_url'])) {
                             $manifest_url = $print_result['manifest_url'];
                         }
                     }
 
                     if ($manifest_url) {
-                        foreach ($sub_order_ids as $id) {
+                        foreach ($order_ids_to_process as $id) {
                             ThaaniyamHub_Shiprocket_API::update_status($id, 'manifested', ['manifest_url' => $manifest_url]);
                             $order = wc_get_order($id);
                             if ($order) {
@@ -697,10 +697,10 @@ class ThaaniyamHub_Dashboard
                 return add_query_arg('thaaniyamhub_sf_bulk_manifest_fail', 1, $redirect_to);
 
             case 'thaaniyamhub_sf_bulk_cancel':
-                thaaniyamhub_log("Bulk Action: Cancel Shipments initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
+                thaaniyamhub_log("Bulk Action: Cancel Shipments initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
                 $success = 0;
                 $fail = 0;
-                foreach ($sub_order_ids as $id) {
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if ($record && !empty($record->shiprocket_order_id) && 'cancelled' !== $record->fulfillment_status) {
                         $result = $api->cancel_order([$record->shiprocket_order_id], $id);
@@ -724,10 +724,10 @@ class ThaaniyamHub_Dashboard
                 return add_query_arg(['thaaniyamhub_sf_bulk_cancelled' => $success, 'thaaniyamhub_sf_bulk_cancel_failed' => $fail], $redirect_to);
 
             case 'thaaniyamhub_sf_bulk_schedule':
-                thaaniyamhub_log("Bulk Action: Schedule Pickups initiated for sub-orders: [" . implode(', ', $sub_order_ids) . "] by user #" . $current_user_id);
+                thaaniyamhub_log("Bulk Action: Schedule Pickups initiated for orders: [" . implode(', ', $order_ids_to_process) . "] by user #" . $current_user_id);
                 $success = 0;
                 $fail = 0;
-                foreach ($sub_order_ids as $id) {
+                foreach ($order_ids_to_process as $id) {
                     $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($id);
                     if ($record && !empty($record->shiprocket_shipment_id) && !empty($record->awb_code) && in_array($record->fulfillment_status, ['assigned', 'manifested'], true)) {
                         $result = $api->request_pickup(['shipment_id' => [(int) $record->shiprocket_shipment_id]], $id);
@@ -757,7 +757,7 @@ class ThaaniyamHub_Dashboard
     public static function display_bulk_notices()
     {
         if (isset($_GET['thaaniyamhub_sf_err_no_suborders'])) {
-            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Error: Shiprocket actions can only be executed on vendor sub-orders.', 'thaaniyamhub-multi-vendor-orders') . '</p></div>';
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Error: Shiprocket actions can only be executed on vendor orders.', 'thaaniyamhub-multi-vendor-orders') . '</p></div>';
         }
 
         if (isset($_GET['thaaniyamhub_sf_bulk_pushed'])) {
@@ -842,9 +842,9 @@ class ThaaniyamHub_Dashboard
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_vendor_ledger';
 
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE sub_order_id = %d OR parent_order_id = %d LIMIT 1", $order_id, $order_id));
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE order_id = %d LIMIT 1", $order_id));
         if ($row) {
-            self::render_single_vendor_order_commission_view($row);
+            self::render_order_commission_detail_view($row);
         } else {
             echo '<p>' . esc_html__('No commission details found in ledger for this order.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
         }
@@ -868,34 +868,20 @@ class ThaaniyamHub_Dashboard
         );
     }
 
-    private static function render_suborder_commission_view($row, $parent_id)
-    {
-        self::render_order_commission_detail_view($row, $parent_id);
-    }
-
-    private static function render_single_vendor_order_commission_view($row)
-    {
-        self::render_order_commission_detail_view($row, 0);
-    }
-
-    private static function render_order_commission_detail_view($row, $parent_id = 0)
+    private static function render_order_commission_detail_view($row)
     {
         $vendor_name = thaaniyamhub_get_vendor_name_by_vendor_id((int) $row->vendor_id);
-        $parent_url  = $parent_id > 0 ? admin_url('admin.php?page=wc-orders&action=edit&id=' . $parent_id) : '';
-        if ($parent_id > 0 && !get_option('woocommerce_enable_order_tracking')) {
-            $parent_url = get_edit_post_link($parent_id) ?: $parent_url;
-        }
 
         $refunded_amount = (float) ($row->refunded_amount ?? 0);
         $total_inflow    = (float) ($row->total_incoming ?: $row->gross_sales + $row->shipping_charge);
         $net_inflow      = max(0.0, round($total_inflow - $refunded_amount, 2));
         $has_refund      = ($refunded_amount > 0);
 
-        // Fetch refund records on sub-order for detailed transparent audit
+        // Fetch refund records on order for detailed transparent audit
         $refund_notes = [];
-        $sub_order_obj = wc_get_order((int) $row->sub_order_id);
-        if ($sub_order_obj) {
-            $refund_objs = $sub_order_obj->get_refunds();
+        $order_obj = wc_get_order((int) $row->order_id);
+        if ($order_obj) {
+            $refund_objs = $order_obj->get_refunds();
             if (!empty($refund_objs)) {
                 foreach ($refund_objs as $ref) {
                     $r_amt = abs((float) $ref->get_amount());
@@ -1180,100 +1166,6 @@ class ThaaniyamHub_Dashboard
         echo '</div>';
     }
 
-    private static function render_parent_order_commission_view($rows, $order_id)
-    {
-        echo '<div class="thaaniyamhub-commission-view" style="padding: 4px 0;">';
-        echo '<style>
-            .thaaniyamhub-commission-view table.wp-list-table th { vertical-align: middle; font-weight: 600; color: #1e293b; padding: 10px 14px; }
-            .thaaniyamhub-commission-view table.wp-list-table td { vertical-align: middle; padding: 10px 14px; }
-            .thaaniyamhub-commission-view .woocommerce-help-tip { vertical-align: middle; margin-left: 6px; cursor: help; }
-        </style>';
-        echo '<table class="wp-list-table widefat fixed striped" style="margin-top: 6px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">';
-        echo '<thead>';
-        echo '<tr>';
-        printf('<th>%s%s</th>', esc_html__('Sub Order', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Individual vendor sub-order ID', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Vendor', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Marketplace vendor / store fulfilling these items', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Gross Sales', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Post-discount product amount paid by customer for this vendor', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Refunded', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Amount refunded back to customer', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Commission (Admin Fee)', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Platform commission earned by Thaaniyam Hub', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Shipping Charge', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Customer shipping fee allocated to this vendor sub-order', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Vendor Net Payout', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Net disbursement payable to vendor', 'thaaniyamhub-multi-vendor-orders')));
-        printf('<th>%s%s</th>', esc_html__('Payout Status', 'thaaniyamhub-multi-vendor-orders'), self::help_tip(__('Disbursement status (PENDING / DISBURSED / REFUNDED)', 'thaaniyamhub-multi-vendor-orders')));
-        echo '</tr>';
-        echo '</thead>';
-        echo '<tbody>';
-
-        $total_gross    = 0.0;
-        $total_refund   = 0.0;
-        $total_comm     = 0.0;
-        $total_shipping = 0.0;
-        $total_payout   = 0.0;
-
-        foreach ($rows as $row) {
-            $vendor_name = thaaniyamhub_get_vendor_name_by_vendor_id((int) $row->vendor_id);
-            $sub_url = admin_url('admin.php?page=wc-orders&action=edit&id=' . $row->sub_order_id);
-            if (!get_option('woocommerce_enable_order_tracking')) {
-                $sub_url = get_edit_post_link($row->sub_order_id) ?: $sub_url;
-            }
-
-            $r_refund = (float) ($row->refunded_amount ?? 0);
-
-            $total_gross    += (float) $row->gross_sales;
-            $total_refund   += $r_refund;
-            $total_comm     += (float) $row->commission_deducted;
-            $total_shipping += (float) $row->shipping_charge;
-            $total_payout   += (float) $row->vendor_net_payout;
-
-            $payout_status_label = strtoupper($row->payout_status ?: 'PENDING');
-            $payout_bg = ('disbursed' === strtolower($row->payout_status)) ? '#d1fae5' : ('refunded' === strtolower($row->payout_status) ? '#fee2e2' : '#fef3c7');
-            $payout_fg = ('disbursed' === strtolower($row->payout_status)) ? '#065f46' : ('refunded' === strtolower($row->payout_status) ? '#991b1b' : '#92400e');
-
-            $comm_deducted = (float) $row->commission_deducted;
-            $catalog_price = (float) ($row->item_subtotal ?: $row->gross_sales);
-            if ($comm_deducted <= 0) {
-                $comm_pct_str = '0%';
-            } else {
-                $rate = (float) $row->commission_rate;
-                if ($rate <= 0 && $catalog_price > 0) {
-                    $rate = round(($comm_deducted / $catalog_price) * 100, 2);
-                }
-                $comm_pct_str = ($rate > 0) ? $rate . '%' : '0%';
-            }
-
-            echo '<tr>';
-            printf('<td><a href="%s" style="font-weight:700;color:#4f46e5;">#%d</a></td>', esc_url($sub_url), esc_html($row->sub_order_id));
-            printf('<td><strong>%s</strong> <span style="color:#64748b;">(ID: %d)</span></td>', esc_html($vendor_name), esc_html($row->vendor_id));
-            printf('<td>%s</td>', wp_kses_post(wc_price($row->gross_sales)));
-            if ($r_refund > 0) {
-                printf('<td style="color:#dc2626;font-weight:600;">-%s</td>', wp_strip_all_tags(wc_price($r_refund)));
-            } else {
-                echo '<td style="color:#94a3b8;">₹0.00</td>';
-            }
-            printf('<td><span style="color:#4f46e5;font-weight:600;">%s (%s)</span></td>', wp_kses_post(wc_price($comm_deducted)), esc_html($comm_pct_str));
-            printf('<td>%s</td>', wp_kses_post(wc_price($row->shipping_charge)));
-            printf('<td><strong style="color:#1e40af;">%s</strong></td>', wp_kses_post(wc_price($row->vendor_net_payout)));
-            printf('<td><span style="background:%s;color:%s;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">%s</span></td>', $payout_bg, $payout_fg, esc_html($payout_status_label));
-            echo '</tr>';
-        }
-
-        echo '<tr style="background-color: #f8fafc; font-weight: bold; border-top: 2px solid #cbd5e1;">';
-        printf('<td colspan="2" style="text-align: right;">%s</td>', esc_html__('Total Summary:', 'thaaniyamhub-multi-vendor-orders'));
-        printf('<td>%s</td>', wp_kses_post(wc_price($total_gross)));
-        if ($total_refund > 0) {
-            printf('<td style="color:#dc2626;">-%s</td>', wp_strip_all_tags(wc_price($total_refund)));
-        } else {
-            echo '<td style="color:#94a3b8;">₹0.00</td>';
-        }
-        printf('<td><span style="color:#4f46e5;">%s</span></td>', wp_kses_post(wc_price($total_comm)));
-        printf('<td>%s</td>', wp_kses_post(wc_price($total_shipping)));
-        printf('<td><span style="color:#1e40af;">%s</span></td>', wp_kses_post(wc_price($total_payout)));
-        echo '<td></td>';
-        echo '</tr>';
-        echo '</tbody>';
-        echo '</table>';
-        echo '</div>';
-    }
-
     public static function render_meta_box($post_or_order)
     {
         $order = $post_or_order instanceof WP_Post ? wc_get_order($post_or_order->ID) : $post_or_order;
@@ -1282,7 +1174,7 @@ class ThaaniyamHub_Dashboard
         }
 
         if (!ThaaniyamHub_Dispatch::is_order_eligible_for_fulfillment($order)) {
-            echo '<p style="color:#888;font-size:12px;">' . esc_html__('Shiprocket fulfillment is tracked on vendor sub-orders and single-vendor orders only.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
+            echo '<p style="color:#888;font-size:12px;">' . esc_html__('Shiprocket fulfillment is tracked on marketplace vendor orders only.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
             return;
         }
 
@@ -4539,7 +4431,7 @@ class ThaaniyamHub_Dashboard
         global $wpdb;
         $attempt_count = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->prefix}thaaniyamhub_shiprocket_api_logs 
-          WHERE sub_order_id = %d AND endpoint_requested LIKE '%%orders/create/return%%'",
+          WHERE order_id = %d AND endpoint_requested LIKE '%%orders/create/return%%'",
             $order_id
         ));
         $unique_return_order_id = $order_id . '-RET' . ($attempt_count > 0 ? '-' . $attempt_count : '');
@@ -4617,7 +4509,7 @@ class ThaaniyamHub_Dashboard
                 'commercial_invoice_url' => null,
                 'fulfillment_status' => 'return_initiated',
             ],
-            ['sub_order_id' => $order_id]
+            ['order_id' => $order_id]
         );
 
         $wc_order->add_order_note(
@@ -4751,7 +4643,7 @@ class ThaaniyamHub_Dashboard
             $wpdb->update(
                 $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment',
                 ['pickup_location_nickname' => $pickup_location ?: $record->pickup_location_nickname],
-                ['sub_order_id' => $order_id]
+                ['order_id' => $order_id]
             );
 
             $record = ThaaniyamHub_Shiprocket_API::get_fulfillment($order_id);
