@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: YITH WooCommerce Wishlist\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/yith-woocommerce-"
 "wishlist\n"
-"POT-Creation-Date: 2026-03-05T10:46:03+00:00\n"
+"POT-Creation-Date: 2026-09-07T12:45:38+00:00\n"
 "PO-Revision-Date: 2020-10-16 14:05+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -289,7 +289,7 @@ msgstr "Fermer"
 msgid "Product successfully removed."
 msgstr "Produit supprimé correctement."
 
-#: includes/class-yith-wcwl-form-handler.php:193
+#: includes/class-yith-wcwl-form-handler.php:198
 msgid "Please, make sure to enter a valid title"
 msgstr "Veuillez vous assurer d'entrer un titre valide"
 

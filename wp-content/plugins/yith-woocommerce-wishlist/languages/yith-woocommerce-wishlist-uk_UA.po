@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: YITH WooCommerce Wishlist\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/yith-woocommerce-"
 "wishlist\n"
-"POT-Creation-Date: 2026-03-05T10:46:03+00:00\n"
+"POT-Creation-Date: 2026-09-07T12:45:38+00:00\n"
 "PO-Revision-Date: 2020-10-16 14:07+0200\n"
 "Last-Translator: Valentyn Zubenko <valentyn.zubenko@gmail.com>\n"
 "Language-Team: Your Inspiration Themes <plugins@yithemes.com>\n"
@@ -284,7 +284,7 @@ msgstr ""
 msgid "Product successfully removed."
 msgstr ""
 
-#: includes/class-yith-wcwl-form-handler.php:193
+#: includes/class-yith-wcwl-form-handler.php:198
 msgid "Please, make sure to enter a valid title"
 msgstr ""
 

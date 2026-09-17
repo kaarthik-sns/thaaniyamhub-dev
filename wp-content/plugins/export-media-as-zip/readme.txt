@@ -1,14 +1,14 @@
 === Export Media as ZIP ===
-Contributors: huzoorbakhsh
+Contributors: huzoorbakhsh, freemius
 Tags: media, export, zip, download images, backup
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.9
+Stable tag: 2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Export images from your WordPress media library as a ZIP file — filter by year and image size before downloading.
+Export images from your WordPress media library as a ZIP file — filter by year and image size before downloading. Premium adds documents, background export, and scheduled exports.
 
 == Description ==
 
@@ -23,6 +23,11 @@ Export images from your WordPress media library as a ZIP file — filter by year
 * Auto-expiring ZIP file — cleaned up automatically after 5 minutes
 * Admin-only access
 * No external dependencies
+
+= Premium Features =
+* **Document export** — include PDF, Word (doc/docx), Excel (xls/xlsx), and PowerPoint (ppt/pptx) files alongside images
+* **Background export** — large exports run via WP-Cron in chunks instead of a single blocking request, so they don't time out; you get an email with the download link when the ZIP is ready
+* **Scheduled export** — configure a recurring (daily, weekly, or monthly) export with your preferred filters; each run emails a fresh download link automatically
 
 == Installation ==
 
@@ -52,6 +57,15 @@ The ZIP is written temporarily to your uploads directory and deleted automatical
 = Will it export every size variant of every image? =
 Only sizes you check in the Image Size dropdown are included. If an intermediate size was never generated for a particular image, that file is silently skipped.
 
+= What document types can Premium export? =
+PDF, Word (.doc/.docx), Excel (.xls/.xlsx), and PowerPoint (.ppt/.pptx). Documents are always included at their original file — the Image Size filter only affects images.
+
+= How does background export work? =
+Premium users can check "Run in background" before exporting. The export is queued and processed in chunks via WP-Cron so it can complete without keeping the browser tab open or hitting a server timeout. You'll receive an email with the download link (valid for 24 hours) when it's ready.
+
+= How does scheduled export work? =
+Premium users can configure a recurring export (daily, weekly, or monthly) using the Year, Image Size, and Document Type filters selected on the page, plus a recipient email. Each run happens automatically in the background and emails a fresh download link.
+
 == Screenshots ==
 
 1. Export page with Year and Image Size filter dropdowns
@@ -63,6 +77,12 @@ Only sizes you check in the Image Size dropdown are included. If an intermediate
 If you have any questions or need help, please open an issue on GitHub or contact me at huzoorbux@gmail.com.
 
 == Changelog ==
+
+= 2.0 =
+* Added Premium document export — PDF, Word, Excel, and PowerPoint files alongside images
+* Added Premium background export — chunked WP-Cron processing with email notification, for exports too large for a single request
+* Added Premium scheduled export — recurring daily/weekly/monthly exports emailed automatically
+* Plugin menu is now a top-level admin menu instead of a submenu under Media
 
 = 1.9 =
 * Tested up to WordPress 7.1

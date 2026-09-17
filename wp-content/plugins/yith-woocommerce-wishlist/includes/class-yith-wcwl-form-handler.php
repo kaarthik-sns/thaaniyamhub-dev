@@ -80,7 +80,7 @@ if ( ! class_exists( 'YITH_WCWL_Form_Handler' ) ) {
 			// add item to wishlist when javascript is not enabled.
 			if ( isset( $_GET['add_to_wishlist'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'add_to_wishlist' ) ) {
 				try {
-					yith_wcwl_wishlists()->add_item(yith_wcwl()->get_details());
+					yith_wcwl_wishlists()->add_item( yith_wcwl()->get_details() );
 
 					/**
 					 * APPLY_FILTERS: yith_wcwl_product_added_to_wishlist_message
@@ -189,11 +189,17 @@ if ( ! class_exists( 'YITH_WCWL_Form_Handler' ) ) {
 			$wishlist_id   = isset( $_POST['wishlist_id'] ) ? sanitize_text_field( wp_unslash( $_POST['wishlist_id'] ) ) : false;
 			$wishlist      = yith_wcwl_get_wishlist( $wishlist_id );
 
-			if ( ! $wishlist_name || strlen( $wishlist_name ) >= 65535 ) {
-				yith_wcwl_add_notice( __( 'Please, make sure to enter a valid title', 'yith-woocommerce-wishlist' ), 'error' );
-			} else {
-				$wishlist->set_name( $wishlist_name );
-				$wishlist->save();
+			if ( ! $wishlist_id || ! $wishlist ) {
+				return;
+			}
+
+			if ( $wishlist && $wishlist->is_current_user_owner() ) {
+				if ( ! $wishlist_name || strlen( $wishlist_name ) >= 65535 ) {
+					yith_wcwl_add_notice( __( 'Please, make sure to enter a valid title', 'yith-woocommerce-wishlist' ), 'error' );
+				} else {
+					$wishlist->set_name( $wishlist_name );
+					$wishlist->save();
+				}
 			}
 
 			$redirect_url = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : $wishlist->get_url();

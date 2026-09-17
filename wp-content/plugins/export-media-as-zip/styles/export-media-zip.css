@@ -665,3 +665,91 @@
     outline: 2px solid #0073aa;
     outline-offset: 2px;
 }
+
+/* Premium badges */
+.emaz-premium-tag {
+    display: inline-block;
+    background: #7c3aed;
+    color: #fff;
+    font-size: 0.7em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 10px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+a.emaz-premium-badge {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.emaz-premium-badge:hover .emaz-premium-tag {
+    background: #6425d0;
+}
+
+/* Locked (free-tier) premium controls */
+.emaz-locked {
+    opacity: 0.55;
+    pointer-events: none;
+    position: relative;
+}
+
+/* Background export toggle */
+.background-toggle-row {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.emaz-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95em;
+    color: #23282d;
+    cursor: pointer;
+}
+
+.emaz-checkbox-label input[type="checkbox"]:disabled + * ,
+.emaz-checkbox-label input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+}
+
+/* Scheduled Exports section */
+.schedule-section .emaz-select,
+.schedule-section .emaz-text-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95em;
+    color: #23282d;
+    background: #fff;
+}
+
+.schedule-section .filter-field .emaz-checkbox-label {
+    height: 32px;
+}
+
+#schedule-status {
+    margin: 10px 0;
+    font-style: italic;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .schedule-actions {
+        justify-content: stretch;
+    }
+
+    .schedule-actions .button {
+        flex: 1;
+    }
+}

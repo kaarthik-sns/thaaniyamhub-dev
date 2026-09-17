@@ -1,10 +1,12 @@
 jQuery(document).ready(function ($) {
     var progressInterval;
     var previewDebounce;
+    var isPremium = false;
 
     // Load statistics and filter options on page load
     loadMediaStats();
     loadFilterOptions();
+    loadExportSchedule();
 
     // -------------------------------------------------------------------------
     // Filter options — dropdown style
@@ -25,6 +27,8 @@ jQuery(document).ready(function ($) {
                 if (response.success) {
                     renderYearFilters(response.data.years);
                     renderSizeFilters(response.data.sizes);
+                    applyPremiumState(response.data.premium);
+                    renderDocTypeFilters(response.data.doc_types);
                     $('#filter-loading').hide();
                     $('#filter-content').show();
                     updatePreviewCount();
@@ -86,6 +90,54 @@ jQuery(document).ready(function ($) {
         updateSizeDropdownLabel();
     }
 
+    function renderDocTypeFilters(docTypes) {
+        var $container = $('#doctype-filters');
+        $container.empty();
+
+        if (!docTypes || $.isEmptyObject(docTypes)) {
+            $container.html('<p class="emaz-dropdown-empty">No document types available.</p>');
+            return;
+        }
+
+        $.each(docTypes, function (key, data) {
+            var $label = $('<label>').addClass('emaz-dropdown-item');
+            var $cb = $('<input>')
+                .attr('type', 'checkbox')
+                .val(key)
+                .prop('checked', false)
+                .prop('disabled', !isPremium)
+                .addClass('emaz-doctype-cb');
+            $label.append($cb).append($('<span>').text(data.label));
+            $container.append($label);
+        });
+
+        updateDocTypeDropdownLabel();
+    }
+
+    // Show/hide and enable/disable premium-only controls based on the current license state
+    function applyPremiumState(premiumInfo) {
+        isPremium = !!(premiumInfo && premiumInfo.can_use_premium);
+        var upgradeUrl = (premiumInfo && premiumInfo.upgrade_url) || '';
+
+        $('#doctype-dropdown').toggleClass('emaz-locked', !isPremium);
+        $('.background-toggle-row').toggleClass('emaz-locked', !isPremium);
+        $('#schedule-section .filter-row, #schedule-section .schedule-actions').toggleClass('emaz-locked', !isPremium);
+
+        $('.emaz-doctype-cb').prop('disabled', !isPremium);
+        $('#run-in-background-cb').prop('disabled', !isPremium);
+        $('#schedule-frequency, #schedule-recipient, #schedule-enabled, #save-schedule-button, #delete-schedule-button').prop('disabled', !isPremium);
+
+        if (!isPremium && upgradeUrl) {
+            $('.emaz-premium-tag').each(function () {
+                if (!$(this).data('emaz-linked')) {
+                    $(this).data('emaz-linked', true).wrap(
+                        $('<a>').addClass('emaz-premium-badge').attr({ href: upgradeUrl, target: '_blank', rel: 'noopener' })
+                    );
+                }
+            });
+        }
+    }
+
     // Reflect current selection in the dropdown trigger label
     function updateYearDropdownLabel() {
         var $checked = $('.emaz-year-cb:checked');
@@ -123,6 +175,21 @@ jQuery(document).ready(function ($) {
         }
 
         $('#size-dropdown .emaz-dropdown-label').text(label);
+    }
+
+    function updateDocTypeDropdownLabel() {
+        var $checked = $('.emaz-doctype-cb:checked');
+        var label;
+
+        if ($checked.length === 0) {
+            label = 'Images Only';
+        } else {
+            var names = [];
+            $checked.each(function () { names.push($(this).closest('label').find('span').text()); });
+            label = names.length <= 3 ? names.join(', ') : names.length + ' types selected';
+        }
+
+        $('#doctype-dropdown .emaz-dropdown-label').text(label);
     }
 
     // -------------------------------------------------------------------------
@@ -179,6 +246,21 @@ jQuery(document).ready(function ($) {
         triggerPreviewUpdate();
     });
 
+    $(document).on('click', '.select-all-doctypes', function () {
+        if (!isPremium) {
+            return;
+        }
+        $('.emaz-doctype-cb').prop('checked', true);
+        updateDocTypeDropdownLabel();
+        triggerPreviewUpdate();
+    });
+
+    $(document).on('click', '.deselect-all-doctypes', function () {
+        $('.emaz-doctype-cb').prop('checked', false);
+        updateDocTypeDropdownLabel();
+        triggerPreviewUpdate();
+    });
+
     // Update label + preview whenever a checkbox changes
     $(document).on('change', '.emaz-year-cb', function () {
         updateYearDropdownLabel();
@@ -190,6 +272,11 @@ jQuery(document).ready(function ($) {
         triggerPreviewUpdate();
     });
 
+    $(document).on('change', '.emaz-doctype-cb', function () {
+        updateDocTypeDropdownLabel();
+        triggerPreviewUpdate();
+    });
+
     function triggerPreviewUpdate() {
         clearTimeout(previewDebounce);
         previewDebounce = setTimeout(updatePreviewCount, 400);
@@ -198,9 +285,10 @@ jQuery(document).ready(function ($) {
     function updatePreviewCount() {
         var years = getSelectedYears();
         var sizes = getSelectedSizes();
+        var docTypes = getSelectedDocTypes();
 
-        if (sizes.length === 0) {
-            $('#filter-preview-text').text('No sizes selected. Please select at least one image size.');
+        if (sizes.length === 0 && docTypes.length === 0) {
+            $('#filter-preview-text').text('No sizes or document types selected. Please select at least one.');
             $('#export-media-zip-button').prop('disabled', true);
             return;
         }
@@ -214,7 +302,8 @@ jQuery(document).ready(function ($) {
                 action: 'emaz_preview_export',
                 nonce: emazExportMediaZip.nonce,
                 years: years,
-                sizes: sizes
+                sizes: sizes,
+                doc_types: docTypes
             },
             success: function (response) {
                 if (response.success) {
@@ -254,6 +343,14 @@ jQuery(document).ready(function ($) {
             sizes.push($(this).val());
         });
         return sizes;
+    }
+
+    function getSelectedDocTypes() {
+        var types = [];
+        $('.emaz-doctype-cb:checked').each(function () {
+            types.push($(this).val());
+        });
+        return types;
     }
 
     // -------------------------------------------------------------------------
@@ -315,8 +412,9 @@ jQuery(document).ready(function ($) {
 
     function validateBeforeExport() {
         var sizes = getSelectedSizes();
-        if (sizes.length === 0) {
-            showError('Please select at least one image size to export.');
+        var docTypes = getSelectedDocTypes();
+        if (sizes.length === 0 && docTypes.length === 0) {
+            showError('Please select at least one image size or document type to export.');
             return false;
         }
         if (!window.XMLHttpRequest) {
@@ -349,8 +447,10 @@ jQuery(document).ready(function ($) {
             return;
         }
 
-        var years = getSelectedYears();
-        var sizes = getSelectedSizes();
+        var years    = getSelectedYears();
+        var sizes    = getSelectedSizes();
+        var docTypes = getSelectedDocTypes();
+        var runInBackground = isPremium && $('#run-in-background-cb').is(':checked');
 
         updateButtonState(true);
 
@@ -362,6 +462,15 @@ jQuery(document).ready(function ($) {
         $('#progress-files').text('0 / 0 files');
         $('#current-file').empty().hide();
 
+        if (runInBackground) {
+            queueBackgroundExport(years, sizes, docTypes);
+            return;
+        }
+
+        runSyncExport(years, sizes, docTypes);
+    });
+
+    function runSyncExport(years, sizes, docTypes) {
         $.ajax({
             url: emazExportMediaZip.ajax_url,
             type: 'POST',
@@ -369,7 +478,8 @@ jQuery(document).ready(function ($) {
                 action: 'emaz_export_media_zip',
                 nonce: emazExportMediaZip.nonce,
                 years: years,
-                sizes: sizes
+                sizes: sizes,
+                doc_types: docTypes
             },
             success: function (response) {
                 if (response.success) {
@@ -492,6 +602,228 @@ jQuery(document).ready(function ($) {
                 }
             });
         }, 500);
+    }
+
+    // -------------------------------------------------------------------------
+    // Background export (Premium)
+    // -------------------------------------------------------------------------
+
+    function queueBackgroundExport(years, sizes, docTypes) {
+        $.ajax({
+            url: emazExportMediaZip.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'emaz_queue_background_export',
+                nonce: emazExportMediaZip.nonce,
+                years: years,
+                sizes: sizes,
+                doc_types: docTypes
+            },
+            success: function (response) {
+                if (response.success) {
+                    $('#progress-files').text('Queued — running in the background...');
+                    pollBackgroundJob(response.data.job_id);
+                } else {
+                    var errorMsg = 'Could not queue background export';
+                    if (response.data && response.data.message) {
+                        errorMsg += ': ' + response.data.message;
+                    }
+                    showError(errorMsg);
+                    $('#progress-section').hide();
+                    updateButtonState(false);
+                }
+            },
+            error: function () {
+                showError('Server error occurred while queuing the background export.');
+                $('#progress-section').hide();
+                updateButtonState(false);
+            }
+        });
+    }
+
+    function pollBackgroundJob(jobId) {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+        }
+
+        progressInterval = setInterval(function () {
+            $.ajax({
+                url: emazExportMediaZip.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'emaz_get_background_job_status',
+                    nonce: emazExportMediaZip.nonce,
+                    job_id: jobId
+                },
+                success: function (response) {
+                    if (!response.success) {
+                        return;
+                    }
+
+                    var data     = response.data;
+                    var progress = data.progress || 0;
+
+                    $('#progress-bar').css('width', progress + '%');
+                    $('#progress-text').text(Math.round(progress) + '%');
+                    $('#progress-files').text((data.processed_files || 0) + ' / ' + (data.total_files || 0) + ' files');
+
+                    if (data.current_file) {
+                        $('#current-file').text(data.current_file).show();
+                    }
+
+                    if (data.status === 'complete') {
+                        clearInterval(progressInterval);
+                        $('#current-file').hide();
+                        showBackgroundDownload(data);
+                        updateButtonState(false);
+                    } else if (data.status === 'failed') {
+                        clearInterval(progressInterval);
+                        showError('Background export failed: ' + (data.error_message || 'Unknown error.'));
+                        $('#progress-section').hide();
+                        updateButtonState(false);
+                    }
+                },
+                error: function () {
+                    clearInterval(progressInterval);
+                    showError('Lost connection while checking the background export status.');
+                    updateButtonState(false);
+                }
+            });
+        }, 3000);
+    }
+
+    function showBackgroundDownload(data) {
+        $('#download-section').show();
+
+        var $downloadLink = $('#download-link');
+        $downloadLink.empty();
+
+        var $downloadBtn = $('<a>')
+            .attr('href', data.download_url)
+            .attr('download', '')
+            .addClass('download-btn')
+            .text('Download ZIP File');
+
+        var $info     = $('<div>').addClass('download-info');
+        var $summaryP = $('<p>').append($('<strong>').text('Export Summary:'));
+        var $list     = $('<ul>');
+
+        $list.append(
+            $('<li>').text('Files processed: ' + (data.processed_files || 0) + ' / ' + (data.total_files || 0))
+        );
+        if (data.zip_size) {
+            $list.append($('<li>').text('ZIP file size: ' + data.zip_size));
+        }
+        $list.append($('<li>').text('A copy of this link was also emailed to you. It expires in 24 hours.'));
+
+        $info.append($summaryP).append($list);
+        $downloadLink.append($downloadBtn).append($info);
+
+        $('#progress-bar').css('width', '100%');
+        $('#progress-text').text('100%');
+    }
+
+    // -------------------------------------------------------------------------
+    // Scheduled export (Premium)
+    // -------------------------------------------------------------------------
+
+    function loadExportSchedule() {
+        $.ajax({
+            url: emazExportMediaZip.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'emaz_get_export_schedule',
+                nonce: emazExportMediaZip.nonce
+            },
+            success: function (response) {
+                $('#schedule-loading').hide();
+                $('#schedule-content').show();
+
+                if (response.success) {
+                    var data = response.data;
+                    $('#schedule-frequency').val(data.frequency || 'weekly');
+                    $('#schedule-recipient').val(data.recipient_email || '');
+                    $('#schedule-enabled').prop('checked', !!data.enabled);
+                    renderScheduleStatus(data);
+                }
+            },
+            error: function () {
+                $('#schedule-loading').hide();
+            }
+        });
+    }
+
+    function renderScheduleStatus(data) {
+        var $status = $('#schedule-status');
+        if (data.next_run) {
+            var nextRun = new Date(data.next_run * 1000);
+            $status.text('Next run: ' + nextRun.toLocaleString());
+        } else if (data.enabled) {
+            $status.text('Enabled — waiting for the next scheduled run.');
+        } else {
+            $status.text('No schedule is currently active.');
+        }
+    }
+
+    $('#save-schedule-button').on('click', function () {
+        if (!isPremium) {
+            return;
+        }
+        hideError();
+
+        $.ajax({
+            url: emazExportMediaZip.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'emaz_save_export_schedule',
+                nonce: emazExportMediaZip.nonce,
+                frequency: $('#schedule-frequency').val(),
+                recipient_email: $('#schedule-recipient').val(),
+                enabled: $('#schedule-enabled').is(':checked') ? 1 : 0,
+                years: getSelectedYears(),
+                sizes: getSelectedSizes(),
+                doc_types: getSelectedDocTypes()
+            },
+            success: function (response) {
+                if (response.success) {
+                    renderScheduleStatus(response.data);
+                } else {
+                    var errorMsg = 'Could not save schedule';
+                    if (response.data && response.data.message) {
+                        errorMsg += ': ' + response.data.message;
+                    }
+                    showError(errorMsg);
+                }
+            },
+            error: function () {
+                showError('Server error occurred while saving the schedule.');
+            }
+        });
+    });
+
+    $('#delete-schedule-button').on('click', function () {
+        if (!isPremium) {
+            return;
+        }
+        hideError();
+
+        $.ajax({
+            url: emazExportMediaZip.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'emaz_delete_export_schedule',
+                nonce: emazExportMediaZip.nonce
+            },
+            success: function (response) {
+                if (response.success) {
+                    $('#schedule-enabled').prop('checked', false);
+                    renderScheduleStatus({ enabled: false, next_run: 0 });
+                }
+            },
+            error: function () {
+                showError('Server error occurred while disabling the schedule.');
+            }
+        });
     });
 
     // -------------------------------------------------------------------------

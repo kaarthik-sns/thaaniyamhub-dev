@@ -151,11 +151,9 @@ Yes, of course you can. To avoid Wishlist page to show product prices, you can h
 
 ## Changelog
 
-### 4.18.0 - Released on 26 August 2026 =
+### 4.18.1 - Released on 7 September 2026 =
 
-* New: support for WordPress 7.1
-* New: support for WooCommerce 11.1
-* Update: YITH plugin framework
+* Fix: security vulnerability when changing the wishlist title
 
 ## Support
 
