@@ -31,8 +31,6 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             // }
             // Auto-cancel Shiprocket order when order is cancelled.
             add_action('woocommerce_order_status_cancelled', [__CLASS__, 'auto_cancel_shiprocket_shipment']);
-            // Prevent cancellation if not allowed by Shiprocket
-            add_action('woocommerce_before_order_status_change', [__CLASS__, 'before_order_status_change_validation'], 10, 4);
             // Auto-push sub-order to Shiprocket on processing status transition.
             // add_action( 'woocommerce_order_status_processing', [ __CLASS__, 'push_to_shiprocket' ], 25 );
         }

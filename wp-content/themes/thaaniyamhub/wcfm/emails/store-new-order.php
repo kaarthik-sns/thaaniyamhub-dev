@@ -20,8 +20,11 @@ if ( ! is_a( $order, 'WC_Order' ) ) {
 }
 
 // Get line items and apply WCFM marketplace filters to display only vendor-specific products
-$line_items = $order->get_items( 'line_item' );
-$line_items = apply_filters( 'wcfm_valid_line_items', $line_items, $order->get_id() );
+$raw_items  = $order->get_items( 'line_item' );
+$line_items = apply_filters( 'wcfm_valid_line_items', $raw_items, $order->get_id() );
+if ( empty( $line_items ) && ! empty( $raw_items ) ) {
+	$line_items = $raw_items;
+}
 
 // Strict vendor item filtering to ensure vendor receives only their own products
 if ( function_exists( 'wcfm_get_vendor_id_by_post' ) ) {

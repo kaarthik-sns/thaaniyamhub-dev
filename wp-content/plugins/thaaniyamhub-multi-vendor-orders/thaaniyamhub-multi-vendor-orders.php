@@ -255,10 +255,25 @@ if (class_exists('ThaaniyamHub_Order_Debug_Logger')) {
 }
 
 // =========================================================================
+// HPOS COMPATIBILITY DECLARATION
+// =========================================================================
+add_action('before_woocommerce_init', function () {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+    }
+});
+
+// =========================================================================
 // ACTIVATION & DEACTIVATION HOOKS
 // =========================================================================
 register_activation_hook(__FILE__, ['ThaaniyamHub_DB_Install', 'run']);
-register_deactivation_hook(__FILE__, ['ThaaniyamHub_Payout_Scheduler', 'clear_schedule']);
+register_deactivation_hook(__FILE__, function () {
+    if (class_exists('ThaaniyamHub_Payout_Scheduler')) {
+        ThaaniyamHub_Payout_Scheduler::clear_schedule();
+    }
+    wp_clear_scheduled_hook('thaaniyamhub_cashfree_payout_sync_pending');
+    wp_clear_scheduled_hook('thaaniyamhub_sf_tracking_sync');
+});
 
 // =========================================================================
 // REGISTER WOOCOMMERCE SETTINGS TAB

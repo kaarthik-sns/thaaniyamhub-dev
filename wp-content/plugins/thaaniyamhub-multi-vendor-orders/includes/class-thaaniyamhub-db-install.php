@@ -18,7 +18,7 @@ class ThaaniyamHub_DB_Install {
     /**
      * Current schema version. Bump this whenever a column is added/changed.
      */
-    const SCHEMA_VERSION = '2.3.0';
+    const SCHEMA_VERSION = '2.4.0';
 
     /**
      * Option key used to store the installed schema version.
@@ -35,6 +35,7 @@ class ThaaniyamHub_DB_Install {
     public static function run() {
         self::migrate_legacy_data();
         self::create_tables();
+        self::seed_defaults();
         update_option( self::VERSION_OPTION, self::SCHEMA_VERSION );
     }
 
@@ -46,10 +47,9 @@ class ThaaniyamHub_DB_Install {
         if ( version_compare( $installed, self::SCHEMA_VERSION, '<' ) ) {
             self::migrate_legacy_data();
             self::create_tables();
+            self::seed_defaults();
             update_option( self::VERSION_OPTION, self::SCHEMA_VERSION );
         }
-        // Always ensure shipping & financial defaults exist in DB, even without a schema version bump.
-        self::seed_defaults();
     }
 
     /**
@@ -247,7 +247,7 @@ class ThaaniyamHub_DB_Install {
             customer_city VARCHAR(100) NOT NULL DEFAULT '',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY sub_order_vendor (sub_order_id, vendor_id),
             KEY vendor_id (vendor_id),
             KEY parent_order_id (parent_order_id),
@@ -288,7 +288,7 @@ class ThaaniyamHub_DB_Install {
             order_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             payment_method VARCHAR(50) NOT NULL DEFAULT '',
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY order_id (order_id),
             KEY sub_order_id (sub_order_id),
             KEY vendor_id (vendor_id),
@@ -316,7 +316,7 @@ class ThaaniyamHub_DB_Install {
             pickup_token_number VARCHAR(100) DEFAULT NULL,
             fulfillment_status VARCHAR(100) NOT NULL DEFAULT 'dispatched',
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY sub_order_id (sub_order_id),
             KEY vendor_id (vendor_id),
             KEY shiprocket_order_id (shiprocket_order_id)
@@ -335,7 +335,7 @@ class ThaaniyamHub_DB_Install {
             payload_received LONGTEXT NOT NULL,
             http_status_code INT(5) NOT NULL DEFAULT 0,
             executed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY sub_order_id (sub_order_id),
             KEY http_status_code (http_status_code)
         ) $charset;";

@@ -1,10 +1,18 @@
-﻿<?php
+<?php
 /**
  * Customer Refunded Order Email — Thaaniyam Hub
  * Override: yourtheme/woocommerce/emails/customer-refunded-order.php
  * @version 10.4.0
  */
 defined( 'ABSPATH' ) || exit;
+
+// Ensure order reflects post-split line items, shipping, and totals
+if ( is_a( $order, 'WC_Order' ) && $order->get_id() ) {
+    $fresh_order = wc_get_order( $order->get_id() );
+    if ( $fresh_order ) {
+        $order = $fresh_order;
+    }
+}
 
 $order_number    = $order->get_order_number();
 $order_date      = date_i18n( 'M d, Y', strtotime( $order->get_date_created() ) );

@@ -365,7 +365,8 @@ class ThaaniyamHub_Cart_Rules {
     // =========================================================================
 
     public static function inject_product_validation_inline() {
-        $js_path = wp_normalize_path( WP_CONTENT_DIR . '/themes/twentytwentyone-child/assets/js/product-validation.js' );
+        $theme_dir = function_exists('get_stylesheet_directory') ? get_stylesheet_directory() : (WP_CONTENT_DIR . '/themes/twentytwentyone-child');
+        $js_path = wp_normalize_path( $theme_dir . '/assets/js/product-validation.js' );
         if ( file_exists( $js_path ) ) {
             ?>
             <script type="text/javascript">
@@ -439,8 +440,20 @@ class ThaaniyamHub_Cart_Rules {
                 'weight'            => 0.5,
                 'cod'               => 0,
             ];
-            thaaniyamhub_log( "Serviceability: Calling Shiprocket check_serviceability API with parameters: " . print_r( $params, true ) );
-            $svc = $api->check_serviceability( $params );
+            
+            // Transient cache for serviceability check to prevent external API hammering during checkout
+            $cache_key = 'th_svc_' . md5( (string) $vendor_postcode . '_' . (string) $customer_pincode );
+            $svc = get_transient( $cache_key );
+            
+            if ( false === $svc ) {
+                thaaniyamhub_log( "Serviceability: Calling Shiprocket check_serviceability API with parameters: " . print_r( $params, true ) );
+                $svc = $api->check_serviceability( $params );
+                if ( ! is_wp_error( $svc ) && ! empty( $svc ) ) {
+                    set_transient( $cache_key, $svc, 2 * HOUR_IN_SECONDS );
+                }
+            } else {
+                thaaniyamhub_log( "Serviceability: Using cached serviceability result for {$vendor_postcode} -> {$customer_pincode}." );
+            }
 
             if ( is_wp_error( $svc ) ) {
                 $err_msg = $svc->get_error_message();

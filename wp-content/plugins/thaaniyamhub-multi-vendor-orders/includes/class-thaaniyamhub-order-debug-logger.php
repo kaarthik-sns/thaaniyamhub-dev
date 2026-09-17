@@ -169,8 +169,11 @@ class ThaaniyamHub_Order_Debug_Logger
         $lines[] = '================================================================================' . "\n";
         $entry = implode("\n", $lines);
 
-        // 1. Direct file write (atomic with LOCK_EX)
+        // 1. Direct file write (atomic with LOCK_EX and log rotation)
         if (!empty(self::$log_file)) {
+            if (file_exists(self::$log_file) && @filesize(self::$log_file) > 10 * 1024 * 1024) {
+                @rename(self::$log_file, self::$log_file . '.1');
+            }
             @file_put_contents(self::$log_file, $entry, FILE_APPEND | LOCK_EX);
         }
 

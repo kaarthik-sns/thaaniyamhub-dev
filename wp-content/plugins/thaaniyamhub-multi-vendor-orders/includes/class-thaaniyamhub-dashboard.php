@@ -171,8 +171,11 @@ class ThaaniyamHub_Dashboard
             return $result;
         }
 
+        static $table_exists = null;
         $table = $wpdb->prefix . 'wcfm_marketplace_refund_request';
-        $table_exists = ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table);
+        if (null === $table_exists) {
+            $table_exists = ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table);
+        }
 
         $rows = [];
         if ($table_exists) {

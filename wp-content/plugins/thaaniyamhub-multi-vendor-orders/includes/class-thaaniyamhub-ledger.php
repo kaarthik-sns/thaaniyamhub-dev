@@ -781,9 +781,6 @@ class ThaaniyamHub_Ledger
             $where_clauses[] = "order_status NOT IN ('trash', 'wc-trash', 'auto-draft', 'draft')";
         }
 
-        // Exclude trashed / deleted posts from wp_posts
-        $where_clauses[] = "parent_order_id NOT IN (SELECT ID FROM {$wpdb->posts} WHERE post_status IN ('trash', 'auto-draft'))";
-
         // 5. Payout Status
         if ( ! empty( $params['payout_status'] ) && 'all' !== $params['payout_status'] ) {
             $where_clauses[] = $wpdb->prepare( 'payout_status = %s', $params['payout_status'] );
@@ -902,8 +899,6 @@ class ThaaniyamHub_Ledger
             $where_clauses[] = "order_status NOT IN ('trash', 'wc-trash', 'auto-draft', 'draft')";
         }
 
-        // Exclude trashed / deleted posts from wp_posts
-        $where_clauses[] = "parent_order_id NOT IN (SELECT ID FROM {$wpdb->posts} WHERE post_status IN ('trash', 'auto-draft'))";
         if ( ! empty( $params['payout_status'] ) && 'all' !== $params['payout_status'] ) {
             $where_clauses[] = $wpdb->prepare( 'payout_status = %s', $params['payout_status'] );
         }

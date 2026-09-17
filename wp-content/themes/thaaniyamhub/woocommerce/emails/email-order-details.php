@@ -6,7 +6,16 @@
  * @version 10.8.0
  */
 
-defined( 'ABSPATH' ) || exit; ?>
+defined( 'ABSPATH' ) || exit;
+
+// Ensure order reflects post-split line items, shipping, and totals
+if ( is_a( $order, 'WC_Order' ) && $order->get_id() ) {
+    $fresh_order = wc_get_order( $order->get_id() );
+    if ( $fresh_order ) {
+        $order = $fresh_order;
+    }
+}
+?>
 
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
     <tr>

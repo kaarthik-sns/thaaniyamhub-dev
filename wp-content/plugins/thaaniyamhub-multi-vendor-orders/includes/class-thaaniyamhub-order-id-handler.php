@@ -19,6 +19,9 @@ class ThaaniyamHub_Order_ID_Handler
 
         // Append Vendor Name under Product Name in Order Item tables (emails and order details)
         add_filter('woocommerce_order_item_name', [__CLASS__, 'append_vendor_name_to_order_item_name'], 10, 3);
+
+        // Ensure Store New Order email subject always matches the current order number
+        add_filter('woocommerce_email_subject_store-new-order', [__CLASS__, 'fix_store_new_order_email_subject'], 20, 3);
     }
 
     /**
@@ -70,6 +73,30 @@ class ThaaniyamHub_Order_ID_Handler
         }
 
         return $item_name;
+    }
+
+    /**
+     * Fix WCFM Store New Order email subject so it always reflects the current order number,
+     * and reset the email's find/replace arrays to prevent bleed across split orders.
+     *
+     * @param string         $subject
+     * @param WC_Order|false $order
+     * @param WC_Email|null  $email_obj
+     * @return string
+     */
+    public static function fix_store_new_order_email_subject($subject, $order, $email_obj = null)
+    {
+        if (is_a($order, 'WC_Order')) {
+            $real_order_number = $order->get_order_number();
+            $subject = preg_replace('/\(\d+\)/', '(' . $real_order_number . ')', $subject);
+        }
+
+        if (is_object($email_obj)) {
+            $email_obj->find    = [];
+            $email_obj->replace = [];
+        }
+
+        return $subject;
     }
 }
 

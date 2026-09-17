@@ -71,11 +71,24 @@ class ThaaniyamHub_Order_Splitter
         wp_cache_delete($order_id, 'posts');
         wp_cache_delete($order_id, 'post_meta');
         wp_cache_delete($order_id, 'orders');
+        wp_cache_delete($order_id, 'order_objects');
         wp_cache_delete($order_id, 'order-items');
         wp_cache_delete($order_id, 'order_meta');
         clean_post_cache($order_id);
         if (function_exists('wc_delete_shop_order_transients')) {
             wc_delete_shop_order_transients($order_id);
+        }
+        if (function_exists('wc_get_container')) {
+            try {
+                if (class_exists('\Automattic\WooCommerce\Caches\OrderCache')) {
+                    $order_cache = wc_get_container()->get(\Automattic\WooCommerce\Caches\OrderCache::class);
+                    if ($order_cache && method_exists($order_cache, 'remove')) {
+                        $order_cache->remove($order_id);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Container or cache class not loaded
+            }
         }
     }
 
@@ -370,11 +383,6 @@ class ThaaniyamHub_Order_Splitter
                         ]);
                     }
 
-                    // Process WCFM commission for this new vendor order
-                    if (isset($WCFMmp->wcfmmp_commission) && method_exists($WCFMmp->wcfmmp_commission, 'wcfmmp_checkout_order_processed')) {
-                        $WCFMmp->wcfmmp_commission->wcfmmp_checkout_order_processed($new_order_id, [], $new_order);
-                    }
-
                     // Record in Financial Ledger
                     if (class_exists('ThaaniyamHub_Ledger')) {
                         ThaaniyamHub_Ledger::record_vendor_order($new_order, $vendor_id);
@@ -661,19 +669,25 @@ class ThaaniyamHub_Order_Splitter
             }
 
             $new_order->calculate_totals();
+            $new_order->set_status('pending');
+            $new_order->save();
+
+            // Process WCFM commission for this new vendor order BEFORE status promotion.
+            // While status is pending, WCFM populates the wcfm_marketplace_orders table
+            // without triggering emails (pending status is excluded from store email triggers).
+            global $WCFMmp;
+            if (isset($WCFMmp->wcfmmp_commission) && method_exists($WCFMmp->wcfmmp_commission, 'wcfmmp_checkout_order_processed')) {
+                $WCFMmp->wcfmmp_commission->wcfmmp_checkout_order_processed($new_order->get_id(), [], $new_order);
+            }
 
             // Status synchronization:
-            // If primary order is already paid or processing, promote secondary order immediately
+            // If primary order is already paid or processing, promote secondary order immediately.
+            // When payment_complete() runs, WCFM's order_status_changed hook sends the Store New Order
+            // email ONCE, and because wcfm_marketplace_orders is already populated, all items are displayed.
             if ($primary_order->is_paid() || $primary_order->has_status(['processing', 'completed'])) {
-                $new_order->set_status('pending');
-                $new_order->save();
                 $new_order->payment_complete($primary_order->get_transaction_id());
             } elseif ($primary_order->has_status('on-hold')) {
-                $new_order->set_status('on-hold');
-                $new_order->save();
-            } else {
-                $new_order->set_status('pending');
-                $new_order->save();
+                $new_order->update_status('on-hold', sprintf(__('Synced on-hold status from primary order #%d.', 'thaaniyamhub-multi-vendor-orders'), $primary_order->get_id()));
             }
 
             self::clear_order_cache($new_order->get_id());
