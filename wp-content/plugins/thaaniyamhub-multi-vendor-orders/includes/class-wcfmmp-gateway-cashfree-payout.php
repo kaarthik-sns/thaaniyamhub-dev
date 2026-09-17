@@ -194,14 +194,38 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
             $response = $api->direct_transfer( $transfer_data );
 
             if ( is_wp_error( $response ) ) {
-                $error_msg = $response->get_error_message();
-                thaaniyamhub_log( "WCFMmp_Gateway_Cashfree: Transfer failed for #{$this->withdrawal_id} — {$error_msg}", 'error', 'thaaniyamhub-cashfree-payout' );
-                return [
-                    [
-                        'status'  => false,
-                        'message' => sprintf( __( 'Cashfree Payout Failed: %s', 'thaaniyamhub-multi-vendor-orders' ), $error_msg ),
-                    ]
-                ];
+                $error_code = $response->get_error_code();
+                $error_msg  = $response->get_error_message();
+
+                // Check for transport/timeout error
+                $is_transport_error = ( 'http_request_failed' === $error_code || false !== stripos( $error_msg, 'cURL error 28' ) || false !== stripos( $error_msg, 'timed out' ) );
+                if ( $is_transport_error ) {
+                    thaaniyamhub_log( "WCFMmp_Gateway_Cashfree: Network timeout on #{$this->withdrawal_id}. Querying Cashfree status for {$transfer_id}...", 'warning', 'thaaniyamhub-cashfree-payout' );
+                    $status_check = $api->get_transfer_status( $transfer_id );
+                    if ( ! is_wp_error( $status_check ) && isset( $status_check['status'] ) && $status_check['status'] ) {
+                        $response = $status_check;
+                    } else {
+                        // Defer to background poller/webhook
+                        if ( isset( $WCFMmp->wcfmmp_withdraw ) && method_exists( $WCFMmp->wcfmmp_withdraw, 'wcfmmp_update_withdrawal_meta' ) ) {
+                            $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $this->withdrawal_id, 'cashfree_transfer_id', $transfer_id );
+                            $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $this->withdrawal_id, 'cashfree_status', 'PENDING_VERIFICATION' );
+                        }
+                        return [
+                            'status'  => true,
+                            'message' => sprintf( __( 'Transfer initiated (ID: %s) but request timed out. Awaiting poller confirmation.', 'thaaniyamhub-multi-vendor-orders' ), $transfer_id ),
+                        ];
+                    }
+                }
+
+                if ( is_wp_error( $response ) ) {
+                    thaaniyamhub_log( "WCFMmp_Gateway_Cashfree: Transfer failed for #{$this->withdrawal_id} — {$error_msg}", 'error', 'thaaniyamhub-cashfree-payout' );
+                    return [
+                        [
+                            'status'  => false,
+                            'message' => sprintf( __( 'Cashfree Payout Failed: %s', 'thaaniyamhub-multi-vendor-orders' ), $error_msg ),
+                        ]
+                    ];
+                }
             }
 
             $transfer_status = $response['transfer_status'] ?? 'PENDING';

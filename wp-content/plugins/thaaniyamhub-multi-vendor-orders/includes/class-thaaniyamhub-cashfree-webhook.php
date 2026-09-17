@@ -93,8 +93,20 @@ class ThaaniyamHub_Cashfree_Webhook {
 
         thaaniyamhub_log( "Cashfree_Webhook: Received webhook notification: {$raw_body}", 'info', 'thaaniyamhub-cashfree-payout' );
 
-        $api = ThaaniyamHub_Cashfree_Payout_API::get_instance();
-        if ( ! empty( $signature ) && ! $api->verify_webhook_signature( $raw_body, $signature, $timestamp ) ) {
+        $api           = ThaaniyamHub_Cashfree_Payout_API::get_instance();
+        $secret_exists = ! empty( $api->get_webhook_secret() ) || ! empty( $api->get_client_secret() );
+
+        // Strict signature validation: In production or whenever secrets are configured, signature is mandatory
+        if ( $secret_exists || ! $api->is_sandbox() ) {
+            if ( empty( $signature ) ) {
+                thaaniyamhub_log( 'Cashfree_Webhook: Missing required signature header!', 'error', 'thaaniyamhub-cashfree-payout' );
+                return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Missing signature' ], 401 );
+            }
+            if ( ! $api->verify_webhook_signature( $raw_body, $signature, $timestamp ) ) {
+                thaaniyamhub_log( 'Cashfree_Webhook: Invalid signature received!', 'error', 'thaaniyamhub-cashfree-payout' );
+                return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Invalid signature' ], 401 );
+            }
+        } elseif ( ! empty( $signature ) && ! $api->verify_webhook_signature( $raw_body, $signature, $timestamp ) ) {
             thaaniyamhub_log( 'Cashfree_Webhook: Invalid signature received!', 'error', 'thaaniyamhub-cashfree-payout' );
             return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Invalid signature' ], 401 );
         }
@@ -181,6 +193,17 @@ class ThaaniyamHub_Cashfree_Webhook {
     public function process_successful_transfer( int $withdrawal_id, string $transfer_id, string $ref_id = '', string $utr = '' ) {
         global $WCFMmp, $wpdb;
 
+        // Idempotency Guard: Prevent duplicate processing if already completed
+        $current_status = $wpdb->get_var( $wpdb->prepare(
+            "SELECT withdraw_status FROM {$wpdb->prefix}wcfm_marketplace_withdraw_request WHERE ID = %d",
+            $withdrawal_id
+        ) );
+
+        if ( 'completed' === $current_status ) {
+            thaaniyamhub_log( "Cashfree_Webhook: Withdrawal #{$withdrawal_id} is already completed. Skipping duplicate processing.", 'info', 'thaaniyamhub-cashfree-payout' );
+            return;
+        }
+
         thaaniyamhub_log( "Cashfree_Webhook: Marking Withdrawal #{$withdrawal_id} as COMPLETED. UTR: {$utr}", 'info', 'thaaniyamhub-cashfree-payout' );
 
         $note = sprintf( __( 'Cashfree Payout Completed. Transfer ID: %s | Ref: %s | UTR: %s', 'thaaniyamhub-multi-vendor-orders' ), $transfer_id, $ref_id, $utr );
@@ -248,6 +271,17 @@ class ThaaniyamHub_Cashfree_Webhook {
      */
     public function process_failed_transfer( int $withdrawal_id, string $transfer_id, string $ref_id = '', string $reason = '' ) {
         global $WCFMmp, $wpdb;
+
+        // Idempotency Guard: Do not re-process or cancel if already terminal
+        $current_status = $wpdb->get_var( $wpdb->prepare(
+            "SELECT withdraw_status FROM {$wpdb->prefix}wcfm_marketplace_withdraw_request WHERE ID = %d",
+            $withdrawal_id
+        ) );
+
+        if ( in_array( $current_status, [ 'cancelled', 'completed' ], true ) ) {
+            thaaniyamhub_log( "Cashfree_Webhook: Withdrawal #{$withdrawal_id} is already {$current_status}. Skipping duplicate fail transition.", 'info', 'thaaniyamhub-cashfree-payout' );
+            return;
+        }
 
         thaaniyamhub_log( "Cashfree_Webhook: Withdrawal #{$withdrawal_id} FAILED. Reason: {$reason}", 'error', 'thaaniyamhub-cashfree-payout' );
 

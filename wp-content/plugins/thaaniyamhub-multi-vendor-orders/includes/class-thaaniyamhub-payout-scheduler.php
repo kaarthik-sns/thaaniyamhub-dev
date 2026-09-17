@@ -232,15 +232,33 @@ class ThaaniyamHub_Payout_Scheduler {
     public static function execute_batch_payouts( string $source = 'cron' ): array {
         global $wpdb, $WCFMmp;
 
-        $start_time  = current_time( 'mysql' );
-        $delay_days  = absint( get_option( 'thaaniyamhub_auto_payout_delay_days', 4 ) );
-        $min_amount  = max( 0.0, (float) get_option( 'thaaniyamhub_auto_payout_min_amount', 0 ) );
+        // Process Mutex Lock: Ensure only one automated payout batch executes at any moment
+        $lock_key = 'thaaniyamhub_auto_payout_batch_lock';
+        if ( get_transient( $lock_key ) ) {
+            $msg = __( 'Another automated payout batch is currently in progress. Aborting duplicate execution.', 'thaaniyamhub-multi-vendor-orders' );
+            thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$msg}", 'warning', 'thaaniyamhub-cashfree-payout' );
+            return [
+                'success'      => false,
+                'message'      => $msg,
+                'vendors_paid' => 0,
+                'total_amount' => 0.0,
+                'errors'       => [ $msg ],
+            ];
+        }
 
-        thaaniyamhub_log(
-            sprintf( 'ThaaniyamHub_Payout_Scheduler: Starting automated payout run [Source: %s, Delay: %d days, Min Amount: ₹%s]', $source, $delay_days, $min_amount ),
-            'info',
-            'thaaniyamhub-cashfree-payout'
-        );
+        // Set lock for 5 minutes (300 seconds)
+        set_transient( $lock_key, time(), 300 );
+
+        try {
+            $start_time  = current_time( 'mysql' );
+            $delay_days  = absint( get_option( 'thaaniyamhub_auto_payout_delay_days', 4 ) );
+            $min_amount  = max( 0.0, (float) get_option( 'thaaniyamhub_auto_payout_min_amount', 0 ) );
+
+            thaaniyamhub_log(
+                sprintf( 'ThaaniyamHub_Payout_Scheduler: Starting automated payout run [Source: %s, Delay: %d days, Min Amount: ₹%s]', $source, $delay_days, $min_amount ),
+                'info',
+                'thaaniyamhub-cashfree-payout'
+            );
 
         $api = ThaaniyamHub_Cashfree_Payout_API::get_instance();
         if ( ! $api->is_configured() ) {
@@ -374,6 +392,9 @@ class ThaaniyamHub_Payout_Scheduler {
             'errors'         => $errors,
             'payout_details' => $payout_details,
         ];
+        } finally {
+            delete_transient( $lock_key );
+        }
     }
 
     /**
@@ -496,41 +517,85 @@ class ThaaniyamHub_Payout_Scheduler {
         $response = $api->direct_transfer( $transfer_data );
 
         if ( is_wp_error( $response ) ) {
-            $error_msg = $response->get_error_message();
-            thaaniyamhub_log(
-                "ThaaniyamHub_Payout_Scheduler: Payout failed for Vendor #{$vendor_id} (Withdrawal #{$withdrawal_id}) — {$error_msg}",
-                'error',
-                'thaaniyamhub-cashfree-payout'
-            );
+            $error_code = $response->get_error_code();
+            $error_msg  = $response->get_error_message();
 
-            // Revert commission status back to pending so they can be fixed and re-attempted
-            $wpdb->query( $wpdb->prepare(
-                "UPDATE {$wpdb->prefix}wcfm_marketplace_orders SET withdraw_status = 'pending' WHERE ID IN ($comm_placeholders)",
-                ...$commission_ids
-            ) );
+            // DOUBLE-PAYOUT SAFEGUARD UNDER HIGH PRESSURE / TIMEOUT:
+            // If the failure was a network/transport timeout, Cashfree may have received and initiated the transfer!
+            $is_transport_error = ( 'http_request_failed' === $error_code || false !== stripos( $error_msg, 'cURL error 28' ) || false !== stripos( $error_msg, 'timed out' ) );
 
-            if ( ! empty( $order_ids ) ) {
-                $order_placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
-                $wpdb->query( $wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
-                     SET payout_status = 'failed' 
-                     WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
-                    $vendor_id,
-                    ...array_merge( $order_ids, $order_ids )
-                ) );
+            if ( $is_transport_error ) {
+                thaaniyamhub_log(
+                    "ThaaniyamHub_Payout_Scheduler: Network timeout during payout initiation for Vendor #{$vendor_id}. Querying Cashfree status for transfer {$transfer_id}...",
+                    'warning',
+                    'thaaniyamhub-cashfree-payout'
+                );
+
+                $status_check = $api->get_transfer_status( $transfer_id );
+                if ( ! is_wp_error( $status_check ) && isset( $status_check['status'] ) && $status_check['status'] ) {
+                    // Cashfree received it! Adopt the status check response
+                    $response = $status_check;
+                } else {
+                    // Could not verify with Cashfree immediately.
+                    // DO NOT revert commissions to pending (would risk double disbursement)!
+                    // Keep request in 'requested' state and defer resolution to the 15-minute background poller.
+                    $note = sprintf( __( 'Transfer initiated (ID: %s) but connection timed out. Awaiting poller verification.', 'thaaniyamhub-multi-vendor-orders' ), $transfer_id );
+                    if ( isset( $WCFMmp->wcfmmp_withdraw ) && method_exists( $WCFMmp->wcfmmp_withdraw, 'wcfmmp_update_withdrawal_meta' ) ) {
+                        $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'withdraw_amount', $amount );
+                        $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_transfer_id', $transfer_id );
+                        $WCFMmp->wcfmmp_withdraw->wcfmmp_update_withdrawal_meta( $withdrawal_id, 'cashfree_status', 'PENDING_VERIFICATION' );
+                    }
+                    $wpdb->update(
+                        "{$wpdb->prefix}wcfm_marketplace_withdraw_request",
+                        [ 'withdraw_note' => $note ],
+                        [ 'ID' => $withdrawal_id ]
+                    );
+
+                    return [
+                        'success'     => true,
+                        'transfer_id' => $transfer_id,
+                        'status'      => 'PENDING_VERIFICATION',
+                        'utr'         => '',
+                    ];
+                }
             }
 
-            // Mark withdrawal request as cancelled/failed with note
-            $wpdb->update(
-                "{$wpdb->prefix}wcfm_marketplace_withdraw_request",
-                [ 'withdraw_status' => 'cancelled', 'withdraw_note' => 'Cashfree Error: ' . $error_msg ],
-                [ 'ID' => $withdrawal_id ]
-            );
+            if ( is_wp_error( $response ) ) {
+                thaaniyamhub_log(
+                    "ThaaniyamHub_Payout_Scheduler: Payout failed for Vendor #{$vendor_id} (Withdrawal #{$withdrawal_id}) — {$error_msg}",
+                    'error',
+                    'thaaniyamhub-cashfree-payout'
+                );
 
-            return [
-                'success' => false,
-                'error'   => $error_msg,
-            ];
+                // Revert commission status back to pending so they can be fixed and re-attempted
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}wcfm_marketplace_orders SET withdraw_status = 'pending' WHERE ID IN ($comm_placeholders)",
+                    ...$commission_ids
+                ) );
+
+                if ( ! empty( $order_ids ) ) {
+                    $order_placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+                    $wpdb->query( $wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}thaaniyamhub_vendor_ledger 
+                         SET payout_status = 'failed' 
+                         WHERE vendor_id = %d AND (sub_order_id IN ($order_placeholders) OR parent_order_id IN ($order_placeholders))",
+                        $vendor_id,
+                        ...array_merge( $order_ids, $order_ids )
+                    ) );
+                }
+
+                // Mark withdrawal request as cancelled/failed with note
+                $wpdb->update(
+                    "{$wpdb->prefix}wcfm_marketplace_withdraw_request",
+                    [ 'withdraw_status' => 'cancelled', 'withdraw_note' => 'Cashfree Error: ' . $error_msg ],
+                    [ 'ID' => $withdrawal_id ]
+                );
+
+                return [
+                    'success' => false,
+                    'error'   => $error_msg,
+                ];
+            }
         }
 
         $transfer_status = $response['transfer_status'] ?? 'PENDING';

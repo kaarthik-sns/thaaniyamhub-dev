@@ -328,27 +328,16 @@ if ($order) :
         }
 
         // Resilient check: If the primary checkout order contains multiple vendors but splitting
-        // is still in-flight (due to asynchronous payment gateway webhook vs browser redirect race condition),
-        // wait briefly (up to ~2.5 seconds) for the background webhook to finish writing sub-orders to the DB,
-        // or trigger the split if not yet initiated.
+        // has not executed yet, trigger split safely if order is paid or in processing.
+        // (ThaaniyamHub_Order_Splitter::split is guarded by MySQL GET_LOCK mutex and idempotency checks)
         if (class_exists('ThaaniyamHub_Order_Splitter') && !$primary_order->get_meta('_thaaniyamhub_order_split_done')) {
             $vendor_groups = ThaaniyamHub_Order_Splitter::group_items_by_vendor($primary_order);
             if (count($vendor_groups) > 1) {
-                for ($wait_i = 0; $wait_i < 6; $wait_i++) {
-                    usleep(400000); // 400ms delay per check
-                    wp_cache_delete($primary_order->get_id(), 'posts');
-                    wp_cache_delete($primary_order->get_id(), 'post_meta');
-                    $refreshed = wc_get_order($primary_order->get_id());
-                    if ($refreshed && $refreshed->get_meta('_thaaniyamhub_order_split_done')) {
-                        $primary_order = $refreshed;
-                        $all_orders = [$refreshed];
-                        break;
-                    }
-                }
-
-                // If still not split and order is already in a paid/processing state, execute split immediately
-                if (!$primary_order->get_meta('_thaaniyamhub_order_split_done') && $primary_order->has_status(['processing', 'completed', 'on-hold'])) {
+                if ($primary_order->has_status(['processing', 'completed', 'on-hold']) || $primary_order->is_paid()) {
                     ThaaniyamHub_Order_Splitter::split($primary_order);
+                    if (method_exists('ThaaniyamHub_Order_Splitter', 'clear_order_cache')) {
+                        ThaaniyamHub_Order_Splitter::clear_order_cache($primary_order->get_id());
+                    }
                     $refreshed = wc_get_order($primary_order->get_id());
                     if ($refreshed) {
                         $primary_order = $refreshed;
@@ -364,6 +353,26 @@ if ($order) :
                 if ((int) $sid !== $primary_order->get_id()) {
                     $sec_o = wc_get_order((int) $sid);
                     if ($sec_o) {
+                        $all_orders[] = $sec_o;
+                    }
+                }
+            }
+        } else {
+            // Resilient fallback query: discover any sub-orders created by background webhook
+            $queried_suborders = wc_get_orders([
+                'limit'        => 50,
+                'type'         => 'shop_order',
+                'status'       => ['any'],
+                'meta_query'   => [
+                    [
+                        'key'   => '_thaaniyamhub_primary_order_id',
+                        'value' => $primary_order->get_id(),
+                    ],
+                ],
+            ]);
+            if (!empty($queried_suborders)) {
+                foreach ($queried_suborders as $sec_o) {
+                    if ($sec_o->get_id() !== $primary_order->get_id()) {
                         $all_orders[] = $sec_o;
                     }
                 }

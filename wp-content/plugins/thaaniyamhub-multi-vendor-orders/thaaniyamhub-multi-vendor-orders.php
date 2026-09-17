@@ -2748,20 +2748,22 @@ if (!function_exists('thaaniyamhub_fetch_actual_payment_method')) {
         if ($payment_method_id === 'cashfree' || empty($formatted_method)) {
             try {
                 $cf_settings = get_option('woocommerce_cashfree_settings', []);
-                $app_id = $cf_settings['app_id'] ?? '';
-                $secret_key = $cf_settings['secret_key'] ?? '';
+                $app_id      = ( defined( 'CASHFREE_APP_ID' ) && ! empty( constant( 'CASHFREE_APP_ID' ) ) ) ? constant( 'CASHFREE_APP_ID' ) : ( getenv( 'CASHFREE_APP_ID' ) ?: ( $cf_settings['app_id'] ?? '' ) );
+                $secret_key  = ( defined( 'CASHFREE_SECRET_KEY' ) && ! empty( constant( 'CASHFREE_SECRET_KEY' ) ) ) ? constant( 'CASHFREE_SECRET_KEY' ) : ( getenv( 'CASHFREE_SECRET_KEY' ) ?: ( $cf_settings['secret_key'] ?? '' ) );
 
                 if (!empty($app_id) && !empty($secret_key)) {
-                    $is_sandbox = ($cf_settings['sandbox'] ?? 'yes') === 'yes';
-                    $base_url = $is_sandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
-                    $prefix = (($cf_settings['order_id_prefix_text'] ?? 'yes') === 'yes') ? substr(md5(home_url()), 0, 4) . '_' : '';
-                    $cf_order_id = $prefix . $order_id;
+                    $is_sandbox = ( defined( 'CASHFREE_ENV' ) && 'production' === constant( 'CASHFREE_ENV' ) ) ? false : ( ($cf_settings['sandbox'] ?? 'yes') === 'yes' );
+                    $base_url   = $is_sandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+                    $saved_cf_id = $order->get_meta('_cf_order_id') ?: $order->get_meta('_cashfree_order_id');
+                    $prefix     = (($cf_settings['order_id_prefix_text'] ?? 'yes') === 'yes') ? substr(md5(home_url()), 0, 4) . '_' : '';
+                    $cf_order_id = !empty($saved_cf_id) ? $saved_cf_id : ($prefix . $order_id);
 
-                    $resp = wp_remote_get($base_url . '/orders/' . $cf_order_id . '/payments', [
+                    $resp = wp_remote_get($base_url . '/orders/' . rawurlencode($cf_order_id) . '/payments', [
                         'headers' => [
-                            'x-api-version' => '2022-09-01',
-                            'x-client-id' => $app_id,
+                            'x-api-version' => '2025-01-01',
+                            'x-client-id'   => $app_id,
                             'x-client-secret' => $secret_key,
+                            'x-request-id'  => 'cf-woo-paycheck-' . $order_id . '-' . time(),
                         ],
                         'timeout' => 15,
                     ]);

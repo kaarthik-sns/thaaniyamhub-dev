@@ -335,9 +335,9 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
 
             // Strategy 2: Direct Official Cashfree PG REST API (v2025-01-01 / v2022-09-01)
             if (!$refund_processed) {
-                $app_id     = $settings['app_id'] ?? '';
-                $secret_key = $settings['secret_key'] ?? '';
-                $is_sandbox = ($settings['sandbox'] ?? 'no') === 'yes';
+                $app_id     = ( defined( 'CASHFREE_APP_ID' ) && ! empty( constant( 'CASHFREE_APP_ID' ) ) ) ? constant( 'CASHFREE_APP_ID' ) : ( getenv( 'CASHFREE_APP_ID' ) ?: ( $settings['app_id'] ?? '' ) );
+                $secret_key = ( defined( 'CASHFREE_SECRET_KEY' ) && ! empty( constant( 'CASHFREE_SECRET_KEY' ) ) ) ? constant( 'CASHFREE_SECRET_KEY' ) : ( getenv( 'CASHFREE_SECRET_KEY' ) ?: ( $settings['secret_key'] ?? '' ) );
+                $is_sandbox = ( defined( 'CASHFREE_ENV' ) && 'production' === constant( 'CASHFREE_ENV' ) ) ? false : ( ( $settings['sandbox'] ?? 'no' ) === 'yes' );
 
                 if (empty($app_id) || empty($secret_key)) {
                     return new WP_Error('error', __('Cashfree credentials missing for refund processing', 'woocommerce'));
@@ -360,7 +360,8 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                         'x-client-secret' => $secret_key,
                         'x-api-version'   => '2025-01-01',
                         'Content-Type'    => 'application/json',
-                        'x-request-id'    => 'cf-woo-ref-' . $order_id . '-' . time(),
+                        'Connection'      => 'keep-alive',
+                        'x-request-id'    => 'cf-woo-ref-' . $order_id . '-' . time() . '-' . wp_rand(100, 999),
                     ],
                     'body' => wp_json_encode($body_data),
                 ]);
@@ -376,9 +377,18 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                 $res_body = json_decode(wp_remote_retrieve_body($response));
 
                 if ($code >= 200 && $code < 300 && !empty($res_body)) {
-                    $refund_processed = true;
-                    $refund_obj       = $res_body;
-                    $cf_refund_id     = $res_body->cf_refund_id ?? $refund_id;
+                    $cf_status = strtoupper($res_body->refund_status ?? 'SUCCESS');
+                    if (in_array($cf_status, ['SUCCESS', 'PENDING'], true)) {
+                        $refund_processed = true;
+                        $refund_obj       = $res_body;
+                        $cf_refund_id     = $res_body->cf_refund_id ?? $refund_id;
+                    } else {
+                        $error_msg = $res_body->refund_note ?? ($res_body->message ?? 'Refund status: ' . $cf_status);
+                        return new WP_Error(
+                            'error',
+                            sprintf(__('Cashfree refund rejected with status %1$s: %2$s', 'cashfree'), $cf_status, $error_msg)
+                        );
+                    }
                 } else {
                     $error_msg = $res_body->message ?? wp_remote_retrieve_response_message($response);
                     return new WP_Error(

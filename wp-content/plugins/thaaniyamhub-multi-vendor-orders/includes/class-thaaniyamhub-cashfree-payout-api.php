@@ -46,6 +46,13 @@ class ThaaniyamHub_Cashfree_Payout_API {
      * @return string
      */
     public function get_environment() {
+        if ( defined( 'CASHFREE_PAYOUT_ENV' ) && ! empty( constant( 'CASHFREE_PAYOUT_ENV' ) ) ) {
+            return constant( 'CASHFREE_PAYOUT_ENV' );
+        }
+        $env = getenv( 'CASHFREE_PAYOUT_ENV' );
+        if ( false !== $env && '' !== $env ) {
+            return $env;
+        }
         return get_option( 'thaaniyamhub_cashfree_payout_env', 'sandbox' );
     }
 
@@ -69,28 +76,58 @@ class ThaaniyamHub_Cashfree_Payout_API {
 
     /**
      * Get configured Client ID.
+     * Supports constant/env override CASHFREE_PAYOUT_CLIENT_ID / CASHFREE_PAYOUT_APP_ID.
      *
      * @return string
      */
     public function get_client_id() {
+        if ( defined( 'CASHFREE_PAYOUT_CLIENT_ID' ) && ! empty( constant( 'CASHFREE_PAYOUT_CLIENT_ID' ) ) ) {
+            return trim( (string) constant( 'CASHFREE_PAYOUT_CLIENT_ID' ) );
+        }
+        if ( defined( 'CASHFREE_PAYOUT_APP_ID' ) && ! empty( constant( 'CASHFREE_PAYOUT_APP_ID' ) ) ) {
+            return trim( (string) constant( 'CASHFREE_PAYOUT_APP_ID' ) );
+        }
+        $env = getenv( 'CASHFREE_PAYOUT_CLIENT_ID' ) ?: getenv( 'CASHFREE_PAYOUT_APP_ID' );
+        if ( false !== $env && '' !== $env ) {
+            return trim( (string) $env );
+        }
         return trim( (string) get_option( 'thaaniyamhub_cashfree_payout_client_id', '' ) );
     }
 
     /**
      * Get configured Client Secret.
+     * Supports constant/env override CASHFREE_PAYOUT_CLIENT_SECRET / CASHFREE_PAYOUT_SECRET_KEY.
      *
      * @return string
      */
     public function get_client_secret() {
+        if ( defined( 'CASHFREE_PAYOUT_CLIENT_SECRET' ) && ! empty( constant( 'CASHFREE_PAYOUT_CLIENT_SECRET' ) ) ) {
+            return trim( (string) constant( 'CASHFREE_PAYOUT_CLIENT_SECRET' ) );
+        }
+        if ( defined( 'CASHFREE_PAYOUT_SECRET_KEY' ) && ! empty( constant( 'CASHFREE_PAYOUT_SECRET_KEY' ) ) ) {
+            return trim( (string) constant( 'CASHFREE_PAYOUT_SECRET_KEY' ) );
+        }
+        $env = getenv( 'CASHFREE_PAYOUT_CLIENT_SECRET' ) ?: getenv( 'CASHFREE_PAYOUT_SECRET_KEY' );
+        if ( false !== $env && '' !== $env ) {
+            return trim( (string) $env );
+        }
         return trim( (string) get_option( 'thaaniyamhub_cashfree_payout_client_secret', '' ) );
     }
 
     /**
      * Get configured Webhook Secret.
+     * Supports constant/env override CASHFREE_PAYOUT_WEBHOOK_SECRET.
      *
      * @return string
      */
     public function get_webhook_secret() {
+        if ( defined( 'CASHFREE_PAYOUT_WEBHOOK_SECRET' ) && ! empty( constant( 'CASHFREE_PAYOUT_WEBHOOK_SECRET' ) ) ) {
+            return trim( (string) constant( 'CASHFREE_PAYOUT_WEBHOOK_SECRET' ) );
+        }
+        $env = getenv( 'CASHFREE_PAYOUT_WEBHOOK_SECRET' );
+        if ( false !== $env && '' !== $env ) {
+            return trim( (string) $env );
+        }
         return trim( (string) get_option( 'thaaniyamhub_cashfree_payout_webhook_secret', '' ) );
     }
 
@@ -110,16 +147,20 @@ class ThaaniyamHub_Cashfree_Payout_API {
      *
      * @param string $client_id
      * @param string $client_secret
+     * @param string $request_id
      * @return array
      */
-    public function get_v2_headers( $client_id = '', $client_secret = '' ) {
+    public function get_v2_headers( $client_id = '', $client_secret = '', $request_id = '' ) {
         $client_id     = ! empty( $client_id ) ? trim( (string) $client_id ) : $this->get_client_id();
         $client_secret = ! empty( $client_secret ) ? trim( (string) $client_secret ) : $this->get_client_secret();
+        $req_id        = ! empty( $request_id ) ? $request_id : ( 'cf-po-' . time() . '-' . wp_rand( 1000, 9999 ) );
 
         return [
             'x-api-version'   => self::API_VERSION,
             'x-client-id'     => $client_id,
             'x-client-secret' => $client_secret,
+            'x-request-id'    => $req_id,
+            'Connection'      => 'keep-alive',
             'Content-Type'    => 'application/json',
             'Accept'          => 'application/json',
         ];
