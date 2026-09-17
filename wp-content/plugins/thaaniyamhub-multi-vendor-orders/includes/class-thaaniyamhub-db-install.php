@@ -102,7 +102,6 @@ class ThaaniyamHub_DB_Install {
                     item_subtotal = IF(item_subtotal <= 0 AND gross_sales > 0, ROUND(gross_sales + discount_total, 2), item_subtotal),
                     total_incoming = IF(total_incoming <= 0, gross_sales + shipping_charge + tax_amount, total_incoming),
                     commission_tax = IF(commission_tax <= 0 AND commission_deducted > 0, ROUND(commission_deducted * 0.18, 2), commission_tax),
-                    shiprocket_shipping_cost = IF(shiprocket_shipping_cost <= 0 AND shipping_charge > 0, shipping_charge, shiprocket_shipping_cost),
                     gateway_fee = IF(gateway_fee <= 0 AND LOWER(payment_method) != 'cod' AND total_incoming > 0, ROUND(total_incoming * 0.02, 2), gateway_fee),
                     gateway_tax = IF(gateway_tax <= 0 AND gateway_fee > 0, ROUND(gateway_fee * 0.18, 2), gateway_tax),
                     other_service_cost = IF(other_service_cost <= 0, 2.95, other_service_cost),

@@ -292,6 +292,7 @@ class ThaaniyamHub_Ledger
         $shiprocket_shipping_cost = 0.0;
         $shiprocket_courier_name  = '';
         $shiprocket_awb           = '';
+        $shiprocket_order_id      = '';
 
         // Check order meta
         $meta_sr_cost = $order->get_meta( '_shiprocket_actual_shipping_cost' );
@@ -301,24 +302,38 @@ class ThaaniyamHub_Ledger
 
         // Check local fulfillment table
         $fulfillment = $wpdb->get_row( $wpdb->prepare(
-            "SELECT awb_code, courier_name FROM {$wpdb->prefix}thaaniyamhub_shiprocket_fulfillment WHERE sub_order_id = %d LIMIT 1",
+            "SELECT awb_code, courier_name, shiprocket_order_id, fulfillment_status FROM {$wpdb->prefix}thaaniyamhub_shiprocket_fulfillment WHERE sub_order_id = %d LIMIT 1",
             $order_id
         ) );
         if ( $fulfillment ) {
             $shiprocket_awb          = $fulfillment->awb_code ?: '';
             $shiprocket_courier_name = $fulfillment->courier_name ?: '';
+            $shiprocket_order_id     = $fulfillment->shiprocket_order_id ?: '';
         }
 
-        // Fallback to order meta for courier / AWB
+        // Fallback to order meta for courier / AWB / Shiprocket Order ID
         if ( empty( $shiprocket_awb ) ) {
             $shiprocket_awb = (string) $order->get_meta( '_shiprocket_awb' );
         }
         if ( empty( $shiprocket_courier_name ) ) {
             $shiprocket_courier_name = (string) $order->get_meta( '_shiprocket_selected_courier_name' );
         }
+        if ( empty( $shiprocket_order_id ) ) {
+            $shiprocket_order_id = (string) $order->get_meta( '_shiprocket_order_id' );
+        }
 
-        if ( $shiprocket_shipping_cost <= 0 && 'admin_retains' === $shipping_model ) {
-            $shiprocket_shipping_cost = $shipping_charge; // baseline estimate
+        $is_pushed_to_shiprocket = ! empty( $shiprocket_order_id );
+        $is_sr_cancelled         = ( $fulfillment && 'cancelled' === $fulfillment->fulfillment_status );
+
+        // If order has not yet been pushed to Shiprocket, or was cancelled in Shiprocket, logistics cost is 0.00
+        if ( ! $is_pushed_to_shiprocket || $is_sr_cancelled ) {
+            $shiprocket_shipping_cost = 0.0;
+        } elseif ( ( $is_full_refund || 'cancelled' === strtolower( (string) $order->get_status() ) ) && empty( $shiprocket_awb ) ) {
+            // Cancelled or fully refunded before shipment/AWB dispatch -> 0.00
+            $shiprocket_shipping_cost = 0.0;
+        } elseif ( $shiprocket_shipping_cost <= 0 && 'admin_retains' === $shipping_model ) {
+            // Pushed to Shiprocket: baseline estimate until exact courier rate/AWB confirmed
+            $shiprocket_shipping_cost = $shipping_charge;
         }
 
         // ---------------------------------------------------------------------
@@ -509,9 +524,11 @@ class ThaaniyamHub_Ledger
                 2
             );
 
-            $total_incoming = (float) $row->total_incoming;
-            $net_profit     = round( $total_incoming - $total_outgoing, 2 );
-            $profit_margin  = ( $total_incoming > 0 ) ? round( ( $net_profit / $total_incoming ) * 100, 2 ) : 0.00;
+            $total_incoming  = (float) $row->total_incoming;
+            $refunded_amount = (float) ( $row->refunded_amount ?? 0 );
+            $net_incoming    = max( 0.0, round( $total_incoming - $refunded_amount, 2 ) );
+            $net_profit      = round( $net_incoming - $total_outgoing, 2 );
+            $profit_margin   = ( $net_incoming > 0 ) ? round( ( $net_profit / $net_incoming ) * 100, 2 ) : 0.00;
 
             $wpdb->update(
                 $table,

@@ -617,7 +617,7 @@ class ThaaniyamHub_PDF_Report
 
                                         <!-- 10. Shiprocket Freight -->
                                         <td class="col-numeric col-logistics">
-                                            <span class="sr-cost"><strong><?php echo wp_kses_post(wc_price((float)$row->shiprocket_shipping_cost > 0 ? (float)$row->shiprocket_shipping_cost : (float)$row->shipping_charge)); ?></strong></span>
+                                            <span class="sr-cost"><strong><?php echo wp_kses_post(wc_price((float)$row->shiprocket_shipping_cost)); ?></strong></span>
                                             <?php if (!empty($row->shiprocket_awb)): ?>
                                                 <span class="sr-awb-tag" title="<?php echo esc_attr($row->shiprocket_courier_name ?: 'Shiprocket AWB'); ?>">
                                                     📦 <?php echo esc_html($row->shiprocket_awb); ?>
@@ -759,7 +759,7 @@ class ThaaniyamHub_PDF_Report
                                                             </tr>
                                                             <tr>
                                                                 <td><?php esc_html_e('Shiprocket Actual Freight:', 'thaaniyamhub-multi-vendor-orders'); ?></td>
-                                                                <td class="text-right text-orange"><?php echo wp_kses_post(wc_price((float)$row->shiprocket_shipping_cost > 0 ? (float)$row->shiprocket_shipping_cost : (float)$row->shipping_charge)); ?></td>
+                                                                <td class="text-right text-orange"><?php echo wp_kses_post(wc_price((float)$row->shiprocket_shipping_cost)); ?></td>
                                                             </tr>
                                                             <tr>
                                                                 <td><?php esc_html_e('18% GST on Platform Comm.:', 'thaaniyamhub-multi-vendor-orders'); ?></td>
@@ -839,7 +839,7 @@ class ThaaniyamHub_PDF_Report
                                         </div>
                                     </td>
                                     <!-- 7. Shiprocket Freight -->
-                                    <td class="col-numeric font-bold text-orange"><?php echo wp_kses_post(wc_price(array_sum(array_map(function($r){ return (float)($r->shiprocket_shipping_cost > 0 ? $r->shiprocket_shipping_cost : $r->shipping_charge); }, (array)$rows)))); ?></td>
+                                    <td class="col-numeric font-bold text-orange"><?php echo wp_kses_post(wc_price(array_sum(array_map(function($r){ return (float)$r->shiprocket_shipping_cost; }, (array)$rows)))); ?></td>
                                     <!-- 8. Cashfree Fees -->
                                     <td class="col-numeric font-bold text-purple col-grp-end"><?php echo wp_kses_post(wc_price(array_sum(array_map(function($r){ return (float)$r->gateway_fee + (float)$r->gateway_tax + (float)$r->other_service_cost; }, (array)$rows)))); ?></td>
                                     <!-- 9. Total Outflow -->

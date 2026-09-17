@@ -33,6 +33,19 @@ class ThaaniyamHub_Dashboard
         // ---- Row Actions in Orders Table ----
         add_filter('woocommerce_admin_order_actions', [__CLASS__, 'add_row_actions'], 20, 2);
 
+        // ---- Orders List: Status Column Refund Badge ----
+        // HPOS (wc-orders screen)
+        add_action('manage_woocommerce_page_wc-orders_custom_column', [__CLASS__, 'render_order_status_column_refund_badge'], 20, 2);
+        // Legacy CPT (edit.php?post_type=shop_order)
+        add_action('manage_shop_order_posts_custom_column', [__CLASS__, 'render_order_status_column_refund_badge'], 20, 2);
+
+        // Status Transition: Clean up when order status changes to refunded
+        add_action('woocommerce_order_status_refunded', [__CLASS__, 'on_order_status_refunded'], 10, 1);
+
+        // Order row CSS classes
+        add_filter('woocommerce_order_list_table_order_css_classes', [__CLASS__, 'filter_order_row_classes'], 10, 2);
+        add_filter('post_class', [__CLASS__, 'filter_legacy_order_row_classes'], 10, 3);
+
         // ---- Bulk Actions ----
         // Legacy (post-based orders)
         add_filter('bulk_actions-edit-shop_order', [__CLASS__, 'register_bulk_actions']);
@@ -145,6 +158,19 @@ class ThaaniyamHub_Dashboard
             return $cache[$order_id];
         }
 
+        // If the WooCommerce order is already refunded, refund is completed and no longer in "requested" state
+        if ($order->get_status() === 'refunded' || $order->has_status('refunded')) {
+            $result = [
+                'status'    => 'completed',
+                'label'     => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
+                'amount'    => (float) $order->get_total_refunded(),
+                'reasons'   => [],
+                'badge_cls' => 'thaaniyamhub-badge-refund-completed',
+            ];
+            $cache[$order_id] = $result;
+            return $result;
+        }
+
         $table = $wpdb->prefix . 'wcfm_marketplace_refund_request';
         $table_exists = ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table);
 
@@ -219,6 +245,118 @@ class ThaaniyamHub_Dashboard
 
         $cache[$order_id] = $result;
         return $result;
+    }
+
+    // =========================================================================
+    // 0.2 STATUS COLUMN REFUND BADGE RENDERING
+    // =========================================================================
+
+    /**
+     * Render "Refund Requested" badge directly below the status in the Orders list table.
+     * Hidden if the order status has changed to refunded.
+     *
+     * @param string $column_name Column identifier.
+     * @param WC_Order|int $order_or_id Order object (HPOS) or Order ID (legacy CPT).
+     */
+    public static function render_order_status_column_refund_badge($column_name, $order_or_id)
+    {
+        if ('order_status' !== $column_name) {
+            return;
+        }
+
+        $order = ($order_or_id instanceof WC_Order) ? $order_or_id : wc_get_order($order_or_id);
+        if (!$order) {
+            return;
+        }
+
+        // Hide if the order status has changed to refunded
+        if ($order->get_status() === 'refunded' || $order->has_status('refunded')) {
+            return;
+        }
+
+        $refund_info = self::get_order_refund_info($order);
+        if (!$refund_info || ($refund_info['status'] ?? '') !== 'requested') {
+            return;
+        }
+
+        $label = !empty($refund_info['label']) ? $refund_info['label'] : __('Refund Requested', 'thaaniyamhub-multi-vendor-orders');
+        $badge_cls = !empty($refund_info['badge_cls']) ? $refund_info['badge_cls'] : 'thaaniyamhub-badge-refund-requested';
+        $tip = !empty($refund_info['reasons']) ? implode('; ', $refund_info['reasons']) : '';
+
+        echo '<div class="thaaniyamhub-status-refund-badge" style="margin-top: 5px;">';
+        echo '<span class="thaaniyamhub-refund-badge ' . esc_attr($badge_cls) . '"' . (!empty($tip) ? ' title="' . esc_attr(__('Reason: ', 'thaaniyamhub-multi-vendor-orders') . $tip) . '"' : '') . '>';
+        echo '<span class="dashicons dashicons-undo" style="font-size: 11px; width: 11px; height: 11px; vertical-align: -1px; margin-right: 3px;"></span>';
+        echo esc_html($label);
+        echo '</span>';
+        echo '</div>';
+    }
+
+    /**
+     * Add refund requested CSS classes to order row in HPOS list table.
+     *
+     * @param array $classes
+     * @param WC_Order $order
+     * @return array
+     */
+    public static function filter_order_row_classes(array $classes, WC_Order $order): array
+    {
+        if ($order->get_status() !== 'refunded' && !$order->has_status('refunded')) {
+            $refund_info = self::get_order_refund_info($order);
+            if ($refund_info && ($refund_info['status'] ?? '') === 'requested') {
+                $classes[] = 'thaaniyamhub-has-refund';
+                $classes[] = 'thaaniyamhub-refund-requested';
+            }
+        }
+        return array_unique($classes);
+    }
+
+    /**
+     * Add refund requested CSS classes to post row in legacy CPT list table.
+     *
+     * @param array $classes
+     * @param string|array $class
+     * @param int $post_id
+     * @return array
+     */
+    public static function filter_legacy_order_row_classes(array $classes, $class = '', $post_id = 0): array
+    {
+        if ($post_id && get_post_type($post_id) === 'shop_order') {
+            $order = wc_get_order($post_id);
+            if ($order && $order->get_status() !== 'refunded' && !$order->has_status('refunded')) {
+                $refund_info = self::get_order_refund_info($order);
+                if ($refund_info && ($refund_info['status'] ?? '') === 'requested') {
+                    $classes[] = 'thaaniyamhub-has-refund';
+                    $classes[] = 'thaaniyamhub-refund-requested';
+                }
+            }
+        }
+        return array_unique($classes);
+    }
+
+    /**
+     * Clean up refund request flags when order status changes to refunded.
+     *
+     * @param int $order_id
+     */
+    public static function on_order_status_refunded($order_id)
+    {
+        global $wpdb;
+        $order = wc_get_order($order_id);
+        if ($order) {
+            $order->delete_meta_data('_wcfm_refund_request');
+            $order->delete_meta_data('_refund_requested');
+            $order->save();
+        }
+
+        // Mark WCFM refund table rows for this order as completed
+        $table = $wpdb->prefix . 'wcfm_marketplace_refund_request';
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table) {
+            $wpdb->update(
+                $table,
+                ['refund_status' => 'completed', 'refund_paid_date' => current_time('mysql')],
+                ['order_id' => $order_id, 'refund_status' => 'requested']
+            );
+        }
     }
 
     // =========================================================================
@@ -938,10 +1076,21 @@ class ThaaniyamHub_Dashboard
                 printf(
                     '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">⏱️ Estimated (Pending Shiprocket dispatch)</small></td></tr>',
                     esc_html__('Estimated Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
-                    self::help_tip(__('Estimated shipping cost based on customer checkout shipping charge. This order has not yet been pushed to Shiprocket. Once dispatched and an AWB is generated, this row will automatically update with the exact courier freight cost billed by Shiprocket.', 'thaaniyamhub-multi-vendor-orders')),
+                    self::help_tip(__('Estimated shipping cost based on customer checkout shipping charge. This order has been pushed to Shiprocket. Once dispatched and an AWB is generated, this row will automatically update with the exact courier freight cost billed by Shiprocket.', 'thaaniyamhub-multi-vendor-orders')),
                     wp_kses_post(wc_price($shipping_cost))
                 );
             }
+        } else {
+            $is_fully_refunded = ('refunded' === strtolower($row->payout_status ?: '') || $has_refund);
+            $badge_text = $is_fully_refunded ? __('Not dispatched / Cancelled', 'thaaniyamhub-multi-vendor-orders') : __('Not yet pushed to Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+            $tip_text   = $is_fully_refunded ? __('Logistics cost is ₹0.00 as this order was refunded/cancelled prior to dispatch.', 'thaaniyamhub-multi-vendor-orders') : __('Logistics cost is ₹0.00 because this order has not yet been pushed to Shiprocket.', 'thaaniyamhub-multi-vendor-orders');
+            printf(
+                '<tr><th><strong>%s</strong>%s</th><td><span style="color:#64748b;font-weight:600;">%s</span> <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">%s</small></td></tr>',
+                esc_html__('Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
+                self::help_tip($tip_text),
+                wp_kses_post(wc_price(0)),
+                esc_html($badge_text)
+            );
         }
 
         if ($total_processing_fee > 0) {
@@ -966,7 +1115,10 @@ class ThaaniyamHub_Dashboard
                     '<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:700;color:#059669;">+%s</td></tr>' .
                     ($has_refund ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:700;color:#dc2626;">-%s</td></tr><tr><td style="padding:2px 0;font-weight:700;">%s:</td><td style="text-align:right;font-weight:700;color:#059669;">=%s</td></tr>', esc_html__('Customer Refund', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($refunded_amount)), esc_html__('Net Inflow', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($net_inflow))) : '') .
                     '<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>' .
-                    ($shipping_cost > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html($shipping_label_short), wp_strip_all_tags(wc_price($shipping_cost))) : '') .
+                    ($shipping_cost > 0 
+                        ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html($shipping_label_short), wp_strip_all_tags(wc_price($shipping_cost))) 
+                        : sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#64748b;">-%s</td></tr>', esc_html__('Logistics', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price(0)))
+                    ) .
                     ((float)$row->commission_tax > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html__('Tax on Commission (GST)', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($row->commission_tax))) : '') .
                     ($total_processing_fee > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html__('Cashfree Gateway & Payout Fees', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($total_processing_fee))) : '') .
                     '<tr style="border-top:1px dashed %s;"><td style="padding:5px 0 2px 0;font-weight:700;">%s:</td><td style="padding:5px 0 2px 0;text-align:right;font-weight:800;font-size:12.5px;color:%s;">%s (%s%%)</td></tr>' .
@@ -1757,6 +1909,11 @@ class ThaaniyamHub_Dashboard
             background: #fef3c7;
             color: #92400e;
             border: 1px solid #fde68a;
+        }
+        .thaaniyamhub-badge-refund-requested:hover {
+            background: #fde68a;
+            color: #78350f;
+            cursor: help;
         }
         .thaaniyamhub-badge-refund-completed {
             background: #d1fae5;

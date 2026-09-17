@@ -91,6 +91,10 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             // Success - update local status to cancelled so auto_cancel_shiprocket_shipment doesn't call it again.
             thaaniyamhub_log("ThaaniyamHub_Dispatch: before_order_status_change_validation - Shiprocket cancellation succeeded for order #{$order_id}. Updating local status to cancelled.");
             ThaaniyamHub_Shiprocket_API::update_status($order_id, 'cancelled');
+            if (class_exists('ThaaniyamHub_Ledger')) {
+                $v_id = self::get_order_vendor_id($order);
+                ThaaniyamHub_Ledger::record_vendor_order($order, $v_id);
+            }
         }
 
         /**
@@ -125,6 +129,10 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             $order = wc_get_order($order_id);
             if ($order) {
                 $order->add_order_note(__('❌ Shiprocket shipment automatically cancelled because order was cancelled in WooCommerce/WCFM.', 'thaaniyamhub-shiprocket-fulfillment'));
+                if (class_exists('ThaaniyamHub_Ledger')) {
+                    $v_id = self::get_order_vendor_id($order);
+                    ThaaniyamHub_Ledger::record_vendor_order($order, $v_id);
+                }
             }
         }
 
@@ -263,6 +271,11 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             $order->update_meta_data('_pickup_location', $pickup_nickname);
             $order->delete_meta_data('_shiprocket_sync_failed');
             $order->save();
+
+            // Refresh ledger row with pushed status
+            if (class_exists('ThaaniyamHub_Ledger')) {
+                ThaaniyamHub_Ledger::record_vendor_order($order, $vendor_id);
+            }
 
             $order->add_order_note(
                 sprintf(

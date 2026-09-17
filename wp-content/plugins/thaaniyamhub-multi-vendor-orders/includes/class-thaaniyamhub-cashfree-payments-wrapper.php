@@ -250,10 +250,9 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
             // never refunding or bleeding into another split vendor order's share.
             $order_total    = (float) $order->get_total();
             $total_refunded = (float) $order->get_total_refunded();
-            $max_refundable = max(0.0, round($order_total - $total_refunded, 2));
 
             if (null === $amount || (float) $amount <= 0) {
-                $refund_amount = $max_refundable;
+                $refund_amount = max(0.0, round($order_total - $total_refunded, 2));
             } else {
                 $refund_amount = round((float) $amount, 2);
             }
@@ -265,7 +264,14 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                 );
             }
 
-            if ($refund_amount > $max_refundable) {
+            // Note: WooCommerce's wc_create_refund() saves the new WC_Order_Refund object to the database
+            // BEFORE calling $gateway->process_refund(). Therefore, $order->get_total_refunded()
+            // already includes this current pending refund attempt ($refund_amount).
+            // Calculate what had already been refunded prior to this attempt:
+            $prior_refunded = max(0.0, round($total_refunded - $refund_amount, 2));
+            $max_refundable = max(0.0, round($order_total - $prior_refunded, 2));
+
+            if ($refund_amount > $max_refundable || $total_refunded > round($order_total, 2) + 0.01) {
                 return new WP_Error(
                     'error',
                     sprintf(
