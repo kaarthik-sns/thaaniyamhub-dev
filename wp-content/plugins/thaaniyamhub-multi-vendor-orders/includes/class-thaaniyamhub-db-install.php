@@ -18,7 +18,7 @@ class ThaaniyamHub_DB_Install {
     /**
      * Current schema version. Bump this whenever a column is added/changed.
      */
-    const SCHEMA_VERSION = '2.5.0';
+    const SCHEMA_VERSION = '2.5.1';
 
     /**
      * Option key used to store the installed schema version.
@@ -131,6 +131,10 @@ class ThaaniyamHub_DB_Install {
             $pickup_token_col = $wpdb->get_results( "SHOW COLUMNS FROM `{$fulfillment_table}` LIKE 'pickup_token_number'" );
             if ( empty( $pickup_token_col ) ) {
                 $wpdb->query( "ALTER TABLE `{$fulfillment_table}` ADD `pickup_token_number` VARCHAR(100) DEFAULT NULL AFTER `pickup_scheduled_date`" );
+            }
+            $cost_col = $wpdb->get_results( "SHOW COLUMNS FROM `{$fulfillment_table}` LIKE 'shiprocket_shipping_cost'" );
+            if ( empty( $cost_col ) ) {
+                $wpdb->query( "ALTER TABLE `{$fulfillment_table}` ADD `shiprocket_shipping_cost` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `pickup_token_number`" );
             }
         }
     }
@@ -410,6 +414,7 @@ class ThaaniyamHub_DB_Install {
             manifest_url TEXT DEFAULT NULL,
             pickup_scheduled_date VARCHAR(50) DEFAULT NULL,
             pickup_token_number VARCHAR(100) DEFAULT NULL,
+            shiprocket_shipping_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             fulfillment_status VARCHAR(100) NOT NULL DEFAULT 'dispatched',
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),

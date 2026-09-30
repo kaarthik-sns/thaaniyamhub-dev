@@ -75,9 +75,10 @@ class ThaaniyamHub_Shiprocket_API {
 
         // Perform raw POST without auth headers.
         $response = wp_remote_post( $url, [
-            'headers' => [ 'Content-Type' => 'application/json' ],
-            'body'    => wp_json_encode( $payload ),
-            'timeout' => 15,
+            'headers'   => [ 'Content-Type' => 'application/json' ],
+            'body'      => wp_json_encode( $payload ),
+            'timeout'   => 15,
+            'sslverify' => false,
         ] );
 
         self::log_api_call( null, 'auth/login', $payload, $response );
@@ -120,6 +121,18 @@ class ThaaniyamHub_Shiprocket_API {
      */
     public function create_order( array $payload, int $order_id ) {
         return $this->request( 'POST', 'orders/create/adhoc', $payload, $order_id );
+    }
+
+    /**
+     * Fetch full order details from Shiprocket.
+     * Endpoint: GET external/orders/show/{shiprocket_order_id}
+     *
+     * @param string   $shiprocket_order_id Shiprocket order ID.
+     * @param int|null $order_id            Local order ID.
+     * @return array|WP_Error Response data or WP_Error.
+     */
+    public function get_order_details( string $shiprocket_order_id, ?int $order_id = null ) {
+        return $this->request( 'GET', 'orders/show/' . rawurlencode( $shiprocket_order_id ), [], $order_id );
     }
 
     /**
@@ -278,24 +291,72 @@ class ThaaniyamHub_Shiprocket_API {
      * Generate Manifest for shipments.
      * Endpoint: POST external/manifests/generate
      *
-     * @param array $payload Manifest details (e.g. ['shipment_id' => [12345]]).
+     * @param array $payload Manifest details (e.g. ['shipment_id' => [12345]] or ['order_ids' => [12345]]).
      * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
     public function generate_manifest( array $payload, int $order_id ) {
+        // Parameter flexibility: Normalize shipment_id / shipment_ids / order_ids
+        if ( isset( $payload['shipment_ids'] ) ) {
+            $payload['shipment_id'] = is_array( $payload['shipment_ids'] ) ? $payload['shipment_ids'] : [ (int) $payload['shipment_ids'] ];
+            unset( $payload['shipment_ids'] );
+        }
+        if ( isset( $payload['shipment_id'] ) && ! is_array( $payload['shipment_id'] ) ) {
+            $payload['shipment_id'] = [ (int) $payload['shipment_id'] ];
+        }
+        if ( isset( $payload['order_ids'] ) && ! is_array( $payload['order_ids'] ) ) {
+            $payload['order_ids'] = [ (int) $payload['order_ids'] ];
+        }
+        if ( isset( $payload['order_id'] ) && ! isset( $payload['order_ids'] ) ) {
+            $payload['order_ids'] = [ (int) $payload['order_id'] ];
+            unset( $payload['order_id'] );
+        }
+
         return $this->request( 'POST', 'manifests/generate', $payload, $order_id );
     }
 
     /**
-     * Print Manifest for orders.
+     * Print Manifest for orders / shipments.
      * Endpoint: POST external/manifests/print
      *
-     * @param array $payload Print details (e.g. ['order_ids' => [12345]]).
+     * @param array $payload Print details (e.g. ['order_ids' => [12345]] and/or ['shipment_id' => [12345]]).
      * @param int   $order_id Local order ID.
      * @return array|WP_Error
      */
     public function print_manifest( array $payload, int $order_id ) {
-        return $this->request( 'POST', 'manifests/print', $payload, $order_id );
+        // Parameter flexibility: Normalize order_ids and shipment_id
+        if ( isset( $payload['order_id'] ) && ! isset( $payload['order_ids'] ) ) {
+            $payload['order_ids'] = [ (int) $payload['order_id'] ];
+            unset( $payload['order_id'] );
+        }
+        if ( isset( $payload['order_ids'] ) && ! is_array( $payload['order_ids'] ) ) {
+            $payload['order_ids'] = [ (int) $payload['order_ids'] ];
+        }
+        if ( isset( $payload['shipment_ids'] ) ) {
+            $payload['shipment_id'] = is_array( $payload['shipment_ids'] ) ? $payload['shipment_ids'] : [ (int) $payload['shipment_ids'] ];
+            unset( $payload['shipment_ids'] );
+        }
+        if ( isset( $payload['shipment_id'] ) && ! is_array( $payload['shipment_id'] ) ) {
+            $payload['shipment_id'] = [ (int) $payload['shipment_id'] ];
+        }
+
+        $res = $this->request( 'POST', 'manifests/print', $payload, $order_id );
+
+        // If request returned no URL and both order_ids and shipment_id were supplied, try them individually for maximum reliability
+        $has_url = ! is_wp_error( $res ) && ( ! empty( $res['manifest_url'] ) || ! empty( $res['url'] ) || ! empty( $res['data']['manifest_url'] ) || ! empty( $res['data']['url'] ) );
+        if ( ! $has_url && ! empty( $payload['order_ids'] ) && ! empty( $payload['shipment_id'] ) ) {
+            $res_orders = $this->request( 'POST', 'manifests/print', [ 'order_ids' => $payload['order_ids'] ], $order_id );
+            if ( ! is_wp_error( $res_orders ) && ( ! empty( $res_orders['manifest_url'] ) || ! empty( $res_orders['url'] ) || ! empty( $res_orders['data']['manifest_url'] ) || ! empty( $res_orders['data']['url'] ) ) ) {
+                return $res_orders;
+            }
+
+            $res_shipments = $this->request( 'POST', 'manifests/print', [ 'shipment_id' => $payload['shipment_id'] ], $order_id );
+            if ( ! is_wp_error( $res_shipments ) && ( ! empty( $res_shipments['manifest_url'] ) || ! empty( $res_shipments['url'] ) || ! empty( $res_shipments['data']['manifest_url'] ) || ! empty( $res_shipments['data']['url'] ) ) ) {
+                return $res_shipments;
+            }
+        }
+
+        return $res;
     }
 
     // =========================================================================
@@ -321,12 +382,13 @@ class ThaaniyamHub_Shiprocket_API {
 
         $url = self::API_BASE . $endpoint;
         $args = [
-            'method'  => $method,
-            'headers' => [
+            'method'    => $method,
+            'headers'   => [
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $token,
             ],
-            'timeout' => 20,
+            'timeout'   => 20,
+            'sslverify' => false,
         ];
 
         if ( 'GET' === $method ) {
@@ -371,7 +433,50 @@ class ThaaniyamHub_Shiprocket_API {
     public static function get_fulfillment( int $order_id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
-        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE order_id = %d LIMIT 1", $order_id ) );
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE order_id = %d LIMIT 1", $order_id ) );
+        if ( ! $row && function_exists( 'wc_get_order' ) ) {
+            $order = wc_get_order( $order_id );
+            if ( $order ) {
+                $sr_order_id = $order->get_meta( '_shiprocket_order_id' );
+                if ( ! empty( $sr_order_id ) ) {
+                    $vendor_id    = (int) ( class_exists( 'ThaaniyamHub_Dispatch' ) ? ThaaniyamHub_Dispatch::get_order_vendor_id( $order ) : 0 );
+                    $shipment_id  = (string) ( $order->get_meta( '_shiprocket_shipment_id' ) ?: '' );
+                    $awb          = (string) ( $order->get_meta( '_shiprocket_awb_code' ) ?: '' );
+                    $courier      = (string) ( $order->get_meta( '_shiprocket_courier_name' ) ?: '' );
+                    $pickup_loc   = (string) ( $order->get_meta( '_shiprocket_pickup_override' ) ?: ( class_exists( 'ThaaniyamHub_Dispatch' ) ? ThaaniyamHub_Dispatch::resolve_pickup_nickname( $vendor_id ) : '' ) );
+                    $label_url    = (string) ( $order->get_meta( '_shiprocket_label_url' ) ?: '' );
+                    $invoice_url  = (string) ( $order->get_meta( '_shiprocket_invoice_url' ) ?: '' );
+                    $manifest_url = (string) ( $order->get_meta( '_shiprocket_manifest_url' ) ?: '' );
+                    $pickup_date  = (string) ( $order->get_meta( '_shiprocket_pickup_scheduled_date' ) ?: '' );
+                    $pickup_token = (string) ( $order->get_meta( '_shiprocket_pickup_token_number' ) ?: '' );
+                    $cost         = (float) ( $order->get_meta( '_shiprocket_actual_shipping_cost' ) ?: 0 );
+                    $status       = $awb ? 'assigned' : 'dispatched';
+
+                    $wpdb->replace(
+                        $table,
+                        [
+                            'order_id'                 => $order_id,
+                            'vendor_id'                => $vendor_id,
+                            'shiprocket_order_id'      => $sr_order_id,
+                            'shiprocket_shipment_id'   => $shipment_id,
+                            'awb_code'                 => $awb ?: null,
+                            'courier_name'             => $courier ?: null,
+                            'pickup_location_nickname' => $pickup_loc,
+                            'shipping_label_url'       => $label_url ?: null,
+                            'commercial_invoice_url'   => $invoice_url ?: null,
+                            'manifest_url'             => $manifest_url ?: null,
+                            'pickup_scheduled_date'    => $pickup_date ?: null,
+                            'pickup_token_number'      => $pickup_token ?: null,
+                            'shiprocket_shipping_cost' => $cost,
+                            'fulfillment_status'       => $status,
+                        ]
+                    );
+
+                    $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE order_id = %d LIMIT 1", $order_id ) );
+                }
+            }
+        }
+        return $row;
     }
 
     /**

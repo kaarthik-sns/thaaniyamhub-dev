@@ -306,8 +306,205 @@ class ThaaniyamHub_Tracker {
     }
 
     // =========================================================================
-    // 3. BACKGROUND CRON POLLING (FAILSAFE)
+    // 3. ORDER SYNC & BACKGROUND CRON POLLING (FAILSAFE)
     // =========================================================================
+
+    /**
+     * Synchronize local order & fulfillment details directly from Shiprocket API.
+     * Updates courier partner name, AWB code, shipment ID, pickup date/token,
+     * status, freight charges, and order meta.
+     *
+     * @param int $order_id WooCommerce Order ID.
+     * @return true|WP_Error
+     */
+    public static function sync_order_from_shiprocket( int $order_id ) {
+        global $wpdb;
+
+        $record = ThaaniyamHub_Shiprocket_API::get_fulfillment( $order_id );
+        if ( ! $record || empty( $record->shiprocket_order_id ) ) {
+            return new WP_Error( 'not_pushed', __( 'Order has not been pushed to Shiprocket yet.', 'thaaniyamhub-multi-vendor-orders' ) );
+        }
+
+        $api = new ThaaniyamHub_Shiprocket_API();
+        $res = $api->get_order_details( $record->shiprocket_order_id, $order_id );
+
+        if ( is_wp_error( $res ) ) {
+            thaaniyamhub_log( "Tracker Sync: Failed to fetch order details for Shiprocket Order #{$record->shiprocket_order_id} (Order #{$order_id}): " . $res->get_error_message(), 'error' );
+            return $res;
+        }
+
+        $data = $res['data'] ?? $res;
+
+        // Extract fields from Shiprocket order response
+        $sr_status_str  = sanitize_text_field( $data['status'] ?? '' );
+        $sr_status_code = sanitize_text_field( $data['status_code'] ?? '' );
+        $courier_name   = sanitize_text_field( $data['courier_name'] ?? ( $data['courier'] ?? '' ) );
+        $awb_code       = sanitize_text_field( $data['awb_code'] ?? '' );
+        $pickup_loc     = sanitize_text_field( $data['pickup_location'] ?? '' );
+
+        $shipments   = $data['shipments'] ?? [];
+        $shipment    = ! empty( $shipments ) ? $shipments[0] : [];
+        $shipment_id = $record->shiprocket_shipment_id;
+        $pickup_date = '';
+        $pickup_token= '';
+        $cost        = 0.0;
+
+        if ( ! empty( $shipment ) ) {
+            if ( empty( $courier_name ) ) {
+                $courier_name = sanitize_text_field( $shipment['courier'] ?? ( $shipment['courier_name'] ?? '' ) );
+            }
+            if ( empty( $awb_code ) ) {
+                $awb_code = sanitize_text_field( $shipment['awb'] ?? ( $shipment['awb_code'] ?? '' ) );
+            }
+            $shipment_id  = sanitize_text_field( $shipment['id'] ?? ( $shipment['shipment_id'] ?? $shipment_id ) );
+            $pickup_date  = sanitize_text_field( $shipment['pickup_scheduled_date'] ?? '' );
+            $pickup_token = sanitize_text_field( $shipment['pickup_token_number'] ?? '' );
+            if ( ! empty( $shipment['status'] ) ) {
+                $sr_status_str = sanitize_text_field( $shipment['status'] );
+            }
+        } else {
+            $pickup_date  = sanitize_text_field( $data['pickup_scheduled_date'] ?? '' );
+            $pickup_token = sanitize_text_field( $data['pickup_token_number'] ?? '' );
+        }
+
+        // Accurate Shipping Cost Extraction:
+        // Extract actual courier freight charges (freight_charges, shipping_charges, rate) instead of customer order totals.
+        $extract_cost = function( $src ) {
+            if ( empty( $src ) || ! is_array( $src ) ) {
+                return 0.0;
+            }
+            $keys = [
+                'freight_charges',
+                'shipping_charges',
+                'rate',
+                'freight_charge',
+                'shipping_charge',
+                'courier_rate',
+                'courier_charges',
+                'courier_cost',
+                'cost',
+            ];
+            foreach ( $keys as $k ) {
+                if ( isset( $src[ $k ] ) && '' !== $src[ $k ] && (float) $src[ $k ] > 0 ) {
+                    return (float) $src[ $k ];
+                }
+            }
+            return 0.0;
+        };
+
+        $cost = $extract_cost( $shipment );
+        if ( $cost <= 0.0 ) {
+            $cost = $extract_cost( $data );
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( $cost <= 0.0 && class_exists( 'ThaaniyamHub_Dashboard' ) && $order ) {
+            $cost = ThaaniyamHub_Dashboard::get_actual_shipping_cost( $order, $record );
+        }
+
+        // Try tracking endpoint for latest scan info if AWB exists
+        if ( $awb_code ) {
+            $track_res = $api->track_awb( $awb_code, $order_id );
+            if ( ! is_wp_error( $track_res ) && isset( $track_res['tracking_data']['track_status'] ) && (int) $track_res['tracking_data']['track_status'] === 1 ) {
+                $st = $track_res['tracking_data']['shipment_track'][0] ?? [];
+                if ( ! empty( $st ) ) {
+                    $sr_status_str  = sanitize_text_field( $st['current_status'] ?? $sr_status_str );
+                    $sr_status_code = sanitize_text_field( $st['status_code'] ?? $sr_status_code );
+                    if ( ! empty( $st['courier_name'] ) ) {
+                        $courier_name = sanitize_text_field( $st['courier_name'] );
+                    }
+                    if ( ! empty( $st['awb_code'] ) ) {
+                        $awb_code = sanitize_text_field( $st['awb_code'] );
+                    }
+                }
+            }
+        }
+
+        // Pass through payload processor for local status mapping & order updates
+        $payload = [
+            'awb'               => $awb_code,
+            'shipment_id'       => $shipment_id,
+            'order_id'          => $record->shiprocket_order_id,
+            'current_status'    => $sr_status_str,
+            'status_code'       => $sr_status_code,
+            'courier_name'      => $courier_name,
+        ];
+
+        self::process_tracking_payload( $payload );
+
+        // Update DB fields in fulfillment table with automatic cache invalidation
+        $table = $wpdb->prefix . 'thaaniyamhub_shiprocket_fulfillment';
+        $db_updates = [
+            // Automatic Cache Invalidation: Clear document cache on sync
+            'shipping_label_url'     => null,
+            'commercial_invoice_url' => null,
+            'manifest_url'           => null,
+        ];
+
+        if ( $courier_name ) {
+            $db_updates['courier_name'] = $courier_name;
+        }
+        if ( $awb_code ) {
+            $db_updates['awb_code'] = $awb_code;
+        }
+        if ( $shipment_id ) {
+            $db_updates['shiprocket_shipment_id'] = $shipment_id;
+        }
+        if ( $pickup_loc ) {
+            $db_updates['pickup_location_nickname'] = $pickup_loc;
+        }
+        if ( $pickup_date ) {
+            $db_updates['pickup_scheduled_date'] = $pickup_date;
+        }
+        if ( $pickup_token ) {
+            $db_updates['pickup_token_number'] = $pickup_token;
+        }
+        if ( $cost > 0 ) {
+            $db_updates['shiprocket_shipping_cost'] = $cost;
+        }
+
+        $wpdb->update( $table, $db_updates, [ 'order_id' => $order_id ] );
+
+        // Update WooCommerce Order Metadata & invalidate meta document caches
+        if ( $order ) {
+            // Cache Invalidation in Order Meta
+            $order->delete_meta_data( '_shiprocket_label_url' );
+            $order->delete_meta_data( '_shiprocket_shipping_label_url' );
+            $order->delete_meta_data( '_shiprocket_invoice_url' );
+            $order->delete_meta_data( '_shiprocket_commercial_invoice_url' );
+            $order->delete_meta_data( '_shiprocket_manifest_url' );
+
+            // Force write latest courier, AWB, cost, pickup schedule and token
+            if ( $courier_name ) {
+                $order->update_meta_data( '_shiprocket_courier_name', $courier_name );
+            }
+            if ( $awb_code ) {
+                $order->update_meta_data( '_shiprocket_awb_code', $awb_code );
+            }
+            if ( $shipment_id ) {
+                $order->update_meta_data( '_shiprocket_shipment_id', $shipment_id );
+            }
+            if ( $cost > 0 ) {
+                $order->update_meta_data( '_shiprocket_actual_shipping_cost', $cost );
+            }
+            if ( $pickup_date ) {
+                $order->update_meta_data( '_shiprocket_pickup_scheduled_date', $pickup_date );
+            }
+            if ( $pickup_token ) {
+                $order->update_meta_data( '_shiprocket_pickup_token_number', $pickup_token );
+            }
+            $order->save();
+
+            if ( class_exists( 'ThaaniyamHub_Ledger' ) ) {
+                $vendor_id = ThaaniyamHub_Dispatch::get_order_vendor_id( $order );
+                ThaaniyamHub_Ledger::record_vendor_order( $order, $vendor_id );
+            }
+        }
+
+        thaaniyamhub_log( "Tracker Sync: Manual/Auto sync complete for Order #{$order_id}. Courier: '{$courier_name}', AWB: '{$awb_code}', Status: '{$sr_status_str}'." );
+
+        return true;
+    }
 
     public static function poll_tracking_status() {
         global $wpdb;
@@ -317,7 +514,7 @@ class ThaaniyamHub_Tracker {
             "SELECT order_id, awb_code, shiprocket_shipment_id, shiprocket_order_id
              FROM {$table}
              WHERE fulfillment_status NOT IN ('delivered', 'cancelled', 'rto', 'returned', 'return_cancelled')
-               AND awb_code IS NOT NULL AND awb_code != ''
+               AND shiprocket_order_id IS NOT NULL AND shiprocket_order_id != ''
              ORDER BY updated_at ASC
              LIMIT 40"
         );
@@ -329,39 +526,10 @@ class ThaaniyamHub_Tracker {
 
         thaaniyamhub_log( 'ThaaniyamHub_Tracker Poller: Syncing status for ' . count( $active_shipments ) . ' active shipment(s)...' );
 
-        $api = new ThaaniyamHub_Shiprocket_API();
-
         foreach ( $active_shipments as $shipment ) {
             $order_id_val = (int) $shipment->order_id;
-            $awb          = $shipment->awb_code;
-
-            thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: Fetching tracking data for AWB: {$awb} (Order #{$order_id_val})" );
-
-            $response = $api->track_awb( $awb, $order_id_val );
-
-            if ( is_wp_error( $response ) ) {
-                thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: API error for AWB {$awb} — " . $response->get_error_message() );
-                continue;
-            }
-
-            if ( isset( $response['tracking_data']['track_status'] ) && (int) $response['tracking_data']['track_status'] === 1 ) {
-                $shipment_data = $response['tracking_data']['shipment_track'][0] ?? [];
-                if ( ! empty( $shipment_data ) ) {
-                    $payload = [
-                        'awb'               => $shipment_data['awb_code'] ?? $awb,
-                        'shipment_id'       => $shipment_data['shipment_id'] ?? $shipment->shiprocket_shipment_id,
-                        'order_id'          => $shipment->shiprocket_order_id,
-                        'current_status_id' => $shipment_data['current_status_id'] ?? 0,
-                        'current_status'    => $shipment_data['current_status'] ?? '',
-                        'status_code'       => $shipment_data['status_code'] ?? '',
-                        'courier_name'      => $shipment_data['courier_name'] ?? '',
-                    ];
-
-                    self::process_tracking_payload( $payload );
-                }
-            } else {
-                thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: No tracking scans available for AWB {$awb}." );
-            }
+            thaaniyamhub_log( "ThaaniyamHub_Tracker Poller: Syncing order data from Shiprocket for Order #{$order_id_val} (SR Order: {$shipment->shiprocket_order_id})" );
+            self::sync_order_from_shiprocket( $order_id_val );
         }
     }
 }

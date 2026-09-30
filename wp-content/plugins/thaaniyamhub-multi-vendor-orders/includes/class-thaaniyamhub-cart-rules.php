@@ -490,8 +490,15 @@ class ThaaniyamHub_Cart_Rules {
 
             $couriers = $svc['data']['available_courier_companies'] ?? [];
             thaaniyamhub_log( "Serviceability: Shiprocket API returned " . count($couriers) . " available courier(s) for vendor #{$vid}." );
+
+            // Strictly filter out blocked or suppressed couriers
+            if ( class_exists( 'ThaaniyamHub_Dashboard' ) && method_exists( 'ThaaniyamHub_Dashboard', 'filter_serviceable_couriers' ) ) {
+                $couriers = ThaaniyamHub_Dashboard::filter_serviceable_couriers( $couriers );
+                thaaniyamhub_log( "Serviceability: After unblocked/unsuppressed filtering, " . count($couriers) . " courier(s) remain for vendor #{$vid}." );
+            }
+
             if ( empty( $couriers ) ) {
-                thaaniyamhub_log( "Serviceability: No courier options returned. Delivery is unserviceable.", 'warning' );
+                thaaniyamhub_log( "Serviceability: No active/unblocked courier options returned. Delivery is unserviceable for vendor #{$vid}.", 'warning' );
                 return new WP_Error( 'unserviceable', sprintf(
                     __( 'We are coming soon to your area! Currently, we do not provide delivery service to pincode %s.', 'thaaniyamhub-multi-vendor-orders' ),
                     $customer_pincode

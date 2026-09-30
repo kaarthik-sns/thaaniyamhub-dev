@@ -85,7 +85,9 @@ class ThaaniyamHub_Dashboard
         add_action('wp_ajax_thaaniyamhub_sf_reassign_courier', [__CLASS__, 'ajax_reassign_courier']);
         add_action('wp_ajax_thaaniyamhub_sf_schedule_pickup', [__CLASS__, 'ajax_schedule_pickup']);
         add_action('wp_ajax_thaaniyamhub_sf_download_manifest', [__CLASS__, 'ajax_download_manifest']);
+        add_action('wp_ajax_thaaniyamhub_sf_print_manifest', [__CLASS__, 'ajax_download_manifest']);
         add_action('wp_ajax_thaaniyamhub_sf_initiate_return', [__CLASS__, 'ajax_initiate_return']);
+        add_action('wp_ajax_thaaniyamhub_sf_sync_order', [__CLASS__, 'ajax_sync_order']);
 
         // ---- User Profile Edit Fields ----
         add_action('show_user_profile', [__CLASS__, 'render_vendor_profile_fields']);
@@ -96,6 +98,7 @@ class ThaaniyamHub_Dashboard
         // ---- Admin Order Action Menu Hooks ----
         add_filter('woocommerce_order_actions', ['ThaaniyamHub_Dispatch', 'register_retry_action']);
         add_action('woocommerce_order_action_thaaniyamhub_retry_shiprocket_push', ['ThaaniyamHub_Dispatch', 'handle_retry_action']);
+        add_action('woocommerce_order_action_thaaniyamhub_sync_shiprocket', ['ThaaniyamHub_Dispatch', 'handle_sync_action']);
 
         // ---- WCFM Frontend (Vendor Dashboard) ----
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_frontend_assets']);
@@ -444,6 +447,15 @@ class ThaaniyamHub_Dashboard
                 ];
             }
         }
+
+        // 7. Sync with Shiprocket (available on all eligible orders)
+        $actions['ag_sf_sync'] = [
+            'url'    => '#',
+            'name'   => __('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'),
+            'action' => 'thaaniyamhub-sf-sync thaaniyamhub-sf-row-action',
+            'class'  => 'thaaniyamhub-sf-action-sync',
+            'id'     => $order_id,
+        ];
 
         return $actions;
     }
@@ -880,13 +892,29 @@ class ThaaniyamHub_Dashboard
         // Fetch refund records on order for detailed transparent audit
         $refund_notes = [];
         $order_obj = wc_get_order((int) $row->order_id);
+        $parent_id = 0;
+        $parent_url = '';
         if ($order_obj) {
-            $refund_objs = $order_obj->get_refunds();
+            $parent_id = (int) $order_obj->get_parent_id();
+            if ($parent_id > 0) {
+                $parent_order = wc_get_order($parent_id);
+                $parent_url   = $parent_order ? $parent_order->get_edit_order_url() : (get_edit_post_link($parent_id) ?: admin_url('post.php?post=' . $parent_id . '&action=edit'));
+            }
+            $refund_objs = method_exists($order_obj, 'get_refunds') ? $order_obj->get_refunds() : [];
             if (!empty($refund_objs)) {
                 foreach ($refund_objs as $ref) {
+                    if (!$ref instanceof WC_Order_Refund) {
+                        continue;
+                    }
                     $r_amt = abs((float) $ref->get_amount());
                     $r_reason = trim((string) $ref->get_reason());
-                    $r_date = $ref->get_date_created() ? $ref->get_date_created()->date_i18n('d M Y, H:i') : '';
+                    $created_dt = $ref->get_date_created();
+                    $r_date = '';
+                    if ($created_dt) {
+                        $r_date = function_exists('wc_format_datetime') 
+                            ? wc_format_datetime($created_dt, 'd M Y, H:i') 
+                            : date_i18n('d M Y, H:i', $created_dt->getTimestamp());
+                    }
                     $refund_notes[] = sprintf(
                         'Refund #%d: %s (%s)%s',
                         $ref->get_id(),
@@ -940,6 +968,12 @@ class ThaaniyamHub_Dashboard
         $shipping_label_short = $has_awb ? __('Shiprocket Freight', 'thaaniyamhub-multi-vendor-orders') : __('Logistics (Estimated)', 'thaaniyamhub-multi-vendor-orders');
 
         echo '<div class="thaaniyamhub-commission-view" style="padding: 4px 0;">';
+        echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+        echo '<span style="font-weight:700; color:#334155; font-size:13px;">' . esc_html__('Financial & Commission Breakdown', 'thaaniyamhub-multi-vendor-orders') . '</span>';
+        echo '<button type="button" class="button thaaniyamhub-btn-sync-shiprocket ag-sf-btn-sync" data-order-id="' . esc_attr($row->order_id) . '" style="border-color:#0284c7; color:#0284c7; background:#f0f9ff; font-weight:600; display:inline-flex; align-items:center; gap:4px; font-size:11.5px; padding:3px 10px; cursor:pointer;" title="' . esc_attr__('Sync latest courier freight cost & status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
+        echo '<span class="dashicons dashicons-update" style="font-size:14px; width:14px; height:14px; line-height:14px;"></span> ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+        echo '</button>';
+        echo '</div>';
         echo '<style>
             .thaaniyamhub-commission-view table.wp-list-table th { vertical-align: middle; font-weight: 600; color: #1e293b; padding: 10px 14px; }
             .thaaniyamhub-commission-view table.wp-list-table td { vertical-align: middle; padding: 10px 14px; }
@@ -1051,22 +1085,31 @@ class ThaaniyamHub_Dashboard
             ($has_refund && (float)$row->vendor_net_payout <= 0 ? ' <small style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;">Fully Refunded</small>' : '')
         );
 
+        $sync_btn_html = sprintf(
+            '<button type="button" class="button button-small thaaniyamhub-btn-sync-shiprocket ag-sf-btn-sync" data-order-id="%d" style="border-color:#0284c7;color:#0284c7;background:#f0f9ff;font-weight:600;margin-left:8px;display:inline-flex;align-items:center;gap:3px;vertical-align:middle;font-size:11px;padding:1px 8px;height:24px;min-height:24px;" title="%s"><span class="dashicons dashicons-update" style="font-size:13px;width:13px;height:13px;line-height:13px;"></span> %s</button>',
+            (int) $row->order_id,
+            esc_attr__('Sync latest courier freight cost & status from Shiprocket', 'thaaniyamhub-multi-vendor-orders'),
+            esc_html__('Sync', 'thaaniyamhub-multi-vendor-orders')
+        );
+
         if ($shipping_cost > 0) {
             if ($has_awb) {
                 printf(
-                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#ffedd5;color:#9a3412;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;">📦 AWB: %s%s</small></td></tr>',
+                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#ffedd5;color:#9a3412;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;">📦 AWB: %s%s</small> %s</td></tr>',
                     esc_html__('Shiprocket Actual Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
                     self::help_tip(__('Actual courier freight cost billed by Shiprocket for dispatching this shipment.', 'thaaniyamhub-multi-vendor-orders')),
                     wp_kses_post(wc_price($shipping_cost)),
                     esc_html($row->shiprocket_awb),
-                    (!empty($row->shiprocket_courier_name) ? ' (' . esc_html($row->shiprocket_courier_name) . ')' : '')
+                    (!empty($row->shiprocket_courier_name) ? ' (' . esc_html($row->shiprocket_courier_name) . ')' : ''),
+                    $sync_btn_html
                 );
             } else {
                 printf(
-                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">⏱️ Estimated (Pending Shiprocket dispatch)</small></td></tr>',
+                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">⏱️ Estimated (Pending Shiprocket dispatch)</small> %s</td></tr>',
                     esc_html__('Estimated Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
                     self::help_tip(__('Estimated shipping cost based on customer checkout shipping charge. This order has been pushed to Shiprocket. Once dispatched and an AWB is generated, this row will automatically update with the exact courier freight cost billed by Shiprocket.', 'thaaniyamhub-multi-vendor-orders')),
-                    wp_kses_post(wc_price($shipping_cost))
+                    wp_kses_post(wc_price($shipping_cost)),
+                    $sync_btn_html
                 );
             }
         } else {
@@ -1074,11 +1117,12 @@ class ThaaniyamHub_Dashboard
             $badge_text = $is_fully_refunded ? __('Not dispatched / Cancelled', 'thaaniyamhub-multi-vendor-orders') : __('Not yet pushed to Shiprocket', 'thaaniyamhub-multi-vendor-orders');
             $tip_text   = $is_fully_refunded ? __('Logistics cost is ₹0.00 as this order was refunded/cancelled prior to dispatch.', 'thaaniyamhub-multi-vendor-orders') : __('Logistics cost is ₹0.00 because this order has not yet been pushed to Shiprocket.', 'thaaniyamhub-multi-vendor-orders');
             printf(
-                '<tr><th><strong>%s</strong>%s</th><td><span style="color:#64748b;font-weight:600;">%s</span> <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">%s</small></td></tr>',
+                '<tr><th><strong>%s</strong>%s</th><td><span style="color:#64748b;font-weight:600;">%s</span> <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">%s</small> %s</td></tr>',
                 esc_html__('Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
                 self::help_tip($tip_text),
                 wp_kses_post(wc_price(0)),
-                esc_html($badge_text)
+                esc_html($badge_text),
+                $sync_btn_html
             );
         }
 
@@ -1188,9 +1232,23 @@ class ThaaniyamHub_Dashboard
 
         echo '<div id="thaaniyamhub-sf-fulfillment-metabox" data-order-id="' . esc_attr($order_id) . '">';
 
+        // ── 0. Persistent Live Sync Header Bar ─────────────────────────────────
+        echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:8px 10px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px;">';
+        echo '<span style="font-size:11.5px; font-weight:700; color:#0369a1; display:inline-flex; align-items:center; gap:5px;">';
+        echo '<span>🔄</span> ' . esc_html__('Live Shiprocket Sync', 'thaaniyamhub-multi-vendor-orders');
+        echo '</span>';
+        echo '<button type="button" class="button ag-sf-btn-sync" data-order-id="' . esc_attr($order_id) . '" style="border-color:#0284c7; color:#0284c7; background:#fff; font-weight:700; display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:2px 8px; min-height:26px; height:auto; cursor:pointer;" title="' . esc_attr__('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
+        echo '<span class="dashicons dashicons-update" style="font-size:14px; width:14px; height:14px; line-height:14px;"></span> ' . esc_html__('Sync Now', 'thaaniyamhub-multi-vendor-orders');
+        echo '</button>';
+        echo '</div>';
+
         if (!$record || !$record->shiprocket_order_id) {
             if ('processing' !== $order->get_status()) {
-                echo '<p style="color:#b91c1c;font-weight:600;margin:0;">' . esc_html__('Order must be in processing status to push to Shiprocket.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
+                echo '<p style="color:#b91c1c;font-weight:600;margin:0 0 10px 0;">' . esc_html__('Order must be in processing status to push to Shiprocket.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
+                echo '<p style="font-size:11px;color:#64748b;margin:0 0 10px 0;">' . esc_html__('If this order was already pushed to Shiprocket or processed outside, click Sync Now above or below.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
+                echo '<button type="button" id="thaaniyamhub-sf-btn-sync-order" class="button ag-sf-btn-sync" style="border-color:#0284c7; color:#0284c7; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:4px; width:100%; cursor:pointer;" data-order-id="' . esc_attr($order_id) . '" title="' . esc_attr__('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
+                echo '<span class="dashicons dashicons-update"></span> ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+                echo '</button>';
                 echo '</div>';
                 return;
             }
@@ -1222,6 +1280,11 @@ class ThaaniyamHub_Dashboard
             } else {
                 echo esc_html__('Order has not been pushed to Shiprocket yet.', 'thaaniyamhub-multi-vendor-orders') . '<br><br>';
             }
+            echo '<div style="margin-bottom:12px;">';
+            echo '<button type="button" id="thaaniyamhub-sf-btn-sync-order" class="button ag-sf-btn-sync" style="border-color:#0284c7; color:#0284c7; font-weight:600; display:inline-flex; align-items:center; gap:4px;" data-order-id="' . esc_attr($order_id) . '" title="' . esc_attr__('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
+            echo '<span class="dashicons dashicons-update"></span> ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+            echo '</button>';
+            echo '</div>';
 
             // Pickup dropdown
             echo '<div class="thaaniyamhub-pickup-selector-wrapper" style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;">';
@@ -1557,6 +1620,14 @@ class ThaaniyamHub_Dashboard
             <?php endif; ?>
 
             <div class="thaaniyamhub-actions">
+                <?php if (!empty($record->shiprocket_order_id) || !empty($order->get_meta('_shiprocket_order_id'))): ?>
+                    <button type="button" id="thaaniyamhub-sf-btn-sync-order" class="button ag-sf-btn-sync" style="border-color:#0284c7; color:#0284c7; width:100%; margin-bottom:8px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:6px;"
+                        data-order-id="<?php echo esc_attr($order_id); ?>" title="<?php esc_attr_e('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>">
+                        <span class="dashicons dashicons-update"></span>
+                        <?php esc_html_e('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>
+                    </button>
+                <?php endif; ?>
+
                 <?php if (!$record->awb_code && 'cancelled' !== $record->fulfillment_status): ?>
                     <button type="button" id="thaaniyamhub-sf-btn-generate-awb" class="button button-primary" style="width:100%;"
                         data-order-id="<?php echo esc_attr($order_id); ?>">
@@ -1780,6 +1851,7 @@ class ThaaniyamHub_Dashboard
         .thaaniyamhub-sf-action-manifest::after { content: "\f481"; font-family: dashicons; }
         .thaaniyamhub-sf-action-invoice::after { content: "\f497"; font-family: dashicons; }
         .thaaniyamhub-sf-action-cancel::after { content: "\f158"; font-family: dashicons; color: #b91c1c; }
+        .thaaniyamhub-sf-action-sync::after { content: "\f463"; font-family: dashicons; color: #0284c7; }
         .ag-sf-loading-row { opacity: 0.5; pointer-events: none; }
 
         /* Courier loader */
@@ -2471,6 +2543,23 @@ class ThaaniyamHub_Dashboard
                 });
             });
 
+            $(document).on("click", "#thaaniyamhub-sf-btn-sync-order, #thaaniyamhub-sf-btn-sync, #ag-sf-btn-sync, .ag-sf-btn-sync, .thaaniyamhub-btn-sync-shiprocket", function(e) {
+                e.preventDefault();
+                var $btn = $(this);
+                var orderId = $btn.data("order-id") || $("#thaaniyamhub-sf-fulfillment-metabox").data("order-id");
+                if (!orderId) return;
+
+                $btn.prop("disabled", true);
+                ag_sf_ajax($btn, "thaaniyamhub_sf_sync_order", { order_id: orderId }, function(res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        alert("Sync Error: " + (res.data || "Unknown error occurred."));
+                        $btn.prop("disabled", false);
+                    }
+                });
+            });
+
             $(document).on("click", "#thaaniyamhub-sf-toggle-new-pickup", function(e) {
                 e.preventDefault();
                 $("#thaaniyamhub-sf-new-pickup-form").slideToggle(200);
@@ -2601,6 +2690,8 @@ class ThaaniyamHub_Dashboard
                 } else if (actionClass.indexOf("thaaniyamhub-sf-action-cancel") !== -1) {
                     if (!confirm("Cancel this Shiprocket shipment?")) return;
                     action = "thaaniyamhub_sf_cancel_shipment";
+                } else if (actionClass.indexOf("thaaniyamhub-sf-action-sync") !== -1) {
+                    action = "thaaniyamhub_sf_sync_order";
                 }
 
                 if (!action) return;
@@ -3363,6 +3454,23 @@ class ThaaniyamHub_Dashboard
                 });
             });
 
+            $(document).on("click", "#ag-sf-fe-btn-sync, #ag-sf-fe-btn-sync-order", function(e) {
+                e.preventDefault();
+                var $btn = $(this);
+                var oid  = $btn.data("order-id") || $("#ag-sf-wcfm-panel").data("order-id");
+                if (!oid) return;
+
+                $btn.prop("disabled", true).text("Syncing...");
+                agSfFeAjax($btn, "thaaniyamhub_sf_sync_order", { order_id: oid }, function(res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        alert("Sync Error: " + (res.data || "Unknown error occurred."));
+                        $btn.prop("disabled", false).text("🔄 Sync with Shiprocket");
+                    }
+                });
+            });
+
             $(document).on("click", "#ag-sf-fe-make-default", function(e) {
                 e.preventDefault();
                 var oid    = $("#ag-sf-wcfm-panel").data("order-id");
@@ -3782,14 +3890,26 @@ class ThaaniyamHub_Dashboard
         echo '<h4>' . esc_html__('Shiprocket Fulfillment', 'thaaniyamhub-multi-vendor-orders') . '</h4>';
         echo '<div class="ag-sf-sub">' . esc_html__('Push this order to Shiprocket for shipping', 'thaaniyamhub-multi-vendor-orders') . '</div>';
         echo '</div>';
+        echo '<div style="margin-left:auto;">';
+        echo '<button type="button" class="wcfm_submit_button ag-sf-fe-btn-sync" data-order-id="' . esc_attr($order_id) . '" style="border:1.5px solid #0284c7 !important; color:#0284c7 !important; background:#f0f9ff !important; font-weight:700 !important; padding:5px 12px !important; font-size:12px !important; margin:0 !important; display:inline-flex !important; align-items:center !important; gap:5px !important; border-radius:6px !important; cursor:pointer !important; text-decoration:none !important;" title="' . esc_attr__('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
+        echo '🔄 ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+        echo '</button>';
+        echo '</div>';
         echo '</div>'; // .ag-sf-card-header
         echo '<div class="ag-sf-card-body">';
 
         if (!$record || !$record->shiprocket_order_id) {
             if ('processing' !== $order->get_status()) {
-                echo '<div class="ag-sf-status-banner failed">';
+                echo '<div class="ag-sf-status-banner failed" style="display:flex; flex-direction:column; gap:8px;">';
+                echo '<div style="display:flex; align-items:center; gap:8px;">';
                 echo '<div class="ag-sf-status-icon">🔒</div>';
                 echo '<div><strong>' . esc_html__('Cannot Push', 'thaaniyamhub-multi-vendor-orders') . '</strong>' . esc_html__('Order must be in Processing status before it can be pushed to Shiprocket.', 'thaaniyamhub-multi-vendor-orders') . '</div>';
+                echo '</div>';
+                echo '<div style="margin-top:4px;">';
+                echo '<button type="button" class="wcfm_submit_button ag-sf-fe-btn-sync" data-order-id="' . esc_attr($order_id) . '" style="border:1.5px solid #0284c7 !important; color:#0284c7 !important; background:#f0f9ff !important; font-weight:700 !important; padding:6px 12px !important; font-size:12px !important; margin:0 !important; display:inline-flex !important; align-items:center !important; gap:5px !important; border-radius:6px !important; cursor:pointer !important;">';
+                echo '🔄 ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+                echo '</button>';
+                echo '</div>';
                 echo '</div>';
                 echo '</div></div></div>';
                 return;
@@ -3821,9 +3941,16 @@ class ThaaniyamHub_Dashboard
                 echo '<div><strong>' . esc_html__('Previous Dispatch Failed', 'thaaniyamhub-multi-vendor-orders') . '</strong>' . esc_html($fail_reason) . '</div>';
                 echo '</div>';
             } else {
-                echo '<div class="ag-sf-status-banner pending">';
+                echo '<div class="ag-sf-status-banner pending" style="display:flex; flex-direction:column; gap:8px;">';
+                echo '<div style="display:flex; align-items:center; gap:8px;">';
                 echo '<div class="ag-sf-status-icon">⏳</div>';
                 echo '<div><strong>' . esc_html__('Awaiting Dispatch', 'thaaniyamhub-multi-vendor-orders') . '</strong>' . esc_html__('This order has not been pushed to Shiprocket yet. Click Push to Shiprocket Button.', 'thaaniyamhub-multi-vendor-orders') . '</div>';
+                echo '</div>';
+                echo '<div style="margin-top:4px;">';
+                echo '<button type="button" class="wcfm_submit_button ag-sf-fe-btn-sync" data-order-id="' . esc_attr($order_id) . '" style="border:1px solid #0284c7 !important; color:#0284c7 !important; background:#fff !important; font-weight:600 !important; padding:4px 10px !important; font-size:11.5px !important; margin:0 !important; display:inline-flex !important; align-items:center !important; gap:4px !important; border-radius:4px !important; cursor:pointer !important;">';
+                echo '🔄 ' . esc_html__('Already pushed? Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
+                echo '</button>';
+                echo '</div>';
                 echo '</div>';
             }
 
@@ -4123,6 +4250,13 @@ class ThaaniyamHub_Dashboard
             <?php endif; ?>
 
             <div class="thaaniyamhub-actions">
+                <!-- 0. Sync Button for WCFM Vendor -->
+                <button type="button" id="ag-sf-fe-btn-sync" class="wcfm_submit_button ag-sf-fe-btn-sync"
+                    style="width:100% !important; border:1.5px solid #0284c7 !important; color:#0284c7 !important; background:#f0f9ff !important; font-weight:700 !important; font-size:13px !important; margin-bottom:8px !important; display:flex !important; justify-content:center !important; align-items:center !important; gap:6px !important; border-radius:6px !important; cursor:pointer !important;"
+                    data-order-id="<?php echo esc_attr($order_id); ?>" title="<?php esc_attr_e('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>">
+                    🔄 <?php esc_html_e('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>
+                </button>
+
                 <?php if (!$record->awb_code && 'cancelled' !== $record->fulfillment_status): ?>
                     <button type="button" id="ag-sf-fe-btn-awb" class="wcfm_submit_button"
                         data-order-id="<?php echo esc_attr($order_id); ?>">
@@ -4531,8 +4665,15 @@ class ThaaniyamHub_Dashboard
         }
 
         $cost = $order->get_meta('_shiprocket_actual_shipping_cost');
-        if ('' !== $cost && false !== $cost) {
+        if ('' !== $cost && false !== $cost && (float) $cost > 0) {
             return (float) $cost;
+        }
+
+        if (!empty($record->shiprocket_shipping_cost) && (float) $record->shiprocket_shipping_cost > 0) {
+            $shipping_cost = (float) $record->shiprocket_shipping_cost;
+            $order->update_meta_data('_shiprocket_actual_shipping_cost', $shipping_cost);
+            $order->save();
+            return $shipping_cost;
         }
 
         $selected_courier_id = (int) $order->get_meta('_shiprocket_selected_courier_id');
@@ -4540,18 +4681,34 @@ class ThaaniyamHub_Dashboard
         $svc = $api->check_serviceability(['order_id' => (int) $record->shiprocket_order_id]);
         $shipping_cost = 0.0;
         if (!is_wp_error($svc) && !empty($svc['data']['available_courier_companies'])) {
+            $extract_courier_cost = function($c) {
+                $candidates = [
+                    $c['freight_charges'] ?? null,
+                    $c['shipping_charges'] ?? null,
+                    $c['rate'] ?? null,
+                    $c['freight_charge'] ?? null,
+                    $c['cost'] ?? null,
+                ];
+                foreach ($candidates as $val) {
+                    if (null !== $val && '' !== $val && (float) $val > 0) {
+                        return (float) $val;
+                    }
+                }
+                return 0.0;
+            };
+
             foreach ($svc['data']['available_courier_companies'] as $c) {
                 $c_id = (int) ($c['courier_company_id'] ?? 0);
                 $c_name = $c['courier_name'] ?? '';
                 if (($selected_courier_id && $c_id === $selected_courier_id) || 
                     (!$selected_courier_id && $record->courier_name && strcasecmp($c_name, $record->courier_name) === 0)) {
-                    $shipping_cost = isset($c['rate']) ? (float) $c['rate'] : (isset($c['freight_charge']) ? (float) $c['freight_charge'] : 0.0);
+                    $shipping_cost = $extract_courier_cost($c);
                     break;
                 }
             }
             if (!$shipping_cost && count($svc['data']['available_courier_companies']) === 1) {
                 $c = reset($svc['data']['available_courier_companies']);
-                $shipping_cost = isset($c['rate']) ? (float) $c['rate'] : (isset($c['freight_charge']) ? (float) $c['freight_charge'] : 0.0);
+                $shipping_cost = $extract_courier_cost($c);
             }
         }
 
@@ -4799,7 +4956,8 @@ class ThaaniyamHub_Dashboard
             wp_send_json_error(__('Shipment not found.', 'thaaniyamhub-multi-vendor-orders'));
         }
 
-        if ($record->shipping_label_url) {
+        $force_refresh = !empty($_POST['force_refresh']) || !empty($_GET['force_refresh']);
+        if (!$force_refresh && $record->shipping_label_url) {
             thaaniyamhub_log("AJAX Action (Print Label): Returning cached Label URL for Order #{$order_id}: " . $record->shipping_label_url);
             wp_send_json_success(['label_url' => $record->shipping_label_url]);
         }
@@ -4843,7 +5001,8 @@ class ThaaniyamHub_Dashboard
             wp_send_json_error(__('Shipment not found.', 'thaaniyamhub-multi-vendor-orders'));
         }
 
-        if ($record->commercial_invoice_url) {
+        $force_refresh = !empty($_POST['force_refresh']) || !empty($_GET['force_refresh']);
+        if (!$force_refresh && $record->commercial_invoice_url) {
             thaaniyamhub_log("AJAX Action (Print Invoice): Returning cached Invoice URL for Order #{$order_id}: " . $record->commercial_invoice_url);
             wp_send_json_success(['invoice_url' => $record->commercial_invoice_url]);
         }
@@ -5035,6 +5194,72 @@ class ThaaniyamHub_Dashboard
         return $details['pincode'];
     }
 
+    /**
+     * Filter courier companies list to only include active, unblocked, and unsuppressed couriers.
+     * Strictly filters out couriers where blocked == 1 or where suppression_dates indicates
+     * blocked_fm (first-mile / pickup blocked) or blocked_lm (last-mile / delivery blocked).
+     * Supports both array and object response structures from Shiprocket.
+     *
+     * @param array $couriers
+     * @return array
+     */
+    public static function filter_serviceable_couriers(array $couriers): array
+    {
+        if (empty($couriers)) {
+            return [];
+        }
+
+        $filtered = [];
+        foreach ($couriers as $courier) {
+            $is_blocked = false;
+            $is_suppressed = false;
+
+            if (is_object($courier)) {
+                if (isset($courier->blocked) && ((int) $courier->blocked === 1 || $courier->blocked === true)) {
+                    $is_blocked = true;
+                }
+                if (isset($courier->suppression_dates)) {
+                    $supp = $courier->suppression_dates;
+                    if (is_object($supp)) {
+                        if (!empty($supp->blocked_fm) || !empty($supp->blocked_lm)) {
+                            $is_suppressed = true;
+                        }
+                    } elseif (is_array($supp)) {
+                        if (!empty($supp['blocked_fm']) || !empty($supp['blocked_lm'])) {
+                            $is_suppressed = true;
+                        }
+                    }
+                }
+            } elseif (is_array($courier)) {
+                if (isset($courier['blocked']) && ((int) $courier['blocked'] === 1 || $courier['blocked'] === true)) {
+                    $is_blocked = true;
+                }
+                if (isset($courier['suppression_dates'])) {
+                    $supp = $courier['suppression_dates'];
+                    if (is_array($supp)) {
+                        if (!empty($supp['blocked_fm']) || !empty($supp['blocked_lm'])) {
+                            $is_suppressed = true;
+                        }
+                    } elseif (is_object($supp)) {
+                        if (!empty($supp->blocked_fm) || !empty($supp->blocked_lm)) {
+                            $is_suppressed = true;
+                        }
+                    }
+                }
+            } else {
+                continue;
+            }
+
+            if ($is_blocked || $is_suppressed) {
+                continue;
+            }
+
+            $filtered[] = $courier;
+        }
+
+        return $filtered;
+    }
+
     public static function ajax_get_serviceability_pre_push()
     {
         check_ajax_referer('thaaniyamhub_sf_nonce', '_nonce');
@@ -5049,13 +5274,21 @@ class ThaaniyamHub_Dashboard
             wp_send_json_error(__('Order not found.', 'thaaniyamhub-multi-vendor-orders'));
         }
 
+        $vendor_id = ThaaniyamHub_Dispatch::get_order_vendor_id($order);
+
+        // Pickup Location resolution: explicit or automatic fallback to vendor's default nickname
         $pickup_nickname = sanitize_text_field($_POST['pickup_location'] ?? '');
+        if (empty($pickup_nickname)) {
+            $pickup_nickname = ThaaniyamHub_Dispatch::resolve_pickup_nickname($vendor_id);
+        }
+
         $weight = max(0.1, (float) ($_POST['weight'] ?? 0.1));
         $length = max(1.0, (float) ($_POST['length'] ?? 1.0));
-        $breadth = max(1.0, (float) ($_POST['breadth'] ?? 1.0));
+        // Parameter Normalization: Support breadth (Vendor JS) and width (Admin JS)
+        $breadth_raw = $_POST['breadth'] ?? ($_POST['width'] ?? 1.0);
+        $breadth = max(1.0, (float) $breadth_raw);
         $height = max(1.0, (float) ($_POST['height'] ?? 1.0));
 
-        $vendor_id = ThaaniyamHub_Dispatch::get_order_vendor_id($order);
         $pickup_postcode = self::resolve_pickup_pincode($pickup_nickname, $vendor_id);
         if (!$pickup_postcode) {
             wp_send_json_error(__('Could not resolve pincode for selected pickup location.', 'thaaniyamhub-multi-vendor-orders'));
@@ -5091,6 +5324,13 @@ class ThaaniyamHub_Dashboard
             wp_send_json_error(__('No serviceability for the selected parameters.', 'thaaniyamhub-multi-vendor-orders'));
         }
 
+        // Strictly filter out blocked or suppressed couriers
+        $couriers = self::filter_serviceable_couriers($couriers);
+        if (empty($couriers)) {
+            wp_send_json_error(__('No serviceable courier partners available for these pincodes.', 'thaaniyamhub-multi-vendor-orders'));
+        }
+
+        // Role-based display: Admin sees all unblocked couriers, Vendor sees lowest rate tier
         $couriers = self::maybe_filter_couriers_for_vendor($couriers);
 
         $selected_courier = (int) $order->get_meta('_shiprocket_selected_courier_id');
@@ -5351,17 +5591,20 @@ class ThaaniyamHub_Dashboard
             wp_send_json_error(__('AWB not generated yet. Please generate AWB first.', 'thaaniyamhub-multi-vendor-orders'));
         }
 
-        // Return cached manifest URL if already available
-        if (!empty($record->manifest_url)) {
-            thaaniyamhub_log("AJAX Action (Download Manifest): Returning cached manifest URL for Order #{$order_id}: {$record->manifest_url}");
-            wp_send_json_success(['manifest_url' => $record->manifest_url]);
-        }
+        $force_refresh = !empty($_POST['force_refresh']) || !empty($_GET['force_refresh']);
+        if (!$force_refresh) {
+            // Return cached manifest URL if already available
+            if (!empty($record->manifest_url)) {
+                thaaniyamhub_log("AJAX Action (Download Manifest): Returning cached manifest URL for Order #{$order_id}: {$record->manifest_url}");
+                wp_send_json_success(['manifest_url' => $record->manifest_url]);
+            }
 
-        $order = wc_get_order($order_id);
-        $cached_url = $order ? $order->get_meta('_shiprocket_manifest_url') : '';
-        if ($cached_url) {
-            ThaaniyamHub_Shiprocket_API::update_status($order_id, $record->fulfillment_status, ['manifest_url' => $cached_url]);
-            wp_send_json_success(['manifest_url' => $cached_url]);
+            $order = wc_get_order($order_id);
+            $cached_url = $order ? $order->get_meta('_shiprocket_manifest_url') : '';
+            if ($cached_url) {
+                ThaaniyamHub_Shiprocket_API::update_status($order_id, $record->fulfillment_status, ['manifest_url' => $cached_url]);
+                wp_send_json_success(['manifest_url' => $cached_url]);
+            }
         }
 
         thaaniyamhub_log("AJAX Action (Download Manifest): Requesting manifest generation from Shiprocket for shipment #{$record->shiprocket_shipment_id} (Order #{$order_id})");
@@ -5369,19 +5612,35 @@ class ThaaniyamHub_Dashboard
         $api = new ThaaniyamHub_Shiprocket_API();
         
         // 1. First attempt generate_manifest
-        $result = $api->generate_manifest(['shipment_id' => [(int) $record->shiprocket_shipment_id]], $order_id);
-        $manifest_url = '';
-
-        if (!is_wp_error($result) && !empty($result['manifest_url'])) {
-            $manifest_url = $result['manifest_url'];
+        $gen_payload = [];
+        if (!empty($record->shiprocket_shipment_id)) {
+            $gen_payload['shipment_id'] = [(int) $record->shiprocket_shipment_id];
+        }
+        if (!empty($record->shiprocket_order_id)) {
+            $gen_payload['order_ids'] = [(int) $record->shiprocket_order_id];
         }
 
-        // 2. If generate_manifest did not return URL (e.g. already manifested), try print_manifest
-        if (!$manifest_url && !empty($record->shiprocket_order_id)) {
-            thaaniyamhub_log("AJAX Action (Download Manifest): Calling print_manifest for Order #{$order_id} (Shiprocket Order #{$record->shiprocket_order_id})");
-            $print_result = $api->print_manifest(['order_ids' => [(int) $record->shiprocket_order_id]], $order_id);
-            if (!is_wp_error($print_result) && !empty($print_result['manifest_url'])) {
-                $manifest_url = $print_result['manifest_url'];
+        $result = $api->generate_manifest($gen_payload, $order_id);
+        $manifest_url = '';
+
+        if (!is_wp_error($result)) {
+            $manifest_url = $result['manifest_url'] ?? ($result['url'] ?? ($result['data']['manifest_url'] ?? ($result['data']['url'] ?? '')));
+        }
+
+        // 2. If generate_manifest did not return URL (e.g. "Manifest already generated." or failed), fallback to print_manifest (order_ids & shipment_id)
+        if (!$manifest_url) {
+            thaaniyamhub_log("AJAX Action (Download Manifest): Fallback to print_manifest for Order #{$order_id} (Shiprocket Order #{$record->shiprocket_order_id}, Shipment: #{$record->shiprocket_shipment_id})");
+            $print_payload = [];
+            if (!empty($record->shiprocket_order_id)) {
+                $print_payload['order_ids'] = [(int) $record->shiprocket_order_id];
+            }
+            if (!empty($record->shiprocket_shipment_id)) {
+                $print_payload['shipment_id'] = [(int) $record->shiprocket_shipment_id];
+            }
+
+            $print_result = $api->print_manifest($print_payload, $order_id);
+            if (!is_wp_error($print_result)) {
+                $manifest_url = $print_result['manifest_url'] ?? ($print_result['url'] ?? ($print_result['data']['manifest_url'] ?? ($print_result['data']['url'] ?? '')));
             }
         }
 
@@ -5396,6 +5655,7 @@ class ThaaniyamHub_Dashboard
         $new_status = in_array($record->fulfillment_status, ['assigned', 'dispatched'], true) ? 'manifested' : $record->fulfillment_status;
         ThaaniyamHub_Shiprocket_API::update_status($order_id, $new_status, ['manifest_url' => $manifest_url]);
 
+        $order = wc_get_order($order_id);
         if ($order) {
             $order->update_meta_data('_shiprocket_manifest_url', $manifest_url);
             $order->add_order_note(sprintf(__('📋 Shiprocket Manifest generated: <a href="%s" target="_blank">%s</a>', 'thaaniyamhub-multi-vendor-orders'), esc_url($manifest_url), esc_url($manifest_url)));
@@ -5403,6 +5663,14 @@ class ThaaniyamHub_Dashboard
         }
 
         wp_send_json_success(['manifest_url' => $manifest_url]);
+    }
+
+    /**
+     * AJAX Handler: Print / Download Manifest (alias)
+     */
+    public static function ajax_print_manifest()
+    {
+        self::ajax_download_manifest();
     }
 
     public static function ajax_get_couriers()
@@ -5419,8 +5687,22 @@ class ThaaniyamHub_Dashboard
             wp_send_json_error(__('Shipment not found — dispatch the order first.', 'thaaniyamhub-multi-vendor-orders'));
         }
 
+        $wc_order = wc_get_order($order_id);
+        $vendor_id = $wc_order ? ThaaniyamHub_Dispatch::get_order_vendor_id($wc_order) : 0;
+        $pickup_nickname = $record->pickup_location_nickname ?: ($vendor_id ? ThaaniyamHub_Dispatch::resolve_pickup_nickname($vendor_id) : '');
+        $pickup_postcode = $pickup_nickname ? self::resolve_pickup_pincode($pickup_nickname, $vendor_id) : '';
+        $delivery_postcode = $wc_order ? ($wc_order->get_shipping_postcode() ?: $wc_order->get_billing_postcode()) : '';
+
+        $params = ['order_id' => (int) $record->shiprocket_order_id];
+        if ($pickup_postcode) {
+            $params['pickup_postcode'] = (int) $pickup_postcode;
+        }
+        if ($delivery_postcode) {
+            $params['delivery_postcode'] = (int) $delivery_postcode;
+        }
+
         $api = new ThaaniyamHub_Shiprocket_API();
-        $response = $api->check_serviceability(['order_id' => (int) $record->shiprocket_order_id]);
+        $response = $api->check_serviceability($params);
 
         if (is_wp_error($response)) {
             wp_send_json_error($response->get_error_message());
@@ -5430,6 +5712,14 @@ class ThaaniyamHub_Dashboard
         if (!is_array($couriers) || empty($couriers)) {
             wp_send_json_error(
                 __('No courier partners available for this shipment. Please wait a moment and try again.', 'thaaniyamhub-multi-vendor-orders')
+            );
+        }
+
+        // Strictly filter out blocked or suppressed couriers
+        $couriers = self::filter_serviceable_couriers($couriers);
+        if (empty($couriers)) {
+            wp_send_json_error(
+                __('No serviceable courier partners available for these pincodes.', 'thaaniyamhub-multi-vendor-orders')
             );
         }
 
@@ -5992,6 +6282,30 @@ class ThaaniyamHub_Dashboard
         });
         </script>
         <?php
+    }
+
+    /**
+     * AJAX Handler: Synchronize order fulfillment and courier data with Shiprocket.
+     */
+    public static function ajax_sync_order()
+    {
+        check_ajax_referer('thaaniyamhub_sf_nonce', '_nonce');
+
+        $order_id = (int) ($_POST['order_id'] ?? 0);
+        if (!self::current_user_can_manage_order($order_id)) {
+            wp_send_json_error(__('Insufficient permissions.', 'thaaniyamhub-multi-vendor-orders'), 403);
+        }
+
+        if (!class_exists('ThaaniyamHub_Tracker')) {
+            wp_send_json_error(__('Tracker engine not loaded.', 'thaaniyamhub-multi-vendor-orders'));
+        }
+
+        $result = ThaaniyamHub_Tracker::sync_order_from_shiprocket($order_id);
+        if (is_wp_error($result)) {
+            wp_send_json_error($result->get_error_message());
+        }
+
+        wp_send_json_success(__('Order data successfully synchronized with Shiprocket.', 'thaaniyamhub-multi-vendor-orders'));
     }
 }
 

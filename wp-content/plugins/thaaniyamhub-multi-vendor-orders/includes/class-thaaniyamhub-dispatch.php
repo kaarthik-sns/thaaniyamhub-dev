@@ -618,11 +618,12 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
         }
 
         /**
-         * Add "Retry Shiprocket Push" to WooCommerce order actions menu.
+         * Add "Retry Shiprocket Push" and "Sync with Shiprocket" to WooCommerce order actions menu.
          */
         public static function register_retry_action(array $actions): array
         {
             $actions['thaaniyamhub_retry_shiprocket_push'] = __('Retry Shiprocket Push', 'thaaniyamhub-shiprocket-fulfillment');
+            $actions['thaaniyamhub_sync_shiprocket'] = __('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
             return $actions;
         }
 
@@ -636,6 +637,19 @@ if (!class_exists('ThaaniyamHub_Dispatch')) {
             }
             if ($order) {
                 self::push_to_shiprocket($order->get_id());
+            }
+        }
+
+        /**
+         * Handle the "Sync with Shiprocket" order action.
+         */
+        public static function handle_sync_action($order)
+        {
+            if (is_numeric($order)) {
+                $order = wc_get_order($order);
+            }
+            if ($order && class_exists('ThaaniyamHub_Tracker')) {
+                ThaaniyamHub_Tracker::sync_order_from_shiprocket($order->get_id());
             }
         }
     }

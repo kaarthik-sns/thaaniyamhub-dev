@@ -809,44 +809,50 @@ if (!function_exists('init_custom_shiprocket_shipping_method')) {
              */
             public function select_recommended_courier($json_decoded_data)
             {
-                $available_courier_companies = $json_decoded_data->available_courier_companies ?? array();
+                $available_courier_companies = array();
+                if (is_object($json_decoded_data) && isset($json_decoded_data->available_courier_companies)) {
+                    $available_courier_companies = $json_decoded_data->available_courier_companies;
+                } elseif (is_array($json_decoded_data) && isset($json_decoded_data['available_courier_companies'])) {
+                    $available_courier_companies = $json_decoded_data['available_courier_companies'];
+                }
+
                 if (is_array($available_courier_companies) && !empty($available_courier_companies)) {
-                    // Filter out blocked or suppressed couriers
-                    $filtered_couriers = array();
-                    foreach ($available_courier_companies as $courier) {
-                        // Skip blocked courier partners
-                        if (isset($courier->blocked) && ($courier->blocked == 1 || $courier->blocked === true)) {
-                            continue;
-                        }
+                    if (class_exists('ThaaniyamHub_Dashboard') && method_exists('ThaaniyamHub_Dashboard', 'filter_serviceable_couriers')) {
+                        $filtered_couriers = ThaaniyamHub_Dashboard::filter_serviceable_couriers($available_courier_companies);
+                    } else {
+                        $filtered_couriers = array();
+                        foreach ($available_courier_companies as $courier) {
+                            $blocked = is_object($courier) ? (isset($courier->blocked) && ($courier->blocked == 1 || $courier->blocked === true)) : (isset($courier['blocked']) && ($courier['blocked'] == 1 || $courier['blocked'] === true));
+                            if ($blocked) continue;
 
-                        // Skip suppressed couriers
-                        if (isset($courier->suppression_dates)) {
-                            $supp = $courier->suppression_dates;
-                            if (!empty($supp->blocked_fm) || !empty($supp->blocked_lm)) {
-                                continue;
+                            $supp = is_object($courier) ? ($courier->suppression_dates ?? null) : ($courier['suppression_dates'] ?? null);
+                            if ($supp) {
+                                $blocked_fm = is_object($supp) ? !empty($supp->blocked_fm) : (is_array($supp) ? !empty($supp['blocked_fm']) : false);
+                                $blocked_lm = is_object($supp) ? !empty($supp->blocked_lm) : (is_array($supp) ? !empty($supp['blocked_lm']) : false);
+                                if ($blocked_fm || $blocked_lm) continue;
                             }
-                        }
 
-                        $filtered_couriers[] = $courier;
+                            $filtered_couriers[] = $courier;
+                        }
                     }
 
                     if (empty($filtered_couriers)) {
                         return null;
                     }
 
-                    $recommended_id = isset($json_decoded_data->recommended_courier_company_id) ? $json_decoded_data->recommended_courier_company_id : null;
+                    $recommended_id = is_object($json_decoded_data) ? ($json_decoded_data->recommended_courier_company_id ?? null) : ($json_decoded_data['recommended_courier_company_id'] ?? null);
                     $selected_courier = null;
 
                     if (!empty($recommended_id)) {
                         foreach ($filtered_couriers as $courier) {
-                            if (isset($courier->courier_company_id) && $courier->courier_company_id == $recommended_id) {
+                            $c_id = is_object($courier) ? ($courier->courier_company_id ?? null) : ($courier['courier_company_id'] ?? null);
+                            if ($c_id && $c_id == $recommended_id) {
                                 $selected_courier = $courier;
                                 break;
                             }
                         }
                     }
 
-                    // Fallback to first available if recommended not found or not set
                     if (null === $selected_courier) {
                         $selected_courier = $filtered_couriers[0];
                     }
@@ -861,25 +867,31 @@ if (!function_exists('init_custom_shiprocket_shipping_method')) {
              */
             public function select_lowest_courier($json_decoded_data)
             {
-                $available_courier_companies = $json_decoded_data->available_courier_companies ?? array();
+                $available_courier_companies = array();
+                if (is_object($json_decoded_data) && isset($json_decoded_data->available_courier_companies)) {
+                    $available_courier_companies = $json_decoded_data->available_courier_companies;
+                } elseif (is_array($json_decoded_data) && isset($json_decoded_data['available_courier_companies'])) {
+                    $available_courier_companies = $json_decoded_data['available_courier_companies'];
+                }
+
                 if (is_array($available_courier_companies) && !empty($available_courier_companies)) {
-                    // Filter out blocked or suppressed couriers
-                    $filtered_couriers = array();
-                    foreach ($available_courier_companies as $courier) {
-                        // Skip blocked courier partners
-                        if (isset($courier->blocked) && ($courier->blocked == 1 || $courier->blocked === true)) {
-                            continue;
-                        }
+                    if (class_exists('ThaaniyamHub_Dashboard') && method_exists('ThaaniyamHub_Dashboard', 'filter_serviceable_couriers')) {
+                        $filtered_couriers = ThaaniyamHub_Dashboard::filter_serviceable_couriers($available_courier_companies);
+                    } else {
+                        $filtered_couriers = array();
+                        foreach ($available_courier_companies as $courier) {
+                            $blocked = is_object($courier) ? (isset($courier->blocked) && ($courier->blocked == 1 || $courier->blocked === true)) : (isset($courier['blocked']) && ($courier['blocked'] == 1 || $courier['blocked'] === true));
+                            if ($blocked) continue;
 
-                        // Skip suppressed couriers
-                        if (isset($courier->suppression_dates)) {
-                            $supp = $courier->suppression_dates;
-                            if (!empty($supp->blocked_fm) || !empty($supp->blocked_lm)) {
-                                continue;
+                            $supp = is_object($courier) ? ($courier->suppression_dates ?? null) : ($courier['suppression_dates'] ?? null);
+                            if ($supp) {
+                                $blocked_fm = is_object($supp) ? !empty($supp->blocked_fm) : (is_array($supp) ? !empty($supp['blocked_fm']) : false);
+                                $blocked_lm = is_object($supp) ? !empty($supp->blocked_lm) : (is_array($supp) ? !empty($supp['blocked_lm']) : false);
+                                if ($blocked_fm || $blocked_lm) continue;
                             }
-                        }
 
-                        $filtered_couriers[] = $courier;
+                            $filtered_couriers[] = $courier;
+                        }
                     }
 
                     if (empty($filtered_couriers)) {
@@ -887,15 +899,18 @@ if (!function_exists('init_custom_shiprocket_shipping_method')) {
                     }
 
                     $lowest_courier = null;
+                    $lowest_rate = null;
                     foreach ($filtered_couriers as $courier) {
-                        if (isset($courier->rate)) {
-                            if (null === $lowest_courier || floatval($courier->rate) < floatval($lowest_courier->rate)) {
+                        $rate = is_object($courier) ? ($courier->rate ?? ($courier->freight_charge ?? null)) : ($courier['rate'] ?? ($courier['freight_charge'] ?? null));
+                        if (null !== $rate) {
+                            $float_rate = floatval($rate);
+                            if (null === $lowest_rate || $float_rate < $lowest_rate) {
                                 $lowest_courier = $courier;
+                                $lowest_rate = $float_rate;
                             }
                         }
                     }
 
-                    // Fallback to first available if lowest not found
                     if (null === $lowest_courier) {
                         $lowest_courier = $filtered_couriers[0];
                     }
