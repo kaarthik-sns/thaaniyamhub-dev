@@ -396,6 +396,16 @@ if ($order) :
             $order_numbers_display[] = '#' . $o->get_order_number();
         }
 
+        // combined_subtotal from get_subtotal() can be inflated during a split race condition
+        // (primary order still contains all vendors' items before cleanup).
+        // Derive it reliably from the figures that are always correct:
+        //   subtotal = total + discount − shipping
+        // combined_total is always the actual charged amount; shipping and discount are stored
+        // independently and are never affected by the race.
+        if ($is_multi_vendor) {
+            $combined_subtotal = max(0.0, round($combined_total + $combined_discount - $combined_shipping, 2));
+        }
+
         $display_payment_method = thaaniyamhub_get_display_payment_method($primary_order);
 ?>
 
@@ -495,9 +505,35 @@ if ($order) :
                             </thead>
                             <tbody>
                                 <?php
+                                // Track per-package display totals when filtering by vendor
+                                $pkg_display_subtotal = 0.0;
+
                                 foreach ($v_order->get_items('line_item') as $item_id => $item) :
+                                    // When the split is multi-vendor, guard against the primary order
+                                    // still containing another vendor's items at render time (race condition).
+                                    // Only show items that actually belong to this package's vendor.
+                                    if ($is_multi_vendor && $v_id > 0) {
+                                        $item_vendor_id = (int) $item->get_meta('_vendor_id');
+                                        if (!$item_vendor_id) {
+                                            $item_vendor_id = (int) $item->get_meta('vendor_id');
+                                        }
+                                        if (!$item_vendor_id) {
+                                            $pid = $item->get_product_id();
+                                            if (function_exists('wcfm_get_vendor_id_by_post')) {
+                                                $item_vendor_id = (int) wcfm_get_vendor_id_by_post($pid);
+                                            }
+                                            if (!$item_vendor_id) {
+                                                $item_vendor_id = (int) get_post_field('post_author', $pid);
+                                            }
+                                        }
+                                        if ($item_vendor_id !== $v_id) {
+                                            continue; // Skip items belonging to other vendors
+                                        }
+                                    }
+
                                     $product = $item->get_product();
                                     $item_subtotal = (float) $v_order->get_line_subtotal($item, true);
+                                    $pkg_display_subtotal += $item_subtotal;
                                 ?>
                                     <tr>
                                         <td>
@@ -530,7 +566,7 @@ if ($order) :
                         <div class="th-pkg-totals">
                             <div class="th-pkg-totals-row">
                                 <span><?php esc_html_e('Items Subtotal:', 'woocommerce'); ?></span>
-                                <strong style="color: #0f172a;"><?php echo thaaniyamhub_format_thankyou_price($v_order->get_subtotal()); ?></strong>
+                                <strong style="color: #0f172a;"><?php echo thaaniyamhub_format_thankyou_price($is_multi_vendor && $v_id > 0 ? $pkg_display_subtotal : $v_order->get_subtotal()); ?></strong>
                             </div>
                             <?php if ((float) $v_order->get_shipping_total() > 0) : ?>
                                 <div class="th-pkg-totals-row">

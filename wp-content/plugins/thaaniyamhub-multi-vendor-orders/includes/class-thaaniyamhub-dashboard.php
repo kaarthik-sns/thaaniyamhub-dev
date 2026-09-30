@@ -164,10 +164,10 @@ class ThaaniyamHub_Dashboard
         // If the WooCommerce order is already refunded, refund is completed and no longer in "requested" state
         if ($order->get_status() === 'refunded' || $order->has_status('refunded')) {
             $result = [
-                'status'    => 'completed',
-                'label'     => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
-                'amount'    => (float) $order->get_total_refunded(),
-                'reasons'   => [],
+                'status' => 'completed',
+                'label' => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
+                'amount' => (float) $order->get_total_refunded(),
+                'reasons' => [],
                 'badge_cls' => 'thaaniyamhub-badge-refund-completed',
             ];
             $cache[$order_id] = $result;
@@ -203,26 +203,26 @@ class ThaaniyamHub_Dashboard
 
             if (in_array('requested', $statuses, true) || in_array('pending', $statuses, true)) {
                 $result = [
-                    'status'    => 'requested',
-                    'label'     => __('Refund Requested', 'thaaniyamhub-multi-vendor-orders'),
-                    'amount'    => $total_amt,
-                    'reasons'   => $reasons,
+                    'status' => 'requested',
+                    'label' => __('Refund Requested', 'thaaniyamhub-multi-vendor-orders'),
+                    'amount' => $total_amt,
+                    'reasons' => $reasons,
                     'badge_cls' => 'thaaniyamhub-badge-refund-requested',
                 ];
             } elseif (in_array('completed', $statuses, true) || in_array('approved', $statuses, true)) {
                 $result = [
-                    'status'    => 'completed',
-                    'label'     => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
-                    'amount'    => $total_amt,
-                    'reasons'   => $reasons,
+                    'status' => 'completed',
+                    'label' => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
+                    'amount' => $total_amt,
+                    'reasons' => $reasons,
                     'badge_cls' => 'thaaniyamhub-badge-refund-completed',
                 ];
             } elseif (in_array('cancelled', $statuses, true) || in_array('rejected', $statuses, true)) {
                 $result = [
-                    'status'    => 'cancelled',
-                    'label'     => __('Refund Cancelled', 'thaaniyamhub-multi-vendor-orders'),
-                    'amount'    => $total_amt,
-                    'reasons'   => $reasons,
+                    'status' => 'cancelled',
+                    'label' => __('Refund Cancelled', 'thaaniyamhub-multi-vendor-orders'),
+                    'amount' => $total_amt,
+                    'reasons' => $reasons,
                     'badge_cls' => 'thaaniyamhub-badge-refund-cancelled',
                 ];
             }
@@ -232,18 +232,18 @@ class ThaaniyamHub_Dashboard
         if (!$result) {
             if ($order->get_meta('_wcfm_refund_request') === 'yes' || $order->get_meta('_refund_requested') === 'yes') {
                 $result = [
-                    'status'    => 'requested',
-                    'label'     => __('Refund Requested', 'thaaniyamhub-multi-vendor-orders'),
-                    'amount'    => 0,
-                    'reasons'   => [],
+                    'status' => 'requested',
+                    'label' => __('Refund Requested', 'thaaniyamhub-multi-vendor-orders'),
+                    'amount' => 0,
+                    'reasons' => [],
                     'badge_cls' => 'thaaniyamhub-badge-refund-requested',
                 ];
             } elseif ((float) $order->get_total_refunded() > 0 || $order->get_status() === 'refunded') {
                 $result = [
-                    'status'    => 'completed',
-                    'label'     => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
-                    'amount'    => (float) $order->get_total_refunded(),
-                    'reasons'   => [],
+                    'status' => 'completed',
+                    'label' => __('Refund Completed', 'thaaniyamhub-multi-vendor-orders'),
+                    'amount' => (float) $order->get_total_refunded(),
+                    'reasons' => [],
                     'badge_cls' => 'thaaniyamhub-badge-refund-completed',
                 ];
             }
@@ -450,11 +450,11 @@ class ThaaniyamHub_Dashboard
 
         // 7. Sync with Shiprocket (available on all eligible orders)
         $actions['ag_sf_sync'] = [
-            'url'    => '#',
-            'name'   => __('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'),
+            'url' => '#',
+            'name' => __('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'),
             'action' => 'thaaniyamhub-sf-sync thaaniyamhub-sf-row-action',
-            'class'  => 'thaaniyamhub-sf-action-sync',
-            'id'     => $order_id,
+            'class' => 'thaaniyamhub-sf-action-sync',
+            'id' => $order_id,
         ];
 
         return $actions;
@@ -562,10 +562,10 @@ class ThaaniyamHub_Dashboard
 
                                 $f_status = $p_date ? 'pickup_scheduled' : 'assigned';
                                 $up_data = [
-                                    'awb_code'              => $awb,
-                                    'courier_name'          => $courier,
+                                    'awb_code' => $awb,
+                                    'courier_name' => $courier,
                                     'pickup_scheduled_date' => $p_date,
-                                    'pickup_token_number'   => $p_tok,
+                                    'pickup_token_number' => $p_tok,
                                 ];
                                 if ($m_url) {
                                     $up_data['manifest_url'] = $m_url;
@@ -885,9 +885,9 @@ class ThaaniyamHub_Dashboard
         $vendor_name = thaaniyamhub_get_vendor_name_by_vendor_id((int) $row->vendor_id);
 
         $refunded_amount = (float) ($row->refunded_amount ?? 0);
-        $total_inflow    = (float) ($row->total_incoming ?: $row->gross_sales + $row->shipping_charge);
-        $net_inflow      = max(0.0, round($total_inflow - $refunded_amount, 2));
-        $has_refund      = ($refunded_amount > 0);
+        $total_inflow = (float) ($row->total_incoming ?: $row->gross_sales + $row->shipping_charge);
+        $net_inflow = max(0.0, round($total_inflow - $refunded_amount, 2));
+        $has_refund = ($refunded_amount > 0);
 
         // Fetch refund records on order for detailed transparent audit
         $refund_notes = [];
@@ -898,7 +898,7 @@ class ThaaniyamHub_Dashboard
             $parent_id = (int) $order_obj->get_parent_id();
             if ($parent_id > 0) {
                 $parent_order = wc_get_order($parent_id);
-                $parent_url   = $parent_order ? $parent_order->get_edit_order_url() : (get_edit_post_link($parent_id) ?: admin_url('post.php?post=' . $parent_id . '&action=edit'));
+                $parent_url = $parent_order ? $parent_order->get_edit_order_url() : (get_edit_post_link($parent_id) ?: admin_url('post.php?post=' . $parent_id . '&action=edit'));
             }
             $refund_objs = method_exists($order_obj, 'get_refunds') ? $order_obj->get_refunds() : [];
             if (!empty($refund_objs)) {
@@ -911,8 +911,8 @@ class ThaaniyamHub_Dashboard
                     $created_dt = $ref->get_date_created();
                     $r_date = '';
                     if ($created_dt) {
-                        $r_date = function_exists('wc_format_datetime') 
-                            ? wc_format_datetime($created_dt, 'd M Y, H:i') 
+                        $r_date = function_exists('wc_format_datetime')
+                            ? wc_format_datetime($created_dt, 'd M Y, H:i')
                             : date_i18n('d M Y, H:i', $created_dt->getTimestamp());
                     }
                     $refund_notes[] = sprintf(
@@ -968,11 +968,8 @@ class ThaaniyamHub_Dashboard
         $shipping_label_short = $has_awb ? __('Shiprocket Freight', 'thaaniyamhub-multi-vendor-orders') : __('Logistics (Estimated)', 'thaaniyamhub-multi-vendor-orders');
 
         echo '<div class="thaaniyamhub-commission-view" style="padding: 4px 0;">';
-        echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+        echo '<div style="margin-bottom:10px;">';
         echo '<span style="font-weight:700; color:#334155; font-size:13px;">' . esc_html__('Financial & Commission Breakdown', 'thaaniyamhub-multi-vendor-orders') . '</span>';
-        echo '<button type="button" class="button thaaniyamhub-btn-sync-shiprocket ag-sf-btn-sync" data-order-id="' . esc_attr($row->order_id) . '" style="border-color:#0284c7; color:#0284c7; background:#f0f9ff; font-weight:600; display:inline-flex; align-items:center; gap:4px; font-size:11.5px; padding:3px 10px; cursor:pointer;" title="' . esc_attr__('Sync latest courier freight cost & status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
-        echo '<span class="dashicons dashicons-update" style="font-size:14px; width:14px; height:14px; line-height:14px;"></span> ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
-        echo '</button>';
         echo '</div>';
         echo '<style>
             .thaaniyamhub-commission-view table.wp-list-table th { vertical-align: middle; font-weight: 600; color: #1e293b; padding: 10px 14px; }
@@ -1042,7 +1039,7 @@ class ThaaniyamHub_Dashboard
             esc_html__('Customer Order Total (Gross Inflow)', 'thaaniyamhub-multi-vendor-orders'),
             self::help_tip(__('Total gross cash inflow received from customer at checkout (post-discount product price + shipping charges + taxes).', 'thaaniyamhub-multi-vendor-orders')),
             wp_kses_post(wc_price($total_inflow)),
-            ((float)$row->shipping_charge > 0 ? sprintf(' <small style="color:#64748b;">(incl. %s shipping)</small>', wp_strip_all_tags(wc_price($row->shipping_charge))) : '')
+            ((float) $row->shipping_charge > 0 ? sprintf(' <small style="color:#64748b;">(incl. %s shipping)</small>', wp_strip_all_tags(wc_price($row->shipping_charge))) : '')
         );
 
         if ($has_refund) {
@@ -1082,47 +1079,37 @@ class ThaaniyamHub_Dashboard
             esc_html__('Vendor Net Payout', 'thaaniyamhub-multi-vendor-orders'),
             self::help_tip(__('The net disbursement amount payable to the vendor: Retained Product Catalog Price minus Platform Commission (plus Shipping if vendor delivers).', 'thaaniyamhub-multi-vendor-orders')),
             wp_kses_post(wc_price($row->vendor_net_payout)),
-            ($has_refund && (float)$row->vendor_net_payout <= 0 ? ' <small style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;">Fully Refunded</small>' : '')
-        );
-
-        $sync_btn_html = sprintf(
-            '<button type="button" class="button button-small thaaniyamhub-btn-sync-shiprocket ag-sf-btn-sync" data-order-id="%d" style="border-color:#0284c7;color:#0284c7;background:#f0f9ff;font-weight:600;margin-left:8px;display:inline-flex;align-items:center;gap:3px;vertical-align:middle;font-size:11px;padding:1px 8px;height:24px;min-height:24px;" title="%s"><span class="dashicons dashicons-update" style="font-size:13px;width:13px;height:13px;line-height:13px;"></span> %s</button>',
-            (int) $row->order_id,
-            esc_attr__('Sync latest courier freight cost & status from Shiprocket', 'thaaniyamhub-multi-vendor-orders'),
-            esc_html__('Sync', 'thaaniyamhub-multi-vendor-orders')
+            ($has_refund && (float) $row->vendor_net_payout <= 0 ? ' <small style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;">Fully Refunded</small>' : '')
         );
 
         if ($shipping_cost > 0) {
             if ($has_awb) {
                 printf(
-                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#ffedd5;color:#9a3412;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;">📦 AWB: %s%s</small> %s</td></tr>',
+                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#ffedd5;color:#9a3412;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;">📦 AWB: %s%s</small></td></tr>',
                     esc_html__('Shiprocket Actual Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
                     self::help_tip(__('Actual courier freight cost billed by Shiprocket for dispatching this shipment.', 'thaaniyamhub-multi-vendor-orders')),
                     wp_kses_post(wc_price($shipping_cost)),
                     esc_html($row->shiprocket_awb),
-                    (!empty($row->shiprocket_courier_name) ? ' (' . esc_html($row->shiprocket_courier_name) . ')' : ''),
-                    $sync_btn_html
+                    (!empty($row->shiprocket_courier_name) ? ' (' . esc_html($row->shiprocket_courier_name) . ')' : '')
                 );
             } else {
                 printf(
-                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">⏱️ Estimated (Pending Shiprocket dispatch)</small> %s</td></tr>',
+                    '<tr><th><strong>%s</strong>%s</th><td>%s <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">⏱️ Estimated (Pending Shiprocket dispatch)</small></td></tr>',
                     esc_html__('Estimated Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
                     self::help_tip(__('Estimated shipping cost based on customer checkout shipping charge. This order has been pushed to Shiprocket. Once dispatched and an AWB is generated, this row will automatically update with the exact courier freight cost billed by Shiprocket.', 'thaaniyamhub-multi-vendor-orders')),
-                    wp_kses_post(wc_price($shipping_cost)),
-                    $sync_btn_html
+                    wp_kses_post(wc_price($shipping_cost))
                 );
             }
         } else {
             $is_fully_refunded = ('refunded' === strtolower($row->payout_status ?: '') || $has_refund);
             $badge_text = $is_fully_refunded ? __('Not dispatched / Cancelled', 'thaaniyamhub-multi-vendor-orders') : __('Not yet pushed to Shiprocket', 'thaaniyamhub-multi-vendor-orders');
-            $tip_text   = $is_fully_refunded ? __('Logistics cost is ₹0.00 as this order was refunded/cancelled prior to dispatch.', 'thaaniyamhub-multi-vendor-orders') : __('Logistics cost is ₹0.00 because this order has not yet been pushed to Shiprocket.', 'thaaniyamhub-multi-vendor-orders');
+            $tip_text = $is_fully_refunded ? __('Logistics cost is ₹0.00 as this order was refunded/cancelled prior to dispatch.', 'thaaniyamhub-multi-vendor-orders') : __('Logistics cost is ₹0.00 because this order has not yet been pushed to Shiprocket.', 'thaaniyamhub-multi-vendor-orders');
             printf(
-                '<tr><th><strong>%s</strong>%s</th><td><span style="color:#64748b;font-weight:600;">%s</span> <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">%s</small> %s</td></tr>',
+                '<tr><th><strong>%s</strong>%s</th><td><span style="color:#64748b;font-weight:600;">%s</span> <small style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;margin-left:6px;font-weight:600;border:1px dashed #cbd5e1;">%s</small></td></tr>',
                 esc_html__('Logistics Cost', 'thaaniyamhub-multi-vendor-orders'),
                 self::help_tip($tip_text),
                 wp_kses_post(wc_price(0)),
-                esc_html($badge_text),
-                $sync_btn_html
+                esc_html($badge_text)
             );
         }
 
@@ -1140,25 +1127,25 @@ class ThaaniyamHub_Dashboard
         // Net Admin Profit with interactive / transparent breakdown
         $breakdown_html = sprintf(
             '<div style="font-size:11.5px;line-height:1.6;color:%s;margin-top:8px;padding:10px 14px;background:%s;border:1px solid %s;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">' .
-                '<div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;">' .
-                    '<span>📊</span>' .
-                    '<span>%s</span>' .
-                '</div>' .
-                '<table style="width:100%%;max-width:440px;font-size:11.5px;border-collapse:collapse;color:%s;">' .
-                    '<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:700;color:#059669;">+%s</td></tr>' .
-                    ($has_refund ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:700;color:#dc2626;">-%s</td></tr><tr><td style="padding:2px 0;font-weight:700;">%s:</td><td style="text-align:right;font-weight:700;color:#059669;">=%s</td></tr>', esc_html__('Customer Refund', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($refunded_amount)), esc_html__('Net Inflow', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($net_inflow))) : '') .
-                    '<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>' .
-                    ($shipping_cost > 0 
-                        ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html($shipping_label_short), wp_strip_all_tags(wc_price($shipping_cost))) 
-                        : sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#64748b;">-%s</td></tr>', esc_html__('Logistics', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price(0)))
-                    ) .
-                    ((float)$row->commission_tax > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html__('Tax on Commission (GST)', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($row->commission_tax))) : '') .
-                    ($total_processing_fee > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html__('Cashfree Gateway & Payout Fees', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($total_processing_fee))) : '') .
-                    '<tr style="border-top:1px dashed %s;"><td style="padding:5px 0 2px 0;font-weight:700;">%s:</td><td style="padding:5px 0 2px 0;text-align:right;font-weight:800;font-size:12.5px;color:%s;">%s (%s%%)</td></tr>' .
-                '</table>' .
-                '<div style="margin-top:6px;font-size:11px;color:%s;border-top:1px solid %s;padding-top:5px;">' .
-                    'ℹ️ %s' .
-                '</div>' .
+            '<div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;">' .
+            '<span>📊</span>' .
+            '<span>%s</span>' .
+            '</div>' .
+            '<table style="width:100%%;max-width:440px;font-size:11.5px;border-collapse:collapse;color:%s;">' .
+            '<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:700;color:#059669;">+%s</td></tr>' .
+            ($has_refund ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:700;color:#dc2626;">-%s</td></tr><tr><td style="padding:2px 0;font-weight:700;">%s:</td><td style="text-align:right;font-weight:700;color:#059669;">=%s</td></tr>', esc_html__('Customer Refund', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($refunded_amount)), esc_html__('Net Inflow', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($net_inflow))) : '') .
+            '<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>' .
+            ($shipping_cost > 0
+                ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html($shipping_label_short), wp_strip_all_tags(wc_price($shipping_cost)))
+                : sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#64748b;">-%s</td></tr>', esc_html__('Logistics', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price(0)))
+            ) .
+            ((float) $row->commission_tax > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html__('Tax on Commission (GST)', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($row->commission_tax))) : '') .
+            ($total_processing_fee > 0 ? sprintf('<tr><td style="padding:2px 0;">%s:</td><td style="text-align:right;font-weight:600;color:#dc2626;">-%s</td></tr>', esc_html__('Cashfree Gateway & Payout Fees', 'thaaniyamhub-multi-vendor-orders'), wp_strip_all_tags(wc_price($total_processing_fee))) : '') .
+            '<tr style="border-top:1px dashed %s;"><td style="padding:5px 0 2px 0;font-weight:700;">%s:</td><td style="padding:5px 0 2px 0;text-align:right;font-weight:800;font-size:12.5px;color:%s;">%s (%s%%)</td></tr>' .
+            '</table>' .
+            '<div style="margin-top:6px;font-size:11px;color:%s;border-top:1px solid %s;padding-top:5px;">' .
+            'ℹ️ %s' .
+            '</div>' .
             '</div>',
             $is_profit ? '#065f46' : '#991b1b',
             $is_profit ? '#ecfdf5' : '#fef2f2',
@@ -1245,10 +1232,7 @@ class ThaaniyamHub_Dashboard
         if (!$record || !$record->shiprocket_order_id) {
             if ('processing' !== $order->get_status()) {
                 echo '<p style="color:#b91c1c;font-weight:600;margin:0 0 10px 0;">' . esc_html__('Order must be in processing status to push to Shiprocket.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
-                echo '<p style="font-size:11px;color:#64748b;margin:0 0 10px 0;">' . esc_html__('If this order was already pushed to Shiprocket or processed outside, click Sync Now above or below.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
-                echo '<button type="button" id="thaaniyamhub-sf-btn-sync-order" class="button ag-sf-btn-sync" style="border-color:#0284c7; color:#0284c7; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:4px; width:100%; cursor:pointer;" data-order-id="' . esc_attr($order_id) . '" title="' . esc_attr__('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
-                echo '<span class="dashicons dashicons-update"></span> ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
-                echo '</button>';
+                echo '<p style="font-size:11px;color:#64748b;margin:0 0 10px 0;">' . esc_html__('If this order was already pushed to Shiprocket or processed outside, use the Sync Now button above.', 'thaaniyamhub-multi-vendor-orders') . '</p>';
                 echo '</div>';
                 return;
             }
@@ -1280,11 +1264,7 @@ class ThaaniyamHub_Dashboard
             } else {
                 echo esc_html__('Order has not been pushed to Shiprocket yet.', 'thaaniyamhub-multi-vendor-orders') . '<br><br>';
             }
-            echo '<div style="margin-bottom:12px;">';
-            echo '<button type="button" id="thaaniyamhub-sf-btn-sync-order" class="button ag-sf-btn-sync" style="border-color:#0284c7; color:#0284c7; font-weight:600; display:inline-flex; align-items:center; gap:4px;" data-order-id="' . esc_attr($order_id) . '" title="' . esc_attr__('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders') . '">';
-            echo '<span class="dashicons dashicons-update"></span> ' . esc_html__('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
-            echo '</button>';
-            echo '</div>';
+            // Sync button is already in the persistent header bar above — no duplicate needed here.
 
             // Pickup dropdown
             echo '<div class="thaaniyamhub-pickup-selector-wrapper" style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;">';
@@ -1416,16 +1396,17 @@ class ThaaniyamHub_Dashboard
                 <div>
                     <div class="thaaniyamhub-field-label"><?php esc_html_e('Weight', 'thaaniyamhub-multi-vendor-orders'); ?></div>
                     <div class="thaaniyamhub-field-value">
-                        <?php 
+                        <?php
                         $disp_weight = $order->get_meta('_shiprocket_weight_override');
-                        echo $disp_weight ? esc_html($disp_weight) . ' kg' : '—'; 
+                        echo $disp_weight ? esc_html($disp_weight) . ' kg' : '—';
                         ?>
                     </div>
                 </div>
                 <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Dimensions', 'thaaniyamhub-multi-vendor-orders'); ?></div>
+                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Dimensions', 'thaaniyamhub-multi-vendor-orders'); ?>
+                    </div>
                     <div class="thaaniyamhub-field-value">
-                        <?php 
+                        <?php
                         $l = $order->get_meta('_shiprocket_length_override');
                         $w = $order->get_meta('_shiprocket_width_override');
                         $h = $order->get_meta('_shiprocket_height_override');
@@ -1434,43 +1415,52 @@ class ThaaniyamHub_Dashboard
                     </div>
                 </div>
                 <?php if ($record->awb_code): ?>
-                <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Actual Shipping Cost', 'thaaniyamhub-multi-vendor-orders'); ?></div>
-                    <div class="thaaniyamhub-field-value">
-                        <?php 
-                        $actual_cost = self::get_actual_shipping_cost($order, $record);
-                        echo $actual_cost ? wp_kses_post(wc_price($actual_cost)) : '—'; 
-                        ?>
+                    <div>
+                        <div class="thaaniyamhub-field-label">
+                            <?php esc_html_e('Actual Shipping Cost', 'thaaniyamhub-multi-vendor-orders'); ?>
+                        </div>
+                        <div class="thaaniyamhub-field-value">
+                            <?php
+                            $actual_cost = self::get_actual_shipping_cost($order, $record);
+                            echo $actual_cost ? wp_kses_post(wc_price($actual_cost)) : '—';
+                            ?>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $pickup_date = !empty($record->pickup_scheduled_date) ? $record->pickup_scheduled_date : $order->get_meta('_shiprocket_pickup_scheduled_date');
                 $pickup_token = !empty($record->pickup_token_number) ? $record->pickup_token_number : $order->get_meta('_shiprocket_pickup_token_number');
                 if ($pickup_date): ?>
-                <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Pickup Scheduled', 'thaaniyamhub-multi-vendor-orders'); ?></div>
-                    <div class="thaaniyamhub-field-value">
-                        <span style="color:#166534;font-weight:600;">📅 <?php echo esc_html($pickup_date); ?></span>
-                        <?php if ($pickup_token): ?>
-                            <br><small style="color:#666;font-size:11px;font-weight:normal;"><?php echo sprintf(esc_html__('Token: %s', 'thaaniyamhub-multi-vendor-orders'), esc_html($pickup_token)); ?></small>
-                        <?php endif; ?>
+                    <div>
+                        <div class="thaaniyamhub-field-label">
+                            <?php esc_html_e('Pickup Scheduled', 'thaaniyamhub-multi-vendor-orders'); ?>
+                        </div>
+                        <div class="thaaniyamhub-field-value">
+                            <span style="color:#166534;font-weight:600;">📅 <?php echo esc_html($pickup_date); ?></span>
+                            <?php if ($pickup_token): ?>
+                                <br><small
+                                    style="color:#666;font-size:11px;font-weight:normal;"><?php echo sprintf(esc_html__('Token: %s', 'thaaniyamhub-multi-vendor-orders'), esc_html($pickup_token)); ?></small>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $manifest_url_disp = !empty($record->manifest_url) ? $record->manifest_url : $order->get_meta('_shiprocket_manifest_url');
                 if ($manifest_url_disp): ?>
-                <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Manifest Document', 'thaaniyamhub-multi-vendor-orders'); ?></div>
-                    <div class="thaaniyamhub-field-value">
-                        <a href="<?php echo esc_url($manifest_url_disp); ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;color:#0369a1;text-decoration:none;font-size:12px;font-weight:600;">
-                            <span class="dashicons dashicons-pdf"></span> <?php esc_html_e('View Manifest PDF', 'thaaniyamhub-multi-vendor-orders'); ?>
-                        </a>
+                    <div>
+                        <div class="thaaniyamhub-field-label">
+                            <?php esc_html_e('Manifest Document', 'thaaniyamhub-multi-vendor-orders'); ?>
+                        </div>
+                        <div class="thaaniyamhub-field-value">
+                            <a href="<?php echo esc_url($manifest_url_disp); ?>" target="_blank"
+                                style="display:inline-flex;align-items:center;gap:4px;color:#0369a1;text-decoration:none;font-size:12px;font-weight:600;">
+                                <span class="dashicons dashicons-pdf"></span>
+                                <?php esc_html_e('View Manifest PDF', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </a>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
             </div>
 
@@ -1584,13 +1574,20 @@ class ThaaniyamHub_Dashboard
                             style="display:block;margin-bottom:5px;font-weight:600;"><?php esc_html_e('Package Details:', 'thaaniyamhub-multi-vendor-orders'); ?></label>
                         <?php if (!empty($dimension_presets)): ?>
                             <div style="margin-bottom:8px;">
-                                <label for="thaaniyamhub_sf_package_preset" style="font-size:10px;color:#555;display:block;margin-bottom:3px;"><?php esc_html_e('Select Saved Dimension (Optional):', 'thaaniyamhub-multi-vendor-orders'); ?></label>
-                                <select id="thaaniyamhub_sf_package_preset" style="width:100%;font-size:11px;padding:3px 5px;margin-bottom:4px;">
-                                    <option value=""><?php esc_html_e('-- Choose Preset or Enter Custom Below --', 'thaaniyamhub-multi-vendor-orders'); ?></option>
-                                    <?php foreach ($dimension_presets as $dp): 
+                                <label for="thaaniyamhub_sf_package_preset"
+                                    style="font-size:10px;color:#555;display:block;margin-bottom:3px;"><?php esc_html_e('Select Saved Dimension (Optional):', 'thaaniyamhub-multi-vendor-orders'); ?></label>
+                                <select id="thaaniyamhub_sf_package_preset"
+                                    style="width:100%;font-size:11px;padding:3px 5px;margin-bottom:4px;">
+                                    <option value="">
+                                        <?php esc_html_e('-- Choose Preset or Enter Custom Below --', 'thaaniyamhub-multi-vendor-orders'); ?>
+                                    </option>
+                                    <?php foreach ($dimension_presets as $dp):
                                         $dp_label = sprintf('%s (%s kg | %s × %s × %s cm)', $dp['name'], $dp['weight'], $dp['length'], $dp['width'], $dp['height']);
-                                    ?>
-                                        <option value="<?php echo esc_attr($dp['id']); ?>" data-weight="<?php echo esc_attr($dp['weight']); ?>" data-length="<?php echo esc_attr($dp['length']); ?>" data-width="<?php echo esc_attr($dp['width']); ?>" data-height="<?php echo esc_attr($dp['height']); ?>"><?php echo esc_html($dp_label); ?></option>
+                                        ?>
+                                        <option value="<?php echo esc_attr($dp['id']); ?>" data-weight="<?php echo esc_attr($dp['weight']); ?>"
+                                            data-length="<?php echo esc_attr($dp['length']); ?>"
+                                            data-width="<?php echo esc_attr($dp['width']); ?>"
+                                            data-height="<?php echo esc_attr($dp['height']); ?>"><?php echo esc_html($dp_label); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -1601,13 +1598,16 @@ class ThaaniyamHub_Dashboard
                                     step="0.001" min="0.01" value="<?php echo esc_attr($weight); ?>" style="width:100%;"></div>
                             <div><label style="font-size:10px;display:block;">Length (cm) <span
                                         style="color:#b91c1c;">*</span></label><input type="number" id="thaaniyamhub_sf_length"
-                                    step="0.1" min="1" value="<?php echo esc_attr($length); ?>" style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
+                                    step="0.1" min="1" value="<?php echo esc_attr($length); ?>"
+                                    style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
                             <div><label style="font-size:10px;display:block;">Width (cm) <span
                                         style="color:#b91c1c;">*</span></label><input type="number" id="thaaniyamhub_sf_width"
-                                    step="0.1" min="1" value="<?php echo esc_attr($breadth); ?>" style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
+                                    step="0.1" min="1" value="<?php echo esc_attr($breadth); ?>"
+                                    style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
                             <div><label style="font-size:10px;display:block;">Height (cm) <span
                                         style="color:#b91c1c;">*</span></label><input type="number" id="thaaniyamhub_sf_height"
-                                    step="0.1" min="1" value="<?php echo esc_attr($height); ?>" style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
+                                    step="0.1" min="1" value="<?php echo esc_attr($height); ?>"
+                                    style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
                         </div>
                         <button type="button" id="thaaniyamhub-sf-btn-fetch-couriers" class="button button-secondary button-small"
                             style="width:100%;margin-bottom:6px;"
@@ -1620,13 +1620,7 @@ class ThaaniyamHub_Dashboard
             <?php endif; ?>
 
             <div class="thaaniyamhub-actions">
-                <?php if (!empty($record->shiprocket_order_id) || !empty($order->get_meta('_shiprocket_order_id'))): ?>
-                    <button type="button" id="thaaniyamhub-sf-btn-sync-order" class="button ag-sf-btn-sync" style="border-color:#0284c7; color:#0284c7; width:100%; margin-bottom:8px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:6px;"
-                        data-order-id="<?php echo esc_attr($order_id); ?>" title="<?php esc_attr_e('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>">
-                        <span class="dashicons dashicons-update"></span>
-                        <?php esc_html_e('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>
-                    </button>
-                <?php endif; ?>
+                <!-- Sync button is in the persistent header bar above -->
 
                 <?php if (!$record->awb_code && 'cancelled' !== $record->fulfillment_status): ?>
                     <button type="button" id="thaaniyamhub-sf-btn-generate-awb" class="button button-primary" style="width:100%;"
@@ -1636,16 +1630,18 @@ class ThaaniyamHub_Dashboard
                     </button>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $pickup_date = !empty($record->pickup_scheduled_date) ? $record->pickup_scheduled_date : $order->get_meta('_shiprocket_pickup_scheduled_date');
                 $pickup_token = !empty($record->pickup_token_number) ? $record->pickup_token_number : $order->get_meta('_shiprocket_pickup_token_number');
                 ?>
 
                 <?php if ($record->awb_code && $pickup_date): ?>
-                    <div style="width:100%; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+                    <div
+                        style="width:100%; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
                         <span style="font-size:22px; line-height:1;">📅</span>
                         <div style="flex:1;">
-                            <div style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.5px;">
+                            <div
+                                style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.5px;">
                                 <?php esc_html_e('Scheduled Pickup Date', 'thaaniyamhub-multi-vendor-orders'); ?>
                             </div>
                             <div style="font-size:13px; font-weight:700; color:#14532d; margin-top:1px;">
@@ -1707,7 +1703,8 @@ class ThaaniyamHub_Dashboard
 
                 <!-- 2. Manifest Button: View if generated, Download if not yet generated -->
                 <?php if ($manifest_url): ?>
-                    <a href="<?php echo esc_url($manifest_url); ?>" target="_blank" class="button" style="color:#0369a1;border-color:#0369a1;">
+                    <a href="<?php echo esc_url($manifest_url); ?>" target="_blank" class="button"
+                        style="color:#0369a1;border-color:#0369a1;">
                         <span class="dashicons dashicons-pdf"></span>
                         <?php esc_html_e('View Manifest', 'thaaniyamhub-multi-vendor-orders'); ?>
                     </a>
@@ -1742,7 +1739,8 @@ class ThaaniyamHub_Dashboard
                 <?php endif; ?>
 
                 <?php if ('delivered' === $record->fulfillment_status): ?>
-                    <button type="button" id="thaaniyamhub-sf-btn-return-order" class="button button-primary" style="width:100%; background:#b91c1c; border-color:#b91c1c;"
+                    <button type="button" id="thaaniyamhub-sf-btn-return-order" class="button button-primary"
+                        style="width:100%; background:#b91c1c; border-color:#b91c1c;"
                         data-order-id="<?php echo esc_attr($order_id); ?>">
                         <span class="dashicons dashicons-undo"></span>
                         <?php esc_html_e('Return Order', 'thaaniyamhub-multi-vendor-orders'); ?>
@@ -1756,7 +1754,7 @@ class ThaaniyamHub_Dashboard
                     </button>
                 <?php endif; ?>
             </div>
-        <?php
+            <?php
         }
 
         echo '</div>'; // #thaaniyamhub-sf-fulfillment-metabox
@@ -3941,16 +3939,9 @@ class ThaaniyamHub_Dashboard
                 echo '<div><strong>' . esc_html__('Previous Dispatch Failed', 'thaaniyamhub-multi-vendor-orders') . '</strong>' . esc_html($fail_reason) . '</div>';
                 echo '</div>';
             } else {
-                echo '<div class="ag-sf-status-banner pending" style="display:flex; flex-direction:column; gap:8px;">';
-                echo '<div style="display:flex; align-items:center; gap:8px;">';
+                echo '<div class="ag-sf-status-banner pending" style="display:flex; align-items:center; gap:8px;">';
                 echo '<div class="ag-sf-status-icon">⏳</div>';
                 echo '<div><strong>' . esc_html__('Awaiting Dispatch', 'thaaniyamhub-multi-vendor-orders') . '</strong>' . esc_html__('This order has not been pushed to Shiprocket yet. Click Push to Shiprocket Button.', 'thaaniyamhub-multi-vendor-orders') . '</div>';
-                echo '</div>';
-                echo '<div style="margin-top:4px;">';
-                echo '<button type="button" class="wcfm_submit_button ag-sf-fe-btn-sync" data-order-id="' . esc_attr($order_id) . '" style="border:1px solid #0284c7 !important; color:#0284c7 !important; background:#fff !important; font-weight:600 !important; padding:4px 10px !important; font-size:11.5px !important; margin:0 !important; display:inline-flex !important; align-items:center !important; gap:4px !important; border-radius:4px !important; cursor:pointer !important;">';
-                echo '🔄 ' . esc_html__('Already pushed? Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders');
-                echo '</button>';
-                echo '</div>';
                 echo '</div>';
             }
 
@@ -4074,16 +4065,17 @@ class ThaaniyamHub_Dashboard
                 <div>
                     <div class="thaaniyamhub-field-label"><?php esc_html_e('Weight', 'thaaniyamhub-multi-vendor-orders'); ?></div>
                     <div class="thaaniyamhub-field-value">
-                        <?php 
+                        <?php
                         $disp_weight = $order->get_meta('_shiprocket_weight_override');
-                        echo $disp_weight ? esc_html($disp_weight) . ' kg' : '—'; 
+                        echo $disp_weight ? esc_html($disp_weight) . ' kg' : '—';
                         ?>
                     </div>
                 </div>
                 <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Dimensions', 'thaaniyamhub-multi-vendor-orders'); ?></div>
+                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Dimensions', 'thaaniyamhub-multi-vendor-orders'); ?>
+                    </div>
                     <div class="thaaniyamhub-field-value">
-                        <?php 
+                        <?php
                         $l = $order->get_meta('_shiprocket_length_override');
                         $w = $order->get_meta('_shiprocket_width_override');
                         $h = $order->get_meta('_shiprocket_height_override');
@@ -4092,43 +4084,51 @@ class ThaaniyamHub_Dashboard
                     </div>
                 </div>
                 <?php if ($record->awb_code): ?>
-                <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Actual Shipping Cost', 'thaaniyamhub-multi-vendor-orders'); ?></div>
-                    <div class="thaaniyamhub-field-value">
-                        <?php 
-                        $actual_cost = self::get_actual_shipping_cost($order, $record);
-                        echo $actual_cost ? wp_kses_post(wc_price($actual_cost)) : '—'; 
-                        ?>
+                    <div>
+                        <div class="thaaniyamhub-field-label">
+                            <?php esc_html_e('Actual Shipping Cost', 'thaaniyamhub-multi-vendor-orders'); ?>
+                        </div>
+                        <div class="thaaniyamhub-field-value">
+                            <?php
+                            $actual_cost = self::get_actual_shipping_cost($order, $record);
+                            echo $actual_cost ? wp_kses_post(wc_price($actual_cost)) : '—';
+                            ?>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $fe_pickup_date = !empty($record->pickup_scheduled_date) ? $record->pickup_scheduled_date : $order->get_meta('_shiprocket_pickup_scheduled_date');
                 $fe_pickup_token = !empty($record->pickup_token_number) ? $record->pickup_token_number : $order->get_meta('_shiprocket_pickup_token_number');
                 if ($fe_pickup_date): ?>
-                <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Pickup Scheduled', 'thaaniyamhub-multi-vendor-orders'); ?></div>
-                    <div class="thaaniyamhub-field-value">
-                        <span style="color:#166534;font-weight:600;">📅 <?php echo esc_html($fe_pickup_date); ?></span>
-                        <?php if ($fe_pickup_token): ?>
-                            <br><small style="color:#666;font-size:11px;font-weight:normal;"><?php echo sprintf(esc_html__('Token: %s', 'thaaniyamhub-multi-vendor-orders'), esc_html($fe_pickup_token)); ?></small>
-                        <?php endif; ?>
+                    <div>
+                        <div class="thaaniyamhub-field-label">
+                            <?php esc_html_e('Pickup Scheduled', 'thaaniyamhub-multi-vendor-orders'); ?>
+                        </div>
+                        <div class="thaaniyamhub-field-value">
+                            <span style="color:#166534;font-weight:600;">📅 <?php echo esc_html($fe_pickup_date); ?></span>
+                            <?php if ($fe_pickup_token): ?>
+                                <br><small
+                                    style="color:#666;font-size:11px;font-weight:normal;"><?php echo sprintf(esc_html__('Token: %s', 'thaaniyamhub-multi-vendor-orders'), esc_html($fe_pickup_token)); ?></small>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $fe_manifest_url_disp = !empty($record->manifest_url) ? $record->manifest_url : $order->get_meta('_shiprocket_manifest_url');
                 if ($fe_manifest_url_disp): ?>
-                <div>
-                    <div class="thaaniyamhub-field-label"><?php esc_html_e('Manifest Document', 'thaaniyamhub-multi-vendor-orders'); ?></div>
-                    <div class="thaaniyamhub-field-value">
-                        <a href="<?php echo esc_url($fe_manifest_url_disp); ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;color:#0369a1;text-decoration:none;font-size:12px;font-weight:600;">
-                            📄 <?php esc_html_e('View Manifest PDF', 'thaaniyamhub-multi-vendor-orders'); ?>
-                        </a>
+                    <div>
+                        <div class="thaaniyamhub-field-label">
+                            <?php esc_html_e('Manifest Document', 'thaaniyamhub-multi-vendor-orders'); ?>
+                        </div>
+                        <div class="thaaniyamhub-field-value">
+                            <a href="<?php echo esc_url($fe_manifest_url_disp); ?>" target="_blank"
+                                style="display:inline-flex;align-items:center;gap:4px;color:#0369a1;text-decoration:none;font-size:12px;font-weight:600;">
+                                📄 <?php esc_html_e('View Manifest PDF', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </a>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
             </div>
 
@@ -4214,13 +4214,20 @@ class ThaaniyamHub_Dashboard
                             style="display:block;margin-bottom:5px;font-weight:600;"><?php esc_html_e('Package Details:', 'thaaniyamhub-multi-vendor-orders'); ?></label>
                         <?php if (!empty($dimension_presets)): ?>
                             <div style="margin-bottom:8px;">
-                                <label for="ag_sf_fe_package_preset" style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:3px;"><?php esc_html_e('Select Saved Dimension (Optional):', 'thaaniyamhub-multi-vendor-orders'); ?></label>
-                                <select id="ag_sf_fe_package_preset" style="width:100%;font-size:12px;padding:4px 6px;margin-bottom:4px;border-radius:4px;border:1px solid #cbd5e1;">
-                                    <option value=""><?php esc_html_e('-- Choose Preset or Enter Custom Below --', 'thaaniyamhub-multi-vendor-orders'); ?></option>
-                                    <?php foreach ($dimension_presets as $dp): 
+                                <label for="ag_sf_fe_package_preset"
+                                    style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:3px;"><?php esc_html_e('Select Saved Dimension (Optional):', 'thaaniyamhub-multi-vendor-orders'); ?></label>
+                                <select id="ag_sf_fe_package_preset"
+                                    style="width:100%;font-size:12px;padding:4px 6px;margin-bottom:4px;border-radius:4px;border:1px solid #cbd5e1;">
+                                    <option value="">
+                                        <?php esc_html_e('-- Choose Preset or Enter Custom Below --', 'thaaniyamhub-multi-vendor-orders'); ?>
+                                    </option>
+                                    <?php foreach ($dimension_presets as $dp):
                                         $dp_label = sprintf('%s (%s kg | %s × %s × %s cm)', $dp['name'], $dp['weight'], $dp['length'], $dp['width'], $dp['height']);
-                                    ?>
-                                        <option value="<?php echo esc_attr($dp['id']); ?>" data-weight="<?php echo esc_attr($dp['weight']); ?>" data-length="<?php echo esc_attr($dp['length']); ?>" data-width="<?php echo esc_attr($dp['width']); ?>" data-height="<?php echo esc_attr($dp['height']); ?>"><?php echo esc_html($dp_label); ?></option>
+                                        ?>
+                                        <option value="<?php echo esc_attr($dp['id']); ?>" data-weight="<?php echo esc_attr($dp['weight']); ?>"
+                                            data-length="<?php echo esc_attr($dp['length']); ?>"
+                                            data-width="<?php echo esc_attr($dp['width']); ?>"
+                                            data-height="<?php echo esc_attr($dp['height']); ?>"><?php echo esc_html($dp_label); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -4231,13 +4238,16 @@ class ThaaniyamHub_Dashboard
                                     min="0.01" value="<?php echo esc_attr($weight); ?>" style="width:100%;"></div>
                             <div><label style="font-size:10px;display:block;">Length (cm) <span
                                         style="color:#b91c1c;">*</span></label><input type="number" id="ag_sf_fe_length" step="0.1"
-                                    min="1" value="<?php echo esc_attr($length); ?>" style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
+                                    min="1" value="<?php echo esc_attr($length); ?>"
+                                    style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
                             <div><label style="font-size:10px;display:block;">Width (cm) <span
                                         style="color:#b91c1c;">*</span></label><input type="number" id="ag_sf_fe_width" step="0.1"
-                                    min="1" value="<?php echo esc_attr($breadth); ?>" style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
+                                    min="1" value="<?php echo esc_attr($breadth); ?>"
+                                    style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
                             <div><label style="font-size:10px;display:block;">Height (cm) <span
                                         style="color:#b91c1c;">*</span></label><input type="number" id="ag_sf_fe_height" step="0.1"
-                                    min="1" value="<?php echo esc_attr($height); ?>" style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
+                                    min="1" value="<?php echo esc_attr($height); ?>"
+                                    style="width:100%;background-color:#f3f4f6;cursor:not-allowed;" readonly></div>
                         </div>
                         <button type="button" id="ag-sf-fe-btn-fetch-couriers" class="wcfm_submit_button"
                             style="width:100%;margin-bottom:6px;"
@@ -4250,12 +4260,7 @@ class ThaaniyamHub_Dashboard
             <?php endif; ?>
 
             <div class="thaaniyamhub-actions">
-                <!-- 0. Sync Button for WCFM Vendor -->
-                <button type="button" id="ag-sf-fe-btn-sync" class="wcfm_submit_button ag-sf-fe-btn-sync"
-                    style="width:100% !important; border:1.5px solid #0284c7 !important; color:#0284c7 !important; background:#f0f9ff !important; font-weight:700 !important; font-size:13px !important; margin-bottom:8px !important; display:flex !important; justify-content:center !important; align-items:center !important; gap:6px !important; border-radius:6px !important; cursor:pointer !important;"
-                    data-order-id="<?php echo esc_attr($order_id); ?>" title="<?php esc_attr_e('Sync latest Courier Partner, AWB and Status from Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>">
-                    🔄 <?php esc_html_e('Sync with Shiprocket', 'thaaniyamhub-multi-vendor-orders'); ?>
-                </button>
+                <!-- Sync button is in the card header above -->
 
                 <?php if (!$record->awb_code && 'cancelled' !== $record->fulfillment_status): ?>
                     <button type="button" id="ag-sf-fe-btn-awb" class="wcfm_submit_button"
@@ -4264,16 +4269,18 @@ class ThaaniyamHub_Dashboard
                     </button>
                 <?php endif; ?>
 
-                <?php 
+                <?php
                 $fe_pickup_date = !empty($record->pickup_scheduled_date) ? $record->pickup_scheduled_date : $order->get_meta('_shiprocket_pickup_scheduled_date');
                 $fe_pickup_token = !empty($record->pickup_token_number) ? $record->pickup_token_number : $order->get_meta('_shiprocket_pickup_token_number');
                 ?>
 
                 <?php if ($record->awb_code && $fe_pickup_date): ?>
-                    <div style="width:100%; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+                    <div
+                        style="width:100%; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
                         <span style="font-size:22px; line-height:1;">📅</span>
                         <div style="flex:1;">
-                            <div style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.5px;">
+                            <div
+                                style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.5px;">
                                 <?php esc_html_e('Scheduled Pickup Date', 'thaaniyamhub-multi-vendor-orders'); ?>
                             </div>
                             <div style="font-size:14px; font-weight:700; color:#14532d; margin-top:1px;">
@@ -4362,7 +4369,8 @@ class ThaaniyamHub_Dashboard
                 <?php endif; ?>
 
                 <?php if ('delivered' === $record->fulfillment_status): ?>
-                    <button type="button" id="ag-sf-fe-btn-return" class="wcfm_submit_button" style="background:#b91c1c; border-color:#b91c1c; width:100%;"
+                    <button type="button" id="ag-sf-fe-btn-return" class="wcfm_submit_button"
+                        style="background:#b91c1c; border-color:#b91c1c; width:100%;"
                         data-order-id="<?php echo esc_attr($order_id); ?>">
                         🔄 <?php esc_html_e('Return Order', 'thaaniyamhub-multi-vendor-orders'); ?>
                     </button>
@@ -4375,7 +4383,7 @@ class ThaaniyamHub_Dashboard
                     </button>
                 <?php endif; ?>
             </div>
-        <?php
+            <?php
         }
         echo '</div>'; // .ag-sf-card-body
         echo '</div>'; // .ag-sf-card
@@ -4681,7 +4689,7 @@ class ThaaniyamHub_Dashboard
         $svc = $api->check_serviceability(['order_id' => (int) $record->shiprocket_order_id]);
         $shipping_cost = 0.0;
         if (!is_wp_error($svc) && !empty($svc['data']['available_courier_companies'])) {
-            $extract_courier_cost = function($c) {
+            $extract_courier_cost = function ($c) {
                 $candidates = [
                     $c['freight_charges'] ?? null,
                     $c['shipping_charges'] ?? null,
@@ -4700,8 +4708,10 @@ class ThaaniyamHub_Dashboard
             foreach ($svc['data']['available_courier_companies'] as $c) {
                 $c_id = (int) ($c['courier_company_id'] ?? 0);
                 $c_name = $c['courier_name'] ?? '';
-                if (($selected_courier_id && $c_id === $selected_courier_id) || 
-                    (!$selected_courier_id && $record->courier_name && strcasecmp($c_name, $record->courier_name) === 0)) {
+                if (
+                    ($selected_courier_id && $c_id === $selected_courier_id) ||
+                    (!$selected_courier_id && $record->courier_name && strcasecmp($c_name, $record->courier_name) === 0)
+                ) {
                     $shipping_cost = $extract_courier_cost($c);
                     break;
                 }
@@ -4894,10 +4904,10 @@ class ThaaniyamHub_Dashboard
 
         $fulfillment_status = $pickup_scheduled_date ? 'pickup_scheduled' : 'assigned';
         $update_data = [
-            'awb_code'              => $awb,
-            'courier_name'          => $courier_name,
+            'awb_code' => $awb,
+            'courier_name' => $courier_name,
             'pickup_scheduled_date' => $pickup_scheduled_date,
-            'pickup_token_number'   => $pickup_token,
+            'pickup_token_number' => $pickup_token,
         ];
         if ($manifest_url) {
             $update_data['manifest_url'] = $manifest_url;
@@ -4931,11 +4941,11 @@ class ThaaniyamHub_Dashboard
         }
 
         wp_send_json_success([
-            'awb'                   => $awb,
-            'courier'               => $courier_name,
+            'awb' => $awb,
+            'courier' => $courier_name,
             'pickup_scheduled_date' => $pickup_scheduled_date,
-            'pickup_token'          => $pickup_token,
-            'manifest_url'          => $manifest_url,
+            'pickup_token' => $pickup_token,
+            'manifest_url' => $manifest_url,
         ]);
     }
 
@@ -5432,10 +5442,10 @@ class ThaaniyamHub_Dashboard
         }
 
         $update_data = [
-            'awb_code'              => $awb,
-            'courier_name'          => $courier_name,
+            'awb_code' => $awb,
+            'courier_name' => $courier_name,
             'pickup_scheduled_date' => $pickup_scheduled_date,
-            'pickup_token_number'   => $pickup_token,
+            'pickup_token_number' => $pickup_token,
         ];
         if ($manifest_url) {
             $update_data['manifest_url'] = $manifest_url;
@@ -5531,7 +5541,7 @@ class ThaaniyamHub_Dashboard
         $status = 'pickup_scheduled';
         $update_data = [
             'pickup_scheduled_date' => $pickup_scheduled_date,
-            'pickup_token_number'   => $pickup_token,
+            'pickup_token_number' => $pickup_token,
         ];
         if ($manifest_url) {
             $update_data['manifest_url'] = $manifest_url;
@@ -5610,7 +5620,7 @@ class ThaaniyamHub_Dashboard
         thaaniyamhub_log("AJAX Action (Download Manifest): Requesting manifest generation from Shiprocket for shipment #{$record->shiprocket_shipment_id} (Order #{$order_id})");
 
         $api = new ThaaniyamHub_Shiprocket_API();
-        
+
         // 1. First attempt generate_manifest
         $gen_payload = [];
         if (!empty($record->shiprocket_shipment_id)) {
@@ -6125,9 +6135,10 @@ class ThaaniyamHub_Dashboard
      * @param array $methods
      * @return array
      */
-    public static function register_cashfree_withdrawal_method( $methods ) {
-        if ( class_exists( 'WCFMmp_Gateway_Cashfree' ) ) {
-            $methods['cashfree'] = __( 'Cashfree Payouts', 'thaaniyamhub-multi-vendor-orders' );
+    public static function register_cashfree_withdrawal_method($methods)
+    {
+        if (class_exists('WCFMmp_Gateway_Cashfree')) {
+            $methods['cashfree'] = __('Cashfree Payouts', 'thaaniyamhub-multi-vendor-orders');
         }
         return $methods;
     }
@@ -6138,15 +6149,16 @@ class ThaaniyamHub_Dashboard
      * @param array $methods
      * @return array
      */
-    public static function filter_active_withdrawal_methods( $methods ) {
-        if ( ! class_exists( 'WCFMmp_Gateway_Cashfree' ) ) {
+    public static function filter_active_withdrawal_methods($methods)
+    {
+        if (!class_exists('WCFMmp_Gateway_Cashfree')) {
             return $methods;
         }
 
-        $api = class_exists( 'ThaaniyamHub_Cashfree_Payout_API' ) ? ThaaniyamHub_Cashfree_Payout_API::get_instance() : null;
-        if ( $api && $api->is_configured() ) {
-            if ( ! isset( $methods['cashfree'] ) ) {
-                $methods['cashfree'] = __( 'Cashfree Payouts (Bank Transfer / UPI)', 'thaaniyamhub-multi-vendor-orders' );
+        $api = class_exists('ThaaniyamHub_Cashfree_Payout_API') ? ThaaniyamHub_Cashfree_Payout_API::get_instance() : null;
+        if ($api && $api->is_configured()) {
+            if (!isset($methods['cashfree'])) {
+                $methods['cashfree'] = __('Cashfree Payouts (Bank Transfer / UPI)', 'thaaniyamhub-multi-vendor-orders');
             }
         }
         return $methods;
@@ -6159,91 +6171,92 @@ class ThaaniyamHub_Dashboard
      * @param int   $vendor_id
      * @return array
      */
-    public static function add_cashfree_vendor_billing_fields( $fields, $vendor_id ) {
-        $vendor_data = get_user_meta( $vendor_id, 'wcfmmp_profile_settings', true );
-        if ( ! is_array( $vendor_data ) ) {
+    public static function add_cashfree_vendor_billing_fields($fields, $vendor_id)
+    {
+        $vendor_data = get_user_meta($vendor_id, 'wcfmmp_profile_settings', true);
+        if (!is_array($vendor_data)) {
             $vendor_data = [];
         }
 
         $cashfree = $vendor_data['payment']['cashfree'] ?? [];
-        $bank     = $vendor_data['payment']['bank'] ?? [];
+        $bank = $vendor_data['payment']['bank'] ?? [];
 
-        $ac_name     = $cashfree['ac_name'] ?? ( $bank['ac_name'] ?? '' );
-        $ac_number   = $cashfree['ac_number'] ?? ( $bank['ac_number'] ?? '' );
-        $bank_name   = $cashfree['bank_name'] ?? ( $bank['bank_name'] ?? '' );
-        $ifsc        = $cashfree['ifsc'] ?? ( $bank['ifsc'] ?? '' );
-        $upi_id      = $cashfree['upi_id'] ?? ( $vendor_data['payment']['upi']['vpa'] ?? '' );
-        $payout_type = $cashfree['payout_type'] ?? ( ! empty( $upi_id ) && empty( $ac_number ) ? 'upi' : 'bank' );
+        $ac_name = $cashfree['ac_name'] ?? ($bank['ac_name'] ?? '');
+        $ac_number = $cashfree['ac_number'] ?? ($bank['ac_number'] ?? '');
+        $bank_name = $cashfree['bank_name'] ?? ($bank['bank_name'] ?? '');
+        $ifsc = $cashfree['ifsc'] ?? ($bank['ifsc'] ?? '');
+        $upi_id = $cashfree['upi_id'] ?? ($vendor_data['payment']['upi']['vpa'] ?? '');
+        $payout_type = $cashfree['payout_type'] ?? (!empty($upi_id) && empty($ac_number) ? 'upi' : 'bank');
 
         $fields['cashfree_payout_heading'] = [
-            'label'       => __( 'Cashfree Disbursals', 'thaaniyamhub-multi-vendor-orders' ),
-            'type'        => 'html',
-            'class'       => 'paymode_field paymode_cashfree',
+            'label' => __('Cashfree Disbursals', 'thaaniyamhub-multi-vendor-orders'),
+            'type' => 'html',
+            'class' => 'paymode_field paymode_cashfree',
             'label_class' => 'paymode_field paymode_cashfree',
-            'value'       => '<div style="margin-top: 15px; margin-bottom: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;"><strong style="font-size: 14px; color: #0284c7;">' . esc_html__( 'Cashfree Direct Payout Account Setup', 'thaaniyamhub-multi-vendor-orders' ) . '</strong><p class="description">' . esc_html__( 'Configure your verified Bank Account or UPI ID to receive instant commission disbursements.', 'thaaniyamhub-multi-vendor-orders' ) . '</p></div>',
+            'value' => '<div style="margin-top: 15px; margin-bottom: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;"><strong style="font-size: 14px; color: #0284c7;">' . esc_html__('Cashfree Direct Payout Account Setup', 'thaaniyamhub-multi-vendor-orders') . '</strong><p class="description">' . esc_html__('Configure your verified Bank Account or UPI ID to receive instant commission disbursements.', 'thaaniyamhub-multi-vendor-orders') . '</p></div>',
         ];
 
         $fields['cashfree_payout_type'] = [
-            'label'       => __( 'Payout Destination', 'thaaniyamhub-multi-vendor-orders' ),
-            'name'        => 'payment[cashfree][payout_type]',
-            'type'        => 'select',
-            'options'     => [
-                'bank' => __( 'Bank Account (IMPS / NEFT)', 'thaaniyamhub-multi-vendor-orders' ),
-                'upi'  => __( 'UPI ID / VPA', 'thaaniyamhub-multi-vendor-orders' ),
+            'label' => __('Payout Destination', 'thaaniyamhub-multi-vendor-orders'),
+            'name' => 'payment[cashfree][payout_type]',
+            'type' => 'select',
+            'options' => [
+                'bank' => __('Bank Account (IMPS / NEFT)', 'thaaniyamhub-multi-vendor-orders'),
+                'upi' => __('UPI ID / VPA', 'thaaniyamhub-multi-vendor-orders'),
             ],
-            'class'       => 'wcfm-select wcfm_ele paymode_field paymode_cashfree',
+            'class' => 'wcfm-select wcfm_ele paymode_field paymode_cashfree',
             'label_class' => 'wcfm_title wcfm_ele paymode_field paymode_cashfree',
-            'value'       => $payout_type,
+            'value' => $payout_type,
         ];
 
         $fields['cashfree_ac_name'] = [
-            'label'       => __( 'Account Holder Name', 'thaaniyamhub-multi-vendor-orders' ),
-            'placeholder' => __( 'As registered in bank records', 'thaaniyamhub-multi-vendor-orders' ),
-            'name'        => 'payment[cashfree][ac_name]',
-            'type'        => 'text',
-            'class'       => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
+            'label' => __('Account Holder Name', 'thaaniyamhub-multi-vendor-orders'),
+            'placeholder' => __('As registered in bank records', 'thaaniyamhub-multi-vendor-orders'),
+            'name' => 'payment[cashfree][ac_name]',
+            'type' => 'text',
+            'class' => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
             'label_class' => 'wcfm_title wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
-            'value'       => $ac_name,
+            'value' => $ac_name,
         ];
 
         $fields['cashfree_ac_number'] = [
-            'label'       => __( 'Bank Account Number', 'thaaniyamhub-multi-vendor-orders' ),
-            'placeholder' => __( 'Enter bank account number', 'thaaniyamhub-multi-vendor-orders' ),
-            'name'        => 'payment[cashfree][ac_number]',
-            'type'        => 'text',
-            'class'       => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
+            'label' => __('Bank Account Number', 'thaaniyamhub-multi-vendor-orders'),
+            'placeholder' => __('Enter bank account number', 'thaaniyamhub-multi-vendor-orders'),
+            'name' => 'payment[cashfree][ac_number]',
+            'type' => 'text',
+            'class' => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
             'label_class' => 'wcfm_title wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
-            'value'       => $ac_number,
+            'value' => $ac_number,
         ];
 
         $fields['cashfree_ifsc'] = [
-            'label'       => __( 'Bank IFSC Code', 'thaaniyamhub-multi-vendor-orders' ),
-            'placeholder' => __( 'e.g. HDFC0001234', 'thaaniyamhub-multi-vendor-orders' ),
-            'name'        => 'payment[cashfree][ifsc]',
-            'type'        => 'text',
-            'class'       => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
+            'label' => __('Bank IFSC Code', 'thaaniyamhub-multi-vendor-orders'),
+            'placeholder' => __('e.g. HDFC0001234', 'thaaniyamhub-multi-vendor-orders'),
+            'name' => 'payment[cashfree][ifsc]',
+            'type' => 'text',
+            'class' => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
             'label_class' => 'wcfm_title wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
-            'value'       => $ifsc,
+            'value' => $ifsc,
         ];
 
         $fields['cashfree_bank_name'] = [
-            'label'       => __( 'Bank & Branch Name', 'thaaniyamhub-multi-vendor-orders' ),
-            'placeholder' => __( 'e.g. HDFC Bank, Main Branch', 'thaaniyamhub-multi-vendor-orders' ),
-            'name'        => 'payment[cashfree][bank_name]',
-            'type'        => 'text',
-            'class'       => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
+            'label' => __('Bank & Branch Name', 'thaaniyamhub-multi-vendor-orders'),
+            'placeholder' => __('e.g. HDFC Bank, Main Branch', 'thaaniyamhub-multi-vendor-orders'),
+            'name' => 'payment[cashfree][bank_name]',
+            'type' => 'text',
+            'class' => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
             'label_class' => 'wcfm_title wcfm_ele paymode_field paymode_cashfree cf_bank_field_row',
-            'value'       => $bank_name,
+            'value' => $bank_name,
         ];
 
         $fields['cashfree_upi_id'] = [
-            'label'       => __( 'UPI ID / VPA', 'thaaniyamhub-multi-vendor-orders' ),
-            'placeholder' => __( 'e.g. merchant@okhdfcbank or 9876543210@paytm', 'thaaniyamhub-multi-vendor-orders' ),
-            'name'        => 'payment[cashfree][upi_id]',
-            'type'        => 'text',
-            'class'       => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_upi_field_row',
+            'label' => __('UPI ID / VPA', 'thaaniyamhub-multi-vendor-orders'),
+            'placeholder' => __('e.g. merchant@okhdfcbank or 9876543210@paytm', 'thaaniyamhub-multi-vendor-orders'),
+            'name' => 'payment[cashfree][upi_id]',
+            'type' => 'text',
+            'class' => 'wcfm-text wcfm_ele paymode_field paymode_cashfree cf_upi_field_row',
             'label_class' => 'wcfm_title wcfm_ele paymode_field paymode_cashfree cf_upi_field_row',
-            'value'       => $upi_id,
+            'value' => $upi_id,
         ];
 
         return $fields;
@@ -6252,34 +6265,35 @@ class ThaaniyamHub_Dashboard
     /**
      * Render script for dynamic toggle between Bank Account and UPI fields in WCFM settings.
      */
-    public static function render_cashfree_vendor_billing_script() {
+    public static function render_cashfree_vendor_billing_script()
+    {
         ?>
         <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            function toggleCashfreePayoutFields() {
-                var paymentMethod = $('select[name="payment[method]"]').val();
-                if (paymentMethod === 'cashfree') {
-                    $('.paymode_cashfree').show();
-                    var payoutType = $('select[name="payment[cashfree][payout_type]"]').val();
-                    if (payoutType === 'upi') {
-                        $('.cf_bank_field_row').hide();
-                        $('.cf_upi_field_row').show();
+            jQuery(document).ready(function ($) {
+                function toggleCashfreePayoutFields() {
+                    var paymentMethod = $('select[name="payment[method]"]').val();
+                    if (paymentMethod === 'cashfree') {
+                        $('.paymode_cashfree').show();
+                        var payoutType = $('select[name="payment[cashfree][payout_type]"]').val();
+                        if (payoutType === 'upi') {
+                            $('.cf_bank_field_row').hide();
+                            $('.cf_upi_field_row').show();
+                        } else {
+                            $('.cf_bank_field_row').show();
+                            $('.cf_upi_field_row').hide();
+                        }
                     } else {
-                        $('.cf_bank_field_row').show();
-                        $('.cf_upi_field_row').hide();
+                        $('.paymode_cashfree').hide();
                     }
-                } else {
-                    $('.paymode_cashfree').hide();
                 }
-            }
 
-            $(document).on('change', 'select[name="payment[method]"], select[name="payment[cashfree][payout_type]"]', function() {
-                toggleCashfreePayoutFields();
+                $(document).on('change', 'select[name="payment[method]"], select[name="payment[cashfree][payout_type]"]', function () {
+                    toggleCashfreePayoutFields();
+                });
+
+                // Initial trigger
+                setTimeout(toggleCashfreePayoutFields, 300);
             });
-
-            // Initial trigger
-            setTimeout(toggleCashfreePayoutFields, 300);
-        });
         </script>
         <?php
     }
