@@ -52,6 +52,16 @@ $short_code		=	$content_layout['short_code'];
           <?php echo do_shortcode($short_code); ?>
         </div>
       </div>
-    </div>
-  </div>
+    </div><!-- /.row.contact-content -->
+
+    <?php
+    // Corporate & Regulatory Information and Statutory Grievance Desk for Payment Gateway Approval
+    if ( function_exists( 'thaaniyamhub_render_contact_compliance_box' ) ) {
+        echo thaaniyamhub_render_contact_compliance_box();
+    }
+    ?>
+
+  </div><!-- /.inner-container -->
 </section>
+
+

@@ -13,7 +13,7 @@ function thaaniyamhub_enqueue_styles()
 
     // Enqueue additional styles from the child theme
 
-    wp_enqueue_style('parent-fontawesome-style', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css', array(), $theme_version);
+    wp_enqueue_style('parent-fontawesome-style', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), $theme_version);
 
     wp_enqueue_style('parent-bootstrap-style', get_stylesheet_directory_uri() . '/assets/css/bootstrap.min.css', array(), $theme_version);
 
@@ -1341,14 +1341,26 @@ add_filter('rest_authentication_errors', function ($result) {
         return $result;
     }
 
-    // Allow public webhooks (e.g., Cashfree payout webhook)
+    // Allow public webhooks and essential frontend endpoints (Contact Form 7, WooCommerce Store, etc.)
     $rest_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
     if (empty($rest_route) && isset($_SERVER['REQUEST_URI'])) {
         $rest_route = $_SERVER['REQUEST_URI'];
     }
 
-    if (strpos($rest_route, 'thaaniyamhub/v1') !== false) {
-        return $result;
+    $allowed_routes = array(
+        'thaaniyamhub/v1',
+        'thaaniyamhub-multi-vendor-orders/v1',
+        'contact-form-7/v1',
+        'wc/store',
+        'yith/wishlist',
+        '1cc/v1',
+        'oembed/1.0',
+    );
+
+    foreach ($allowed_routes as $allowed) {
+        if (strpos($rest_route, $allowed) !== false) {
+            return $result;
+        }
     }
 
     if (!is_user_logged_in()) {
@@ -2639,3 +2651,9 @@ add_filter( 'woocommerce_email_headers', function( $headers, $email_id, $order =
     }
     return $headers;
 }, 50, 3 );
+
+/**
+ * Business & Regulatory Compliance (PAN, GSTIN, Udyam, FSSAI & Cashfree Onboarding)
+ */
+require_once get_template_directory() . '/inc/compliance-settings.php';
+

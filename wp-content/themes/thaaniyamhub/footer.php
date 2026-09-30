@@ -7,14 +7,36 @@
           <?php
           $footer_logo_url = get_theme_mod('footer_logo');
           if (empty($footer_logo_url)) {
-              $footer_logo_url = get_stylesheet_directory_uri() . '/assets/images/thaaniyam-logo.png';
+            $footer_logo_url = get_stylesheet_directory_uri() . '/assets/images/thaaniyam-logo.png';
           }
           ?>
           <img src="<?php echo esc_url($footer_logo_url); ?>" alt="<?php bloginfo('name'); ?>">
         </div>
         <div class="footer-copyright">
-          <p><?php echo get_theme_mod('copyright_text'); ?></p>
+          <p><?php
+          $copyright_text = get_theme_mod('copyright_text');
+          if (!empty($copyright_text)) {
+            $copyright_text = str_ireplace('is a brand of', 'is owned and operated by', $copyright_text);
+            if (stripos($copyright_text, 'Thaaniyam Hub®') === false && stripos($copyright_text, 'Thaaniyam Hub&trade;') === false) {
+              $copyright_text = str_replace('Thaaniyam Hub', 'Thaaniyam Hub&trade;', $copyright_text);
+            }
+            echo wp_kses_post($copyright_text);
+          } else {
+            echo '&copy; ' . date('Y') . ' Thaaniyam Hub&trade; is owned and operated by ' . esc_html(function_exists('thaaniyamhub_get_compliance') ? thaaniyamhub_get_compliance('legal_entity_name', 'Srukshara Agrowork Ventures LLP') : 'Srukshara Agrowork Ventures LLP') . '. All Rights Reserved.';
+          }
+          ?></p>
         </div>
+
+        <?php
+        $fssai_no = function_exists('thaaniyamhub_get_compliance') ? thaaniyamhub_get_compliance('fssai_number') : '';
+        if (!empty($fssai_no)):
+          ?>
+          <div class="footer-fssai-badge">
+            <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/assets/images/fssai-logo.png'); ?>"
+              alt="FSSAI" class="footer-fssai-img" />
+            <span class="footer-fssai-text">Lic. No: <strong><?php echo esc_html($fssai_no); ?></strong></span>
+          </div>
+        <?php endif; ?>
       </div>
 
       <div class="col-list footer-menu-list">
@@ -107,61 +129,61 @@
         </ul>
       </div>
 
-		<div class="col-list footer-menu-list footer-menu-last">
-			<div class="d-block footer-contact-link">
-				<a class="con-heading con-loc-heading">Connect With Us</a>
-			</div>
+      <div class="col-list footer-menu-list footer-menu-last">
+        <div class="d-block footer-contact-link">
+          <a class="con-heading con-loc-heading">Connect With Us</a>
+        </div>
 
-			<ul>
-				<?php if(get_theme_mod('social_link_1')) : ?>
-					<li>
-						<a href="<?php echo esc_url(get_theme_mod('social_link_1')); ?>" target="_blank">
-							<i class="fa-brands fa-facebook"></i> Facebook
-						</a>
-					</li>
-				<?php endif; ?>
+        <ul>
+          <?php if (get_theme_mod('social_link_1')): ?>
+            <li>
+              <a href="<?php echo esc_url(get_theme_mod('social_link_1')); ?>" target="_blank">
+                <i class="fa-brands fa-facebook"></i> Facebook
+              </a>
+            </li>
+          <?php endif; ?>
 
-				<?php if(get_theme_mod('social_link_3')) : ?>
-					<li>
-						<a href="<?php echo esc_url(get_theme_mod('social_link_3')); ?>" target="_blank">
-							<i class="fa-brands fa-instagram"></i> Instagram
-						</a>
-					</li>
-				<?php endif; ?>
-				
-				<?php if(get_theme_mod('social_link_2')) : ?>
-					<li>
-						<a href="<?php echo esc_url(get_theme_mod('social_link_2')); ?>" target="_blank">
-							<i class="fa-brands fa-x-twitter"></i> Twitter
-						</a>
-					</li>
-				<?php endif; ?>
+          <?php if (get_theme_mod('social_link_3')): ?>
+            <li>
+              <a href="<?php echo esc_url(get_theme_mod('social_link_3')); ?>" target="_blank">
+                <i class="fa-brands fa-instagram"></i> Instagram
+              </a>
+            </li>
+          <?php endif; ?>
 
-				<?php if(get_theme_mod('social_link_4')) : ?>
-					<li>
-						<a href="<?php echo esc_url(get_theme_mod('social_link_4')); ?>" target="_blank">
-							<i class="fa-brands fa-linkedin"></i> LinkedIn
-						</a>
-					</li>
-				<?php endif; ?>
+          <?php if (get_theme_mod('social_link_2')): ?>
+            <li>
+              <a href="<?php echo esc_url(get_theme_mod('social_link_2')); ?>" target="_blank">
+                <i class="fa-brands fa-x-twitter"></i> Twitter
+              </a>
+            </li>
+          <?php endif; ?>
 
-				<?php if(get_theme_mod('social_link_5')) : ?>
-					<li>
-						<a href="<?php echo esc_url(get_theme_mod('social_link_5')); ?>" target="_blank">
-							<i class="fa-brands fa-google"></i> Google Business
-						</a>
-					</li>
-				<?php endif; ?>
-				
-				<?php if(get_theme_mod('social_link_6')) : ?>
-					<li>
-						<a href="<?php echo esc_url(get_theme_mod('social_link_6')); ?>" target="_blank">
-							<i class="fa-brands fa-whatsapp"></i> WhatsApp
-						</a>
-					</li>
-				<?php endif; ?>
-			</ul>
-		</div>	
+          <?php if (get_theme_mod('social_link_4')): ?>
+            <li>
+              <a href="<?php echo esc_url(get_theme_mod('social_link_4')); ?>" target="_blank">
+                <i class="fa-brands fa-linkedin"></i> LinkedIn
+              </a>
+            </li>
+          <?php endif; ?>
+
+          <?php if (get_theme_mod('social_link_5')): ?>
+            <li>
+              <a href="<?php echo esc_url(get_theme_mod('social_link_5')); ?>" target="_blank">
+                <i class="fa-brands fa-google"></i> Google Business
+              </a>
+            </li>
+          <?php endif; ?>
+
+          <?php if (get_theme_mod('social_link_6')): ?>
+            <li>
+              <a href="<?php echo esc_url(get_theme_mod('social_link_6')); ?>" target="_blank">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </a>
+            </li>
+          <?php endif; ?>
+        </ul>
+      </div>
 
     </div>
   </div>

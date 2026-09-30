@@ -91,6 +91,11 @@ while (have_posts()):
                         <?php woocommerce_template_single_excerpt(); ?>
                     </div>
 
+                    <?php if ( function_exists( 'thaaniyamhub_display_product_fssai_badge' ) ) {
+                        thaaniyamhub_display_product_fssai_badge();
+                    } ?>
+
+
                     <!-- Quantity + Add to Cart + Buy Now -->
                     <div class="product-quantity-cart">
                         <?php
