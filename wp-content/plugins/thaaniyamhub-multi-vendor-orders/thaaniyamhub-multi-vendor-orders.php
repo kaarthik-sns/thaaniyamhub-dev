@@ -13,14 +13,14 @@ defined('ABSPATH') || exit;
 // =========================================================================
 // VERSION COMPATIBILITY AND DEPENDENCY CONSTANTS
 // =========================================================================
-define('THAANIYAMHUB_WOO_MAX_TESTED', '11.1.0');
+define('THAANIYAMHUB_WOO_MAX_TESTED', '11.1.2');
 define('THAANIYAMHUB_SHIPROCKET_MAX_TESTED', '2.0.9');
 define('THAANIYAMHUB_WCFM_MAX_TESTED', '6.8.1');
 define('THAANIYAMHUB_WCFMU_MAX_TESTED', '6.7.8');
 define('THAANIYAMHUB_WCFMMP_MAX_TESTED', '3.8.3');
 define('THAANIYAMHUB_WCFM_MEMBERSHIP_MAX_TESTED', '2.12.0');
 define('THAANIYAMHUB_WCFM_PRODUCT_HUB_MAX_TESTED', '1.0.11');
-define('THAANIYAMHUB_RAZORPAY_MAX_TESTED', '4.8.7');
+define('THAANIYAMHUB_RAZORPAY_MAX_TESTED', '4.8.8');
 
 // Helper to check if WooCommerce is active
 if (!function_exists('thaaniyamhub_is_woocommerce_active')) {
@@ -178,7 +178,7 @@ if (!function_exists('thaaniyamhub_log')) {
     {
         // Do not suppress errors/critical logs, or webhook/payout related messages even during shipping calculation
         if (!empty($GLOBALS['thaaniyamhub_in_shipping_calculation'])) {
-            $is_critical_level   = in_array(strtolower((string) $level), ['error', 'critical', 'emergency', 'alert'], true);
+            $is_critical_level = in_array(strtolower((string) $level), ['error', 'critical', 'emergency', 'alert'], true);
             $is_protected_source = (false !== strpos((string) $source, 'webhook') || false !== strpos((string) $source, 'payout'));
             if (!$is_critical_level && !$is_protected_source) {
                 return;
@@ -823,13 +823,15 @@ if (!function_exists('init_custom_shiprocket_shipping_method')) {
                         $filtered_couriers = array();
                         foreach ($available_courier_companies as $courier) {
                             $blocked = is_object($courier) ? (isset($courier->blocked) && ($courier->blocked == 1 || $courier->blocked === true)) : (isset($courier['blocked']) && ($courier['blocked'] == 1 || $courier['blocked'] === true));
-                            if ($blocked) continue;
+                            if ($blocked)
+                                continue;
 
                             $supp = is_object($courier) ? ($courier->suppression_dates ?? null) : ($courier['suppression_dates'] ?? null);
                             if ($supp) {
                                 $blocked_fm = is_object($supp) ? !empty($supp->blocked_fm) : (is_array($supp) ? !empty($supp['blocked_fm']) : false);
                                 $blocked_lm = is_object($supp) ? !empty($supp->blocked_lm) : (is_array($supp) ? !empty($supp['blocked_lm']) : false);
-                                if ($blocked_fm || $blocked_lm) continue;
+                                if ($blocked_fm || $blocked_lm)
+                                    continue;
                             }
 
                             $filtered_couriers[] = $courier;
@@ -881,13 +883,15 @@ if (!function_exists('init_custom_shiprocket_shipping_method')) {
                         $filtered_couriers = array();
                         foreach ($available_courier_companies as $courier) {
                             $blocked = is_object($courier) ? (isset($courier->blocked) && ($courier->blocked == 1 || $courier->blocked === true)) : (isset($courier['blocked']) && ($courier['blocked'] == 1 || $courier['blocked'] === true));
-                            if ($blocked) continue;
+                            if ($blocked)
+                                continue;
 
                             $supp = is_object($courier) ? ($courier->suppression_dates ?? null) : ($courier['suppression_dates'] ?? null);
                             if ($supp) {
                                 $blocked_fm = is_object($supp) ? !empty($supp->blocked_fm) : (is_array($supp) ? !empty($supp['blocked_fm']) : false);
                                 $blocked_lm = is_object($supp) ? !empty($supp->blocked_lm) : (is_array($supp) ? !empty($supp['blocked_lm']) : false);
-                                if ($blocked_fm || $blocked_lm) continue;
+                                if ($blocked_fm || $blocked_lm)
+                                    continue;
                             }
 
                             $filtered_couriers[] = $courier;
@@ -2785,22 +2789,22 @@ if (!function_exists('thaaniyamhub_fetch_actual_payment_method')) {
         if ($payment_method_id === 'cashfree' || empty($formatted_method)) {
             try {
                 $cf_settings = get_option('woocommerce_cashfree_settings', []);
-                $app_id      = ( defined( 'CASHFREE_APP_ID' ) && ! empty( constant( 'CASHFREE_APP_ID' ) ) ) ? constant( 'CASHFREE_APP_ID' ) : ( getenv( 'CASHFREE_APP_ID' ) ?: ( $cf_settings['app_id'] ?? '' ) );
-                $secret_key  = ( defined( 'CASHFREE_SECRET_KEY' ) && ! empty( constant( 'CASHFREE_SECRET_KEY' ) ) ) ? constant( 'CASHFREE_SECRET_KEY' ) : ( getenv( 'CASHFREE_SECRET_KEY' ) ?: ( $cf_settings['secret_key'] ?? '' ) );
+                $app_id = (defined('CASHFREE_APP_ID') && !empty(constant('CASHFREE_APP_ID'))) ? constant('CASHFREE_APP_ID') : (getenv('CASHFREE_APP_ID') ?: ($cf_settings['app_id'] ?? ''));
+                $secret_key = (defined('CASHFREE_SECRET_KEY') && !empty(constant('CASHFREE_SECRET_KEY'))) ? constant('CASHFREE_SECRET_KEY') : (getenv('CASHFREE_SECRET_KEY') ?: ($cf_settings['secret_key'] ?? ''));
 
                 if (!empty($app_id) && !empty($secret_key)) {
-                    $is_sandbox = ( defined( 'CASHFREE_ENV' ) && 'production' === constant( 'CASHFREE_ENV' ) ) ? false : ( ($cf_settings['sandbox'] ?? 'yes') === 'yes' );
-                    $base_url   = $is_sandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+                    $is_sandbox = (defined('CASHFREE_ENV') && 'production' === constant('CASHFREE_ENV')) ? false : (($cf_settings['sandbox'] ?? 'yes') === 'yes');
+                    $base_url = $is_sandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
                     $saved_cf_id = $order->get_meta('_cf_order_id') ?: $order->get_meta('_cashfree_order_id');
-                    $prefix     = (($cf_settings['order_id_prefix_text'] ?? 'yes') === 'yes') ? substr(md5(home_url()), 0, 4) . '_' : '';
+                    $prefix = (($cf_settings['order_id_prefix_text'] ?? 'yes') === 'yes') ? substr(md5(home_url()), 0, 4) . '_' : '';
                     $cf_order_id = !empty($saved_cf_id) ? $saved_cf_id : ($prefix . $order_id);
 
                     $resp = wp_remote_get($base_url . '/orders/' . rawurlencode($cf_order_id) . '/payments', [
                         'headers' => [
                             'x-api-version' => '2025-01-01',
-                            'x-client-id'   => $app_id,
+                            'x-client-id' => $app_id,
                             'x-client-secret' => $secret_key,
-                            'x-request-id'  => 'cf-woo-paycheck-' . $order_id . '-' . time(),
+                            'x-request-id' => 'cf-woo-paycheck-' . $order_id . '-' . time(),
                         ],
                         'timeout' => 15,
                     ]);
@@ -3111,17 +3115,23 @@ if (!function_exists('thaaniyamhub_render_customer_order_refund_card')) {
                     <thead>
                         <tr style="background: #fee2e2; color: #7f1d1d;">
                             <th style="padding: 10px 14px; text-align: left;">
-                                <?php esc_html_e('Refund #', 'thaaniyamhub-multi-vendor-orders'); ?></th>
+                                <?php esc_html_e('Refund #', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </th>
                             <th style="padding: 10px 14px; text-align: left;">
-                                <?php esc_html_e('Date', 'thaaniyamhub-multi-vendor-orders'); ?></th>
+                                <?php esc_html_e('Date', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </th>
                             <th style="padding: 10px 14px; text-align: left;">
-                                <?php esc_html_e('Store / Vendor', 'thaaniyamhub-multi-vendor-orders'); ?></th>
+                                <?php esc_html_e('Store / Vendor', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </th>
                             <th style="padding: 10px 14px; text-align: left;">
-                                <?php esc_html_e('Reason', 'thaaniyamhub-multi-vendor-orders'); ?></th>
+                                <?php esc_html_e('Reason', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </th>
                             <th style="padding: 10px 14px; text-align: right;">
-                                <?php esc_html_e('Amount', 'thaaniyamhub-multi-vendor-orders'); ?></th>
+                                <?php esc_html_e('Amount', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </th>
                             <th style="padding: 10px 14px; text-align: center;">
-                                <?php esc_html_e('Status', 'thaaniyamhub-multi-vendor-orders'); ?></th>
+                                <?php esc_html_e('Status', 'thaaniyamhub-multi-vendor-orders'); ?>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
