@@ -137,11 +137,15 @@ if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
 					$item_data['woosb_bundles'] = true;
 
 					// Pass edit URL to Cart Block when edit link setting is enabled
-					if ( $edit_link && is_a( $cart_item['data'], 'WC_Product_Woosb' ) && ( $cart_item['data']->has_optional() || $cart_item['data']->has_variables() ) ) {
-						$item_data['woosb_edit_url'] = apply_filters( 'woosb_cart_item_edit_url', add_query_arg( [
-							'edit' => base64_encode( $cart_item['woosb_ids'] ),
-							'key'  => $cart_item_key,
-						], $cart_item['data']->get_permalink() ), $cart_item, $cart_item_key );
+					if ( $edit_link && is_a( $cart_item['data'], 'WC_Product_Woosb' ) ) {
+						$base_product = new WC_Product_Woosb( $cart_item['product_id'] );
+
+						if ( $base_product->has_optional() || $base_product->has_variables() ) {
+							$item_data['woosb_edit_url'] = apply_filters( 'woosb_cart_item_edit_url', add_query_arg( [
+								'edit' => base64_encode( $cart_item['woosb_ids'] ),
+								'key'  => $cart_item_key,
+							], $cart_item['data']->get_permalink() ), $cart_item, $cart_item_key );
+						}
 					}
 				}
 
@@ -152,6 +156,9 @@ if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
 					if ( ! $hide_bundle_name ) {
 						$item_data['name'] = get_the_title( $cart_item['woosb_parent_id'] ) . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . $item_data['name'];
 					}
+                    
+                    // Add a zero-width space to identify child products in JS
+                    $item_data['name'] .= html_entity_decode( '&#8203;', ENT_QUOTES, 'UTF-8' );
 
 					if ( $hide_bundled ) {
 						$item_data['woosb_hide_bundled'] = true;

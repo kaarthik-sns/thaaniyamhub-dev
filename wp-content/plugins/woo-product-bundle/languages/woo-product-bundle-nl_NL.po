@@ -776,7 +776,7 @@ msgstr "individueel verkocht"
 
 #: includes/class-woosb.php:2486 includes/class-woosb.php:2517
 msgid "From"
-msgstr "Van"
+msgstr "Vanaf"
 
 #: includes/class-woosb.php:2776
 msgid "Choose"
@@ -784,7 +784,7 @@ msgstr "Kiezen"
 
 #: includes/class-woosb.php:2783
 msgid "Clear"
-msgstr "Duidelijk"
+msgstr "Wissen"
 
 #: includes/class-woosb.php:3083
 msgid "Bundle (%s)"

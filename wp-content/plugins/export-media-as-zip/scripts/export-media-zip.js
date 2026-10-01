@@ -293,6 +293,13 @@ jQuery(document).ready(function ($) {
             return;
         }
 
+        // jQuery drops empty arrays from the request, which the server would read as "all years"
+        if ($('.emaz-year-cb').length && years.length === 0) {
+            $('#filter-preview-text').text('No years selected. Please select at least one year.');
+            $('#export-media-zip-button').prop('disabled', true);
+            return;
+        }
+
         $('#filter-preview-text').text('Calculating...');
 
         $.ajax({
@@ -415,6 +422,10 @@ jQuery(document).ready(function ($) {
         var docTypes = getSelectedDocTypes();
         if (sizes.length === 0 && docTypes.length === 0) {
             showError('Please select at least one image size or document type to export.');
+            return false;
+        }
+        if ($('.emaz-year-cb').length && getSelectedYears().length === 0) {
+            showError('Please select at least one year to export.');
             return false;
         }
         if (!window.XMLHttpRequest) {

@@ -4,7 +4,7 @@ Tags: media, export, zip, download images, backup
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,11 @@ Premium users can configure a recurring export (daily, weekly, or monthly) using
 If you have any questions or need help, please open an issue on GitHub or contact me at huzoorbux@gmail.com.
 
 == Changelog ==
+
+= 2.0.1 =
+* Fixed: the same ZIP was downloaded no matter which year was selected (browser/CDN cache served the previous export from a fixed URL). Each export now gets its own unique filename.
+* Fixed: deselecting all years exported every year instead of nothing.
+* Security: export ZIPs are no longer publicly reachable in the uploads folder. They are stored in a protected `emaz-exports` directory with random filenames and downloaded only through an authenticated handler (admin + nonce for manual exports, secret per-job token for emailed links). Expiry is now enforced at download time instead of relying on WP-Cron.
 
 = 2.0 =
 * Added Premium document export — PDF, Word, Excel, and PowerPoint files alongside images

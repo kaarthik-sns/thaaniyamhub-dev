@@ -3,8 +3,10 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 	class WPCleverWoosb_Compatible {
-		protected static $instance = null;
-		protected $helper = null;
+		protected static $instance             = null;
+		protected static $options_post_backup  = [];
+		protected static $options_files_backup = [];
+		protected $helper                      = null;
 
 		public static function instance() {
 			if ( is_null( self::$instance ) ) {
@@ -41,7 +43,7 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 
 			// PayPal
 			add_filter( 'woocommerce_paypal_payments_simulate_cart_enabled', '__return_false' );
-			add_filter( 'woocommerce_paypal_payments_simulate_cart_prevent_updates', '__return_false' );
+			//add_filter( 'woocommerce_paypal_payments_simulate_cart_prevent_updates', '__return_false' );
 
 			/*
 			 * WooCommerce PDF Invoices & Packing Slips
@@ -72,6 +74,12 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 				add_filter( 'wf_pklist_alter_order_items', [ $this, 'pklist_order_hide_bundled' ], 99 );
 				add_filter( 'wf_pklist_alter_package_order_items', [ $this, 'pklist_package_hide_bundled' ], 99 );
 			}
+
+			// Extra product options / addons compatibility
+			add_filter( 'woosb_parent_item_price_before_set', [ $this, 'parent_item_extra_options_price' ], 10, 2 );
+			add_action( 'woosb_before_add_to_cart_items', [ $this, 'clear_extra_options_before_add_child' ], 10, 4 );
+			add_action( 'woosb_after_add_to_cart_items', [ $this, 'restore_extra_options_after_add_child' ], 10, 4 );
+			add_filter( 'woocommerce_add_cart_item_data', [ $this, 'remove_child_extra_options_data' ], 9999, 2 );
 		}
 
 		function wpcap_added_to_order( $item_id, $order, $parsed_data ) {
@@ -92,24 +100,109 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 
 					// get bundle info
 					$fixed_price         = $product->is_fixed_price();
-					$discount_amount     = $product->get_discount_amount();
-					$discount_percentage = $product->get_discount_percentage();
+					$discount_amount     = (float) $product->get_discount_amount();
+					$discount_percentage = (float) $product->get_discount_percentage();
+					$parent_price        = 0;
+					$parent_item         = [
+						'data'       => $product,
+						'product_id' => $product->get_id(),
+						'quantity'   => $quantity,
+					];
 
 					// add the bundle
 					if ( ! $fixed_price ) {
-						if ( $discount_amount ) {
-							$product->set_price( - (float) $discount_amount );
-						} else {
-							$this->helper->set_price( $product, 0 );
-						}
+						$parent_price = (float) apply_filters( 'woosb_parent_item_price_before_set', 0, $parent_item, null );
+						$this->helper->set_price( $product, $parent_price );
 					}
 
 					if ( $order_id = $order->add_product( $product, $quantity ) ) {
 						$order_item = $order->get_item( $order_id );
 						$order_item->update_meta_data( '_woosb_ids', $product->get_ids_str(), true );
-						$order_item->save();
 
-						foreach ( $items as $item ) {
+						if ( ! $fixed_price ) {
+							$child_unit_prices         = [];
+							$child_display_line_totals = [];
+							$child_tax_factors         = [];
+							$display_incl_tax          = ! is_null( WC()->cart ) ? WC()->cart->display_prices_including_tax() : ( get_option( 'woocommerce_tax_display_cart' ) === 'incl' );
+
+							foreach ( $items as $key => $item ) {
+								$_product = wc_get_product( $item['id'] );
+
+								if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) ) {
+									continue;
+								}
+
+								$_price = (float) $this->helper->get_price( $_product );
+
+								// WPC Price by Quantity: apply tier pricing before bundle discount
+								if ( function_exists( 'Wpcpq_Helper' ) ) {
+									$wpcpq_pricing = Wpcpq_Helper()::get_pricing( $item['id'], 'cart' );
+									if ( ! empty( $wpcpq_pricing['method'] ) && ! empty( $wpcpq_pricing['tiers'] ) ) {
+										$_price = (float) Wpcpq_Helper()::get_price( $wpcpq_pricing['method'], $wpcpq_pricing['tiers'], $item['qty'], $_price );
+									}
+								}
+
+								// Apply percentage discount
+								$child_discount = isset( $item['discount'] ) ? (float) $item['discount'] : $discount_percentage;
+								if ( ! empty( $child_discount ) ) {
+									$_price *= ( 100 - $child_discount ) / 100;
+								}
+
+								$_price = $this->helper->round_price( $_price );
+								
+								// Mock cart item structure for filters
+								$item['data']       = $_product;
+								$item['product_id'] = $_product->get_id();
+								$item['quantity']   = $item['qty'];
+								$_price = apply_filters( 'woosb_item_price_before_set', $_price, $item );
+
+								if ( $display_incl_tax ) {
+									$_display_price = wc_get_price_including_tax( $_product, [
+										'price' => $_price,
+										'qty'   => 1,
+									] );
+								} else {
+									$_display_price = wc_get_price_excluding_tax( $_product, [
+										'price' => $_price,
+										'qty'   => 1,
+									] );
+								}
+
+								$tax_factor = ( $_price > 0 && $_display_price > 0 ) ? ( $_display_price / $_price ) : 1.0;
+
+								$child_unit_prices[ $key ]         = $_price;
+								$child_tax_factors[ $key ]         = $tax_factor;
+								$child_display_line_totals[ $key ] = $_display_price * (float) $item['qty'];
+							}
+
+							$discount_amount = apply_filters( 'woosb_cart_item_discount_amount', $discount_amount, $parent_item );
+							$allocations     = [];
+
+							if ( $discount_amount > 0 && ! empty( $child_display_line_totals ) ) {
+								$precision   = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 2;
+								$allocations = WPCleverWoosb_Helper::allocate_discount_proportionally( $discount_amount, $child_display_line_totals, $precision );
+							}
+
+							foreach ( $items as $key => $item ) {
+								if ( ! isset( $child_display_line_totals[ $key ] ) ) {
+									continue;
+								}
+
+								$line_discount      = $allocations[ $key ] ?? 0.0;
+								$orig_display_line  = $child_display_line_totals[ $key ] ?? 0.0;
+								$final_display_line = max( 0.0, $orig_display_line - $line_discount );
+								$final_display_unit = (float) $item['qty'] > 0 ? ( $final_display_line / (float) $item['qty'] ) : 0.0;
+
+								$tax_factor     = $child_tax_factors[ $key ] ?? 1.0;
+								$final_raw_unit = $tax_factor > 0 ? ( $final_display_unit / $tax_factor ) : $final_display_unit;
+
+								$items[ $key ]['final_price'] = $final_raw_unit;
+							}
+						}
+
+						$bundles_display_price = 0;
+
+						foreach ( $items as $key => $item ) {
 							$_product = wc_get_product( $item['id'] );
 
 							if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) ) {
@@ -118,10 +211,23 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 
 							if ( $fixed_price ) {
 								$this->helper->set_price( $_product, 0 );
-							} elseif ( $discount_percentage ) {
-								$_price = (float) ( 100 - $discount_percentage ) * $this->helper->get_price( $_product ) / 100;
-								$_price = apply_filters( 'woosb_product_price_before_set', $_price, $_product );
-								$_product->set_price( $_price );
+							} else {
+								$_product->set_price( $items[ $key ]['final_price'] ?? 0 );
+							}
+
+							if ( ! $fixed_price ) {
+								if ( $display_incl_tax ) {
+									$_child_display = wc_get_price_including_tax( $_product, [
+										'price' => $_product->get_price(),
+										'qty'   => $item['qty'],
+									] );
+								} else {
+									$_child_display = wc_get_price_excluding_tax( $_product, [
+										'price' => $_product->get_price(),
+										'qty'   => $item['qty'],
+									] );
+								}
+								$bundles_display_price += $this->helper->round_price( $_child_display );
 							}
 
 							// add bundled products
@@ -135,6 +241,28 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 							$_order_item->update_meta_data( '_woosb_parent_id', $product_id, true );
 							$_order_item->save();
 						}
+
+						if ( ! $fixed_price ) {
+							if ( $parent_price > 0 ) {
+								if ( $display_incl_tax ) {
+									$_parent_display = wc_get_price_including_tax( $product, [
+										'price' => $parent_price,
+										'qty'   => 1,
+									] );
+								} else {
+									$_parent_display = wc_get_price_excluding_tax( $product, [
+										'price' => $parent_price,
+										'qty'   => 1,
+									] );
+								}
+								$bundles_display_price += $this->helper->round_price( $_parent_display );
+							}
+
+							$bundles_display_price = apply_filters( 'woosb_bundles_display_price', $bundles_display_price, $parent_item );
+							$order_item->update_meta_data( '_woosb_price', $this->helper->round_price( $bundles_display_price ) );
+						}
+
+						$order_item->save();
 
 						// remove the old bundle
 						$order->remove_item( $item_id );
@@ -563,6 +691,124 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 			}
 
 			return $order_package;
+		}
+
+		/**
+		 * Add extra product options price to bundle parent cart item.
+		 * Supports TM Extra Product Options (Themecomplete Extra Product Options).
+		 *
+		 * @param float $price Bundle parent price.
+		 * @param array $parent_item Bundle parent cart item.
+		 * @return float
+		 */
+		function parent_item_extra_options_price( $price, $parent_item ) {
+			// TM Extra Product Options
+			if ( ! empty( $parent_item['tmcartepo'] ) && isset( $parent_item['tm_epo_options_prices'] ) ) {
+				$price += (float) $parent_item['tm_epo_options_prices'];
+			}
+
+			return $price;
+		}
+
+		/**
+		 * Clear extra product options data before adding bundled child items.
+		 *
+		 * @param array  $items Bundle items.
+		 * @param string $cart_item_key Cart item key of the bundle parent.
+		 * @param int    $product_id Bundle parent product ID.
+		 * @param int    $quantity Bundle quantity.
+		 */
+		function clear_extra_options_before_add_child( $items, $cart_item_key, $product_id, $quantity ) {
+			self::$options_post_backup  = [];
+			self::$options_files_backup = [];
+
+			$prefixes   = apply_filters( 'woosb_clear_extra_options_prefixes', [ 'tmcp_', 'tc_', 'cpf_', 'tm_', 'addon-', 'yith_wapo_', 'yith-wapo-' ] );
+			$exact_keys = apply_filters( 'woosb_clear_extra_options_exact_keys', [ 'cpf_product_price', 'cpf_bto_price', 'tm_epo_options_prices', 'tmcartepo', 'tm_meta_cpf' ] );
+
+			if ( ! empty( $_POST ) ) {
+				foreach ( $_POST as $key => $value ) {
+					$should_clear = in_array( $key, $exact_keys, true );
+
+					if ( ! $should_clear ) {
+						foreach ( $prefixes as $prefix ) {
+							if ( strpos( $key, $prefix ) === 0 ) {
+								$should_clear = true;
+								break;
+							}
+						}
+					}
+
+					if ( $should_clear ) {
+						self::$options_post_backup[ $key ] = $value;
+						unset( $_POST[ $key ] );
+
+						if ( isset( $_REQUEST[ $key ] ) ) {
+							unset( $_REQUEST[ $key ] );
+						}
+					}
+				}
+			}
+
+			if ( ! empty( $_FILES ) ) {
+				foreach ( $_FILES as $key => $file ) {
+					foreach ( $prefixes as $prefix ) {
+						if ( strpos( $key, $prefix ) === 0 ) {
+							self::$options_files_backup[ $key ] = $file;
+							unset( $_FILES[ $key ] );
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		/**
+		 * Restore extra product options data after adding bundled child items.
+		 *
+		 * @param array  $items Bundle items.
+		 * @param string $cart_item_key Cart item key of the bundle parent.
+		 * @param int    $product_id Bundle parent product ID.
+		 * @param int    $quantity Bundle quantity.
+		 */
+		function restore_extra_options_after_add_child( $items, $cart_item_key, $product_id, $quantity ) {
+			if ( ! empty( self::$options_post_backup ) ) {
+				foreach ( self::$options_post_backup as $key => $value ) {
+					$_POST[ $key ]    = $value;
+					$_REQUEST[ $key ] = $value;
+				}
+
+				self::$options_post_backup = [];
+			}
+
+			if ( ! empty( self::$options_files_backup ) ) {
+				foreach ( self::$options_files_backup as $key => $file ) {
+					$_FILES[ $key ] = $file;
+				}
+
+				self::$options_files_backup = [];
+			}
+		}
+
+		/**
+		 * Strip extra options data from bundled child items if present.
+		 *
+		 * @param array $cart_item_data Cart item data.
+		 * @param int   $product_id Product ID.
+		 * @return array
+		 */
+		function remove_child_extra_options_data( $cart_item_data, $product_id ) {
+			if ( ! empty( $cart_item_data['woosb_parent_id'] ) || ! empty( $cart_item_data['woosb_parent_key'] ) ) {
+				unset(
+					$cart_item_data['tmcartepo'],
+					$cart_item_data['tmcartfee'],
+					$cart_item_data['tmdata'],
+					$cart_item_data['tmpost_data'],
+					$cart_item_data['epo_price_override'],
+					$cart_item_data['tmhasepo']
+				);
+			}
+
+			return $cart_item_data;
 		}
 	}
 

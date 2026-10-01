@@ -3,7 +3,7 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 7.1
-Stable tag: 8.6.5
+Stable tag: 8.7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,23 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.7.1 =
+* Fixed: Bundle price calculation when adding products to an order
+
+= 8.7.0 =
+* Updated: New UI for the Settings page
+* Fixed: Edit link on the Cart page
+
+= 8.6.8 =
+* Fixed: Inventory issues regarding optional bundles
+
+= 8.6.7 =
+* Fixed: Vulnerability reported by lhking from Wordfence
+
+= 8.6.6 =
+* Fixed: Minor CSS/JS issues in the backend
+* Updated: Compatible with WP 7.1 & Woo 11.1
 
 = 8.6.5 =
 * Updated: WPML compatibility

@@ -13,7 +13,7 @@
  * @wordpress-plugin
  * Plugin Name:       Export Media as ZIP
  * Description:       Adds a top-level admin menu to export images (and, in Premium, documents) as a ZIP file, with year/size filters, background export, and scheduled export.
- * Version:           2.0
+ * Version:           2.0.1
  * Author:            Huzoor Bux
  * Author URI:        https://huzoorbakhsh.com
  * License:           GPL-2.0+
@@ -110,6 +110,10 @@ class EMAZ_Export_Media_Zip {
         add_action( 'wp_ajax_emaz_get_export_schedule', array($this, 'emaz_ajax_get_export_schedule') );
         add_action( 'wp_ajax_emaz_save_export_schedule', array($this, 'emaz_ajax_save_export_schedule') );
         add_action( 'wp_ajax_emaz_delete_export_schedule', array($this, 'emaz_ajax_delete_export_schedule') );
+        add_action( 'admin_post_emaz_download', array($this, 'emaz_handle_sync_download') );
+        add_action( 'admin_post_emaz_download_job', array($this, 'emaz_handle_job_download') );
+        // Emailed links (scheduled recipients may not be logged in) are authorized by a secret per-job token.
+        add_action( 'admin_post_nopriv_emaz_download_job', array($this, 'emaz_handle_job_download') );
         add_action( 'init', array($this, 'emaz_schedule_zip_cleanup') );
         add_action( 'emaz_cleanup_expired_zips', array($this, 'emaz_cleanup_expired_zips') );
         add_action( 'emaz_run_background_export', array($this, 'emaz_process_background_job') );
@@ -359,7 +363,7 @@ class EMAZ_Export_Media_Zip {
             'export-media-zip-js',
             plugin_dir_url( __FILE__ ) . 'scripts/export-media-zip.js',
             array('jquery'),
-            '2.0',
+            '2.0.1',
             true
         );
         wp_localize_script( 'export-media-zip-js', 'emazExportMediaZip', array(
@@ -573,8 +577,16 @@ class EMAZ_Export_Media_Zip {
         if ( !$wp_filesystem->is_writable( $base_dir ) ) {
             return new WP_Error('emaz_dir_unwritable', 'Cannot write to uploads directory. Please check file permissions.');
         }
+        $export_dir = $this->emaz_get_export_dir( $wp_filesystem, $base_dir );
+        if ( is_wp_error( $export_dir ) ) {
+            return $export_dir;
+        }
         if ( $job_id ) {
-            $zip_path = $base_dir . '/emaz-export-' . $job_id . '.zip';
+            $job = $this->emaz_get_job( $job_id );
+            if ( !$job || empty( $job['zip_filename'] ) ) {
+                return new WP_Error('emaz_job_missing', 'Export job record not found.');
+            }
+            $zip_path = $export_dir . '/' . basename( $job['zip_filename'] );
             return $this->emaz_run_chunked_export_job(
                 $params,
                 $job_id,
@@ -583,13 +595,143 @@ class EMAZ_Export_Media_Zip {
                 $zip_path
             );
         }
-        $zip_path = $base_dir . '/' . $this->zip_filename;
+        // Each export gets its own unguessable filename so browsers/CDNs/page caches can never
+        // serve a previous export's ZIP from the same URL.
+        $this->emaz_delete_sync_zip( $wp_filesystem, $base_dir );
+        $zip_path = $export_dir . '/' . $this->emaz_build_sync_zip_filename( $params['years'] );
         return $this->emaz_run_sync_export_job(
             $params,
             $wp_filesystem,
             $upload_dir,
             $zip_path
         );
+    }
+
+    // Private directory for generated ZIPs. Direct web access is denied (Apache/LiteSpeed via
+    // .htaccess); on servers that ignore .htaccess (nginx) the random filenames still keep them
+    // unguessable. Downloads are always served through the authenticated admin-post handlers.
+    private function emaz_get_export_dir( $wp_filesystem, $base_dir ) {
+        $dir = $base_dir . '/emaz-exports';
+        if ( !$wp_filesystem->is_dir( $dir ) && !$wp_filesystem->mkdir( $dir, FS_CHMOD_DIR ) ) {
+            return new WP_Error('emaz_export_dir', 'Could not create the export directory in uploads. Please check file permissions.');
+        }
+        if ( !$wp_filesystem->exists( $dir . '/.htaccess' ) ) {
+            $wp_filesystem->put_contents( $dir . '/.htaccess', "# Export Media as ZIP: files are served only through wp-admin/admin-post.php\n<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n\tOrder deny,allow\n\tDeny from all\n</IfModule>\n", FS_CHMOD_FILE );
+        }
+        if ( !$wp_filesystem->exists( $dir . '/index.php' ) ) {
+            $wp_filesystem->put_contents( $dir . '/index.php', "<?php\n// Silence is golden.\n", FS_CHMOD_FILE );
+        }
+        return $dir;
+    }
+
+    // Delete an export ZIP from the private directory, or from the uploads root (pre-2.0.1 location)
+    private function emaz_delete_export_file( $wp_filesystem, $base_dir, $filename ) {
+        $filename = ( $filename ? basename( $filename ) : '' );
+        if ( !$filename ) {
+            return;
+        }
+        foreach ( array($base_dir . '/emaz-exports/' . $filename, $base_dir . '/' . $filename) as $path ) {
+            if ( $wp_filesystem->is_file( $path ) ) {
+                $wp_filesystem->delete( $path );
+            }
+        }
+    }
+
+    private function emaz_sync_download_url( $filename ) {
+        // Not wp_nonce_url(): it HTML-escapes "&", which would break the URL once it goes through JSON.
+        return add_query_arg( array(
+            'action'   => 'emaz_download',
+            'file'     => rawurlencode( $filename ),
+            '_wpnonce' => wp_create_nonce( 'emaz_download' ),
+        ), admin_url( 'admin-post.php' ) );
+    }
+
+    private function emaz_job_download_url( $job_id, $token ) {
+        return add_query_arg( array(
+            'action' => 'emaz_download_job',
+            'job'    => rawurlencode( $job_id ),
+            'token'  => rawurlencode( $token ),
+        ), admin_url( 'admin-post.php' ) );
+    }
+
+    // Download the current admin's foreground export (logged-in + manage_options + nonce + expiry)
+    public function emaz_handle_sync_download() {
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_die( 'You do not have permission to download this export.', 'Forbidden', array(
+                'response' => 403,
+            ) );
+        }
+        check_admin_referer( 'emaz_download' );
+        $requested = ( isset( $_GET['file'] ) ? sanitize_file_name( wp_unslash( $_GET['file'] ) ) : '' );
+        $current = get_option( 'emaz_zip_file', '' );
+        $zip_time = (int) get_option( 'emaz_zip_time', 0 );
+        // Only the latest export can be downloaded — a filename from the request is never used as a path.
+        if ( !$requested || !$current || !hash_equals( $current, $requested ) || time() - $zip_time > $this->zip_expiry ) {
+            wp_die( 'This export has expired or was replaced by a newer one. Please run the export again.', 'Export expired', array(
+                'response' => 410,
+            ) );
+        }
+        $this->emaz_stream_zip( wp_upload_dir()['basedir'] . '/emaz-exports/' . basename( $current ) );
+    }
+
+    // Download a background/scheduled export via the emailed link (secret token + 24h expiry)
+    public function emaz_handle_job_download() {
+        $job_id = ( isset( $_GET['job'] ) ? sanitize_text_field( wp_unslash( $_GET['job'] ) ) : '' );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $token = ( isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '' );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $job = ( $job_id ? $this->emaz_get_job( $job_id ) : null );
+        $valid = $job && $token && !empty( $job['download_token'] ) && hash_equals( $job['download_token'], $token ) && isset( $job['status'] ) && 'complete' === $job['status'] && empty( $job['zip_deleted'] ) && !empty( $job['expires_at'] ) && time() <= $job['expires_at'];
+        if ( !$valid ) {
+            wp_die( 'This download link is invalid or has expired.', 'Export expired', array(
+                'response' => 410,
+            ) );
+        }
+        $this->emaz_stream_zip( wp_upload_dir()['basedir'] . '/emaz-exports/' . basename( $job['zip_filename'] ) );
+    }
+
+    private function emaz_stream_zip( $zip_path ) {
+        if ( !is_file( $zip_path ) || !is_readable( $zip_path ) ) {
+            wp_die( 'The export file no longer exists. Please run the export again.', 'Not found', array(
+                'response' => 404,
+            ) );
+        }
+        if ( function_exists( 'set_time_limit' ) ) {
+            @set_time_limit( 0 );
+            // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+        }
+        while ( ob_get_level() ) {
+            ob_end_clean();
+        }
+        nocache_headers();
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . basename( $zip_path ) . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'X-Content-Type-Options: nosniff' );
+        readfile( $zip_path );
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+        exit;
+    }
+
+    // e.g. media-2023-2024-20260923-101500-a1b2c3d4e5f6.zip
+    private function emaz_build_sync_zip_filename( $years ) {
+        $years = array_filter( array_map( 'intval', (array) $years ) );
+        sort( $years );
+        if ( empty( $years ) ) {
+            $years_part = 'all';
+        } elseif ( count( $years ) <= 3 ) {
+            $years_part = implode( '-', $years );
+        } else {
+            $years_part = count( $years ) . '-years';
+        }
+        return 'media-' . $years_part . '-' . gmdate( 'Ymd-His' ) . '-' . strtolower( wp_generate_password( 12, false ) ) . '.zip';
+    }
+
+    // Remove the previous synchronous export ZIP (and the legacy fixed-name file from <= 2.0)
+    private function emaz_delete_sync_zip( $wp_filesystem, $base_dir ) {
+        $this->emaz_delete_export_file( $wp_filesystem, $base_dir, get_option( 'emaz_zip_file', '' ) );
+        $this->emaz_delete_export_file( $wp_filesystem, $base_dir, $this->zip_filename );
+        delete_option( 'emaz_zip_file' );
     }
 
     // Synchronous export — identical behavior/options/response shape to the original single-request flow
@@ -644,8 +786,9 @@ class EMAZ_Export_Media_Zip {
             return new WP_Error('emaz_zip_empty', 'ZIP file was not created properly or is empty.');
         }
         update_option( 'emaz_zip_time', time() );
+        update_option( 'emaz_zip_file', basename( $zip_path ), false );
         $response_data = array(
-            'download_url'    => $upload_dir['baseurl'] . '/' . $this->zip_filename,
+            'download_url'    => $this->emaz_sync_download_url( basename( $zip_path ) ),
             'total_files'     => $total_files,
             'processed_files' => $processed_files,
             'zip_size'        => $this->emaz_format_bytes( $wp_filesystem->size( $zip_path ) ),
@@ -743,7 +886,6 @@ class EMAZ_Export_Media_Zip {
         }
         $result = array(
             'status'             => 'complete',
-            'download_url'       => $upload_dir['baseurl'] . '/' . basename( $zip_path ),
             'zip_filename'       => basename( $zip_path ),
             'total_files'        => $progress['total_files'],
             'processed_files'    => $progress['processed_files'],
@@ -958,15 +1100,17 @@ class EMAZ_Export_Media_Zip {
 
     // Create a job registry record (does not schedule processing — callers decide when)
     private function emaz_create_job_record( array $params, $type ) {
-        $job_id = uniqid( 'emaz_', true );
+        $job_id = 'emaz_' . strtolower( wp_generate_password( 20, false ) );
         $user = wp_get_current_user();
         $this->emaz_update_job( $job_id, array(
-            'job_id'       => $job_id,
-            'type'         => $type,
-            'status'       => 'queued',
-            'created_at'   => time(),
-            'filters'      => $params,
-            'requested_by' => array(
+            'job_id'         => $job_id,
+            'type'           => $type,
+            'status'         => 'queued',
+            'created_at'     => time(),
+            'zip_filename'   => 'media-export-' . gmdate( 'Ymd-His' ) . '-' . strtolower( wp_generate_password( 20, false ) ) . '.zip',
+            'download_token' => wp_generate_password( 40, false ),
+            'filters'        => $params,
+            'requested_by'   => array(
                 'user_id' => ( $user ? $user->ID : 0 ),
                 'email'   => ( $user && $user->user_email ? $user->user_email : get_option( 'admin_email' ) ),
             ),
@@ -1017,7 +1161,7 @@ class EMAZ_Export_Media_Zip {
             'status'          => 'complete',
             'completed_at'    => time(),
             'expires_at'      => time() + $this->job_expiry,
-            'download_url'    => $result['download_url'],
+            'download_url'    => $this->emaz_job_download_url( $job_id, $job['download_token'] ),
             'zip_filename'    => $result['zip_filename'],
             'total_files'     => $result['total_files'],
             'processed_files' => $result['processed_files'],
@@ -1228,10 +1372,9 @@ class EMAZ_Export_Media_Zip {
             return;
         }
         $base_dir = wp_upload_dir()['basedir'];
-        $zip_path = $base_dir . '/' . $this->zip_filename;
         $zip_time = get_option( 'emaz_zip_time', 0 );
-        if ( $wp_filesystem->is_file( $zip_path ) && time() - $zip_time > $this->zip_expiry ) {
-            $wp_filesystem->delete( $zip_path );
+        if ( time() - $zip_time > $this->zip_expiry ) {
+            $this->emaz_delete_sync_zip( $wp_filesystem, $base_dir );
             delete_option( 'emaz_zip_time' );
             delete_option( 'emaz_progress' );
             delete_option( 'emaz_current_file' );
@@ -1239,6 +1382,25 @@ class EMAZ_Export_Media_Zip {
             delete_option( 'emaz_total_files' );
         }
         $this->emaz_cleanup_job_zips( $wp_filesystem, $base_dir );
+        $this->emaz_sweep_export_dir( $wp_filesystem, $base_dir );
+    }
+
+    // Safety net: remove any ZIP in the export dir older than the longest expiry (orphans from
+    // failed jobs or job records pruned from the capped registry).
+    private function emaz_sweep_export_dir( $wp_filesystem, $base_dir ) {
+        $dir = $base_dir . '/emaz-exports';
+        if ( !$wp_filesystem->is_dir( $dir ) ) {
+            return;
+        }
+        $listing = $wp_filesystem->dirlist( $dir );
+        if ( empty( $listing ) ) {
+            return;
+        }
+        foreach ( $listing as $name => $info ) {
+            if ( 'f' === $info['type'] && '.zip' === substr( $name, -4 ) && !empty( $info['lastmodunix'] ) && time() - $info['lastmodunix'] > $this->job_expiry ) {
+                $wp_filesystem->delete( $dir . '/' . $name );
+            }
+        }
     }
 
     // Delete expired background/scheduled job ZIPs and prune old job records
@@ -1255,12 +1417,7 @@ class EMAZ_Export_Media_Zip {
             }
             $is_expired = isset( $job['status'] ) && 'complete' === $job['status'] && empty( $job['zip_deleted'] ) && !empty( $job['expires_at'] ) && $now > $job['expires_at'];
             if ( $is_expired ) {
-                if ( !empty( $job['zip_filename'] ) ) {
-                    $job_zip_path = $base_dir . '/' . $job['zip_filename'];
-                    if ( $wp_filesystem->is_file( $job_zip_path ) ) {
-                        $wp_filesystem->delete( $job_zip_path );
-                    }
-                }
+                $this->emaz_delete_export_file( $wp_filesystem, $base_dir, ( isset( $job['zip_filename'] ) ? $job['zip_filename'] : '' ) );
                 delete_option( 'emaz_job_progress_' . $job_id );
                 $jobs[$job_id]['zip_deleted'] = true;
                 $changed = true;

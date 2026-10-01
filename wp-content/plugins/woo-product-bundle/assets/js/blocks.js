@@ -94,3 +94,28 @@ woosbCheckoutFilters('woosb-blocks', {
 });
 
 // https://github.com/woocommerce/woocommerce-blocks/blob/trunk/docs/third-party-developers/extensibility/checkout-block/available-filters/cart-line-items.md
+
+// Suppress Cart Block child removal/change notices via MutationObserver
+( function () {
+    const selector = '.wc-block-components-notice-snackbar, .wc-block-components-notice-banner';
+    let queued = false;
+
+    function hideChildNotices() {
+        queued = false;
+        document.querySelectorAll( selector ).forEach( function ( el ) {
+            const text = el.textContent || '';
+            if ( text.indexOf( '\u200B' ) !== -1 ) {
+                el.style.display = 'none';
+            }
+        } );
+    }
+
+    if ( typeof MutationObserver !== 'undefined' ) {
+        new MutationObserver( function () {
+            if ( ! queued ) {
+                queued = true;
+                requestAnimationFrame( hideChildNotices );
+            }
+        } ).observe( document.body, { childList: true, subtree: true, characterData: true } );
+    }
+} )();
