@@ -169,6 +169,21 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
                     'warning',
                     'thaaniyamhub-cashfree-payout'
                 );
+
+                // Enqueue for admin manual approval
+                if ( class_exists( 'ThaaniyamHub_Payout_Approval' ) ) {
+                    $details_for_queue = $this->get_vendor_payout_details( $this->vendor_id );
+                    ThaaniyamHub_Payout_Approval::enqueue_pending(
+                        $this->vendor_id,
+                        $net_disbursal,
+                        $ceiling_limit,
+                        [],   // commission IDs not available at this layer
+                        [],   // order IDs not available at this layer
+                        $details_for_queue,
+                        'wcfm_withdrawal'
+                    );
+                }
+
                 return [
                     [
                         'status'  => false,
@@ -176,6 +191,7 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
                     ]
                 ];
             }
+
 
             // Security Check 2: Concurrency & Double-Spend Mutex Lock
             $lock_key = 'thaaniyamhub_payout_lock_w_' . $this->withdrawal_id;

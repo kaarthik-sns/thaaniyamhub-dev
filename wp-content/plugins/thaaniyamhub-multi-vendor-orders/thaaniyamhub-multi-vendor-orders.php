@@ -244,6 +244,7 @@ require_once $thaaniyamhub_includes . 'class-thaaniyamhub-order-notes.php';
 
 // Cashfree Vendor Payouts & Refunds Module
 require_once $thaaniyamhub_includes . 'class-thaaniyamhub-cashfree-payout-api.php';
+require_once $thaaniyamhub_includes . 'class-thaaniyamhub-payout-approval.php';
 require_once $thaaniyamhub_includes . 'class-wcfmmp-gateway-cashfree-payout.php';
 require_once $thaaniyamhub_includes . 'class-thaaniyamhub-cashfree-webhook.php';
 require_once $thaaniyamhub_includes . 'class-thaaniyamhub-payout-scheduler.php';
@@ -395,6 +396,9 @@ add_action('plugins_loaded', function () {
     }
     if (class_exists('ThaaniyamHub_Payout_Scheduler')) {
         ThaaniyamHub_Payout_Scheduler::init();
+    }
+    if (class_exists('ThaaniyamHub_Payout_Approval')) {
+        ThaaniyamHub_Payout_Approval::init();
     }
     if (class_exists('ThaaniyamHub_Settings')) {
         ThaaniyamHub_Settings::init();

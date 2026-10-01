@@ -18,7 +18,7 @@ class ThaaniyamHub_DB_Install {
     /**
      * Current schema version. Bump this whenever a column is added/changed.
      */
-    const SCHEMA_VERSION = '2.5.1';
+    const SCHEMA_VERSION = '2.6.0';
 
     /**
      * Option key used to store the installed schema version.
@@ -443,6 +443,13 @@ class ThaaniyamHub_DB_Install {
 
         dbDelta( $sql_api_logs );
 
+        // -----------------------------------------------------------------
+        // Table 5: Payout Approval Queue
+        // -----------------------------------------------------------------
+        if ( class_exists( 'ThaaniyamHub_Payout_Approval' ) ) {
+            ThaaniyamHub_Payout_Approval::create_table();
+        }
+
         thaaniyamhub_log( 'ThaaniyamHub_DB_Install: Tables created/verified at schema v' . self::SCHEMA_VERSION );
     }
 
@@ -462,6 +469,7 @@ class ThaaniyamHub_DB_Install {
             "{$wpdb->prefix}thaaniyamhub_order_history",
             "{$wpdb->prefix}thaaniyamhub_shiprocket_fulfillment",
             "{$wpdb->prefix}thaaniyamhub_shiprocket_api_logs",
+            "{$wpdb->prefix}thaaniyamhub_payout_approval_queue",
         ];
         foreach ( $tables as $table ) {
             // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared

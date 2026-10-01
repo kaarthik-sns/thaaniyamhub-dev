@@ -377,8 +377,24 @@ class ThaaniyamHub_Payout_Scheduler {
                 thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$ceiling_msg}", 'warning', 'thaaniyamhub-cashfree-payout' );
                 $diagnostics[] = $ceiling_msg;
                 $errors[]      = $ceiling_msg;
+
+                // Enqueue for admin approval (instead of silently dropping)
+                if ( class_exists( 'ThaaniyamHub_Payout_Approval' ) ) {
+                    $payout_profile_for_queue = $gateway->get_vendor_payout_details( $vendor_id );
+                    ThaaniyamHub_Payout_Approval::enqueue_pending(
+                        $vendor_id,
+                        $vendor_sum,
+                        $ceiling_limit,
+                        $commission_ids_list,
+                        $order_ids_list,
+                        $payout_profile_for_queue,
+                        $source
+                    );
+                }
+
                 continue;
             }
+
 
             // Verify vendor payout profile
             $payout_profile = $gateway->get_vendor_payout_details( $vendor_id );
