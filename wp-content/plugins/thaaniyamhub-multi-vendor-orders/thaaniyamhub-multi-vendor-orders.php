@@ -250,6 +250,7 @@ require_once $thaaniyamhub_includes . 'class-thaaniyamhub-payout-scheduler.php';
 require_once $thaaniyamhub_includes . 'class-thaaniyamhub-cashfree-refund-handler.php';
 require_once $thaaniyamhub_includes . 'class-thaaniyamhub-settings.php';
 require_once $thaaniyamhub_includes . 'class-thaaniyamhub-order-debug-logger.php';
+require_once $thaaniyamhub_includes . 'class-thaaniyamhub-security-hardening.php';
 
 // Initialize Cashfree split refund handler
 ThaaniyamHub_Cashfree_Refund_Handler::init();
@@ -401,14 +402,17 @@ add_action('plugins_loaded', function () {
 }, 5);
 
 // Ensure Cashfree Gateway is registered in WCFMmp Gateways collection
-add_action('wcfmmp_init', function () {
+$register_cashfree_wcfm_gateway = function () {
     global $WCFMmp;
     if (isset($WCFMmp->wcfmmp_gateways) && class_exists('WCFMmp_Gateway_Cashfree')) {
         if (!isset($WCFMmp->wcfmmp_gateways->payment_gateways['cashfree'])) {
             $WCFMmp->wcfmmp_gateways->payment_gateways['cashfree'] = new WCFMmp_Gateway_Cashfree();
         }
     }
-});
+};
+add_action('wcfmmp_loaded', $register_cashfree_wcfm_gateway);
+add_action('init', $register_cashfree_wcfm_gateway, 30);
+
 
 // =========================================================================
 // ORDER LISTING & UI: Default WooCommerce & WCFM standard display is used.

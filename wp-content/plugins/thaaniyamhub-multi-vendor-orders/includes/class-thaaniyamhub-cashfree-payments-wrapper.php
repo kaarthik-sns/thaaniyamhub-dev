@@ -40,6 +40,21 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                 $this->settings           = $this->inner_gateway->settings ?? array();
                 $this->has_fields         = $this->inner_gateway->has_fields ?? true;
                 $this->order_button_text  = $this->inner_gateway->order_button_text ?? __('Pay Now', 'cashfree');
+
+                // The inner gateway's constructor calls setup_actions() which registers
+                // load_scripts on wp_enqueue_scripts. However, because WooCommerce loads
+                // payment gateways lazily (often during wp_enqueue_scripts itself), that
+                // add_action() call arrives too late and the hook never fires — causing the
+                // Cashfree JS and session params to never be enqueued on the order-pay page.
+                // Solution: remove the inner-gateway hook and own it on the wrapper instead.
+                // If wp_enqueue_scripts has already fired, call it directly right now.
+                remove_action('wp_enqueue_scripts', array($this->inner_gateway, 'load_scripts'));
+                if (did_action('wp_enqueue_scripts')) {
+                    // We're inside wp_enqueue_scripts or after it — call directly now.
+                    $this->load_scripts();
+                } else {
+                    add_action('wp_enqueue_scripts', array($this, 'load_scripts'));
+                }
             } else {
                 $this->id           = 'cashfree';
                 $this->method_title = 'Cashfree Payments';
@@ -90,6 +105,19 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
                 return call_user_func_array(array($this->inner_gateway, $method), $args);
             }
             return null;
+        }
+
+        /**
+         * Enqueue Cashfree JS and localize session params on the order-pay page.
+         * Delegates fully to the inner gateway's load_scripts(); we own the hook
+         * registration so it fires at the right time regardless of when WooCommerce
+         * instantiates the gateway.
+         */
+        public function load_scripts()
+        {
+            if ($this->inner_gateway && method_exists($this->inner_gateway, 'load_scripts')) {
+                $this->inner_gateway->load_scripts();
+            }
         }
 
         /**
@@ -217,9 +245,25 @@ if (class_exists('WC_Payment_Gateway') && !class_exists('ThaaniyamHub_WC_Cashfre
 
         /**
          * Process payment.
+         * Validates order existence, strictly positive total, and prevents re-processing already paid orders.
          */
         public function process_payment($order_id)
         {
+            $order = wc_get_order($order_id);
+            if (!$order) {
+                return array('result' => 'fail', 'messages' => __('Invalid order.', 'thaaniyamhub-multi-vendor-orders'));
+            }
+
+            // Security: Order total must be positive
+            if ((float) $order->get_total() <= 0) {
+                return array('result' => 'fail', 'messages' => __('Order total must be greater than zero.', 'thaaniyamhub-multi-vendor-orders'));
+            }
+
+            // Security: Prevent double-processing already completed/processing orders
+            if (in_array($order->get_status(), array('processing', 'completed'), true)) {
+                return array('result' => 'fail', 'messages' => __('This order has already been paid and processed.', 'thaaniyamhub-multi-vendor-orders'));
+            }
+
             if ($this->inner_gateway && method_exists($this->inner_gateway, 'process_payment')) {
                 return $this->inner_gateway->process_payment($order_id);
             }

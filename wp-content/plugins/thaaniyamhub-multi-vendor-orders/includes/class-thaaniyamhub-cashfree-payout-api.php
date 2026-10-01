@@ -395,16 +395,25 @@ class ThaaniyamHub_Cashfree_Payout_API {
             $transfer_mode = 'banktransfer';
         }
 
+        $remarks_text = sanitize_text_field( $transfer_data['remarks'] ?? 'ThaaniyamHub Vendor Payout' );
+        $bene_email   = sanitize_email( $transfer_data['email'] ?? 'vendor@thaaniyamhub.com' );
+        $bene_phone   = preg_replace( '/[^0-9]/', '', $transfer_data['phone'] ?? '9999999999' );
+
         $payload = [
             'transfer_id'         => sanitize_text_field( $transfer_data['transferId'] ),
             'transfer_amount'     => (float) number_format( $amount, 2, '.', '' ),
             'transfer_currency'   => 'INR',
             'transfer_mode'       => strtolower( sanitize_text_field( $transfer_mode ) ),
-            'remarks'             => sanitize_text_field( $transfer_data['remarks'] ?? 'ThaaniyamHub Vendor Payout' ),
+            'transfer_remarks'    => $remarks_text,
+            'remarks'             => $remarks_text,
             'beneficiary_details' => [
-                'beneficiary_name'  => sanitize_text_field( $transfer_data['name'] ),
-                'beneficiary_email' => sanitize_email( $transfer_data['email'] ?? 'vendor@thaaniyamhub.com' ),
-                'beneficiary_phone' => preg_replace( '/[^0-9]/', '', $transfer_data['phone'] ?? '9999999999' ),
+                'beneficiary_name'            => sanitize_text_field( $transfer_data['name'] ),
+                'beneficiary_email'           => $bene_email,
+                'beneficiary_phone'           => $bene_phone,
+                'beneficiary_contact_details' => [
+                    'beneficiary_email' => $bene_email,
+                    'beneficiary_phone' => $bene_phone,
+                ],
             ],
         ];
 
@@ -534,15 +543,30 @@ class ThaaniyamHub_Cashfree_Payout_API {
             $secret = $this->get_client_secret();
         }
 
-        // If no secret configured at all, skip signature verification in development/sandbox
+        // Security (Fail Closed): Never allow unverified webhook processing if secrets are missing
         if ( empty( $secret ) ) {
-            thaaniyamhub_log( 'Cashfree_Payout_API: No Webhook or Client Secret configured. Skipping signature verification.', 'warning', 'thaaniyamhub-cashfree-payout' );
-            return true;
+            thaaniyamhub_log( 'Cashfree_Payout_API: No Webhook or Client Secret configured. Rejecting webhook signature verification (Fail Closed).', 'error', 'thaaniyamhub-cashfree-payout' );
+            return false;
         }
 
         if ( empty( $signature ) ) {
             thaaniyamhub_log( 'Cashfree_Payout_API: Webhook request missing signature header.', 'warning', 'thaaniyamhub-cashfree-payout' );
             return false;
+        }
+
+        // Replay Attack Protection: verify timestamp freshness if provided
+        if ( ! empty( $timestamp ) && is_numeric( $timestamp ) ) {
+            $ts_int = (int) $timestamp;
+            // Cashfree timestamps might be in milliseconds (13 digits) or seconds (10 digits)
+            if ( $ts_int > 100000000000 ) {
+                $ts_int = (int) round( $ts_int / 1000 );
+            }
+            $now = time();
+            // Reject timestamps older than 5 minutes (300s) or in future > 60s
+            if ( abs( $now - $ts_int ) > 300 ) {
+                thaaniyamhub_log( sprintf( 'Cashfree_Payout_API: Webhook timestamp expired or outside 5-minute tolerance (Timestamp: %d, Server Time: %d).', $ts_int, $now ), 'error', 'thaaniyamhub-cashfree-payout' );
+                return false;
+            }
         }
 
         $secrets_to_try = array_unique( array_filter( [ $this->get_webhook_secret(), $this->get_client_secret() ] ) );

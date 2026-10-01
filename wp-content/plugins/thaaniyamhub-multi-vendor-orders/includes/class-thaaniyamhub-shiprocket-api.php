@@ -78,7 +78,7 @@ class ThaaniyamHub_Shiprocket_API {
             'headers'   => [ 'Content-Type' => 'application/json' ],
             'body'      => wp_json_encode( $payload ),
             'timeout'   => 15,
-            'sslverify' => false,
+            'sslverify' => true,
         ] );
 
         self::log_api_call( null, 'auth/login', $payload, $response );
@@ -388,7 +388,7 @@ class ThaaniyamHub_Shiprocket_API {
                 'Authorization' => 'Bearer ' . $token,
             ],
             'timeout'   => 20,
-            'sslverify' => false,
+            'sslverify' => true,
         ];
 
         if ( 'GET' === $method ) {

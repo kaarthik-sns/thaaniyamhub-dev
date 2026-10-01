@@ -97,18 +97,14 @@ class ThaaniyamHub_Cashfree_Webhook {
         $api           = ThaaniyamHub_Cashfree_Payout_API::get_instance();
         $secret_exists = ! empty( $api->get_webhook_secret() ) || ! empty( $api->get_client_secret() );
 
-        // Strict signature validation: In production or whenever secrets are configured, signature is mandatory
-        if ( $secret_exists || ! $api->is_sandbox() ) {
-            if ( empty( $signature ) ) {
-                thaaniyamhub_log( 'Cashfree_Webhook: Missing required signature header!', 'error', 'thaaniyamhub-cashfree-payout' );
-                return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Missing signature' ], 401 );
-            }
-            if ( ! $api->verify_webhook_signature( $raw_body, $signature, $timestamp ) ) {
-                thaaniyamhub_log( 'Cashfree_Webhook: Invalid signature received!', 'error', 'thaaniyamhub-cashfree-payout' );
-                return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Invalid signature' ], 401 );
-            }
-        } elseif ( ! empty( $signature ) && ! $api->verify_webhook_signature( $raw_body, $signature, $timestamp ) ) {
-            thaaniyamhub_log( 'Cashfree_Webhook: Invalid signature received!', 'error', 'thaaniyamhub-cashfree-payout' );
+        // Mandatory Cryptographic Signature Verification (Fail-Closed)
+        if ( empty( $signature ) ) {
+            thaaniyamhub_log( 'Cashfree_Webhook: Missing required signature header!', 'error', 'thaaniyamhub-cashfree-payout' );
+            return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Missing signature' ], 401 );
+        }
+
+        if ( ! $api->verify_webhook_signature( $raw_body, $signature, $timestamp ) ) {
+            thaaniyamhub_log( 'Cashfree_Webhook: Invalid signature or expired timestamp received!', 'error', 'thaaniyamhub-cashfree-payout' );
             return new WP_REST_Response( [ 'status' => 'error', 'message' => 'Invalid signature' ], 401 );
         }
 
@@ -174,8 +170,10 @@ class ThaaniyamHub_Cashfree_Webhook {
         ) );
 
         if ( ! $withdrawal_id ) {
-            // Check if transferId contains withdrawal ID (TH_WDRW_{id}_timestamp)
+            // Check if transferId contains withdrawal ID (TH_WDRW_{id}_timestamp or TH_AUTO_V{vid}_W{id}_timestamp)
             if ( preg_match( '/TH_WDRW_(\d+)_/i', $transfer_id, $matches ) ) {
+                $withdrawal_id = (int) $matches[1];
+            } elseif ( preg_match( '/TH_AUTO_V\d+_W(\d+)_/i', $transfer_id, $matches ) ) {
                 $withdrawal_id = (int) $matches[1];
             }
         }

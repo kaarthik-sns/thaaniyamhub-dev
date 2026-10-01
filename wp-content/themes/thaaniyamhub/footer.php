@@ -136,11 +136,11 @@
 
         <ul>
           <?php if (get_theme_mod('social_link_1')): ?>
-            <li>
+            <!-- <li>
               <a href="<?php echo esc_url(get_theme_mod('social_link_1')); ?>" target="_blank">
                 <i class="fa-brands fa-facebook"></i> Facebook
               </a>
-            </li>
+            </li> -->
           <?php endif; ?>
 
           <?php if (get_theme_mod('social_link_3')): ?>

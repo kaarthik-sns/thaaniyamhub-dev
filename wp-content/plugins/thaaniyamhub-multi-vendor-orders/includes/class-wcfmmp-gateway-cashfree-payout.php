@@ -161,6 +161,40 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
                 ];
             }
 
+            // Security Check 1: Enforce Automated Payout Ceiling Limit
+            $ceiling_limit = max( 0.0, (float) get_option( 'thaaniyamhub_payout_ceiling_limit', 0 ) );
+            if ( $ceiling_limit > 0 && $net_disbursal > $ceiling_limit ) {
+                thaaniyamhub_log(
+                    sprintf( 'WCFMmp_Gateway_Cashfree: Blocked payout for Withdrawal #%d (Amount ₹%s exceeds ceiling ₹%s).', $this->withdrawal_id, number_format( $net_disbursal, 2 ), number_format( $ceiling_limit, 2 ) ),
+                    'warning',
+                    'thaaniyamhub-cashfree-payout'
+                );
+                return [
+                    [
+                        'status'  => false,
+                        'message' => sprintf( __( 'Disbursal amount (₹%s) exceeds the configured automated payout ceiling (₹%s). Manual administrator approval is required.', 'thaaniyamhub-multi-vendor-orders' ), number_format( $net_disbursal, 2 ), number_format( $ceiling_limit, 2 ) ),
+                    ]
+                ];
+            }
+
+            // Security Check 2: Concurrency & Double-Spend Mutex Lock
+            $lock_key = 'thaaniyamhub_payout_lock_w_' . $this->withdrawal_id;
+            if ( get_transient( $lock_key ) ) {
+                thaaniyamhub_log(
+                    sprintf( 'WCFMmp_Gateway_Cashfree: Concurrent duplicate attempt blocked for Withdrawal #%d.', $this->withdrawal_id ),
+                    'warning',
+                    'thaaniyamhub-cashfree-payout'
+                );
+                return [
+                    [
+                        'status'  => false,
+                        'message' => __( 'Payout operation is currently in progress for this withdrawal. Duplicate request rejected.', 'thaaniyamhub-multi-vendor-orders' ),
+                    ]
+                ];
+            }
+            // Acquire lock for 60 seconds
+            set_transient( $lock_key, time(), 60 );
+
             // Generate unique transfer ID
             $transfer_id = sprintf( 'TH_WDRW_%d_%d', $this->withdrawal_id, time() );
             $remarks     = sprintf( 'ThaaniyamHub Vendor Payout #%d', $this->withdrawal_id );
@@ -218,6 +252,7 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
                 }
 
                 if ( is_wp_error( $response ) ) {
+                    delete_transient( $lock_key );
                     thaaniyamhub_log( "WCFMmp_Gateway_Cashfree: Transfer failed for #{$this->withdrawal_id} — {$error_msg}", 'error', 'thaaniyamhub-cashfree-payout' );
                     return [
                         [

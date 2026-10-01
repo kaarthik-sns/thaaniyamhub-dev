@@ -236,19 +236,21 @@ class ThaaniyamHub_Payout_Scheduler {
             wp_send_json_error( [ 'message' => __( 'Permission denied.', 'thaaniyamhub-multi-vendor-orders' ) ] );
         }
 
-        $results = self::execute_batch_payouts( 'manual' );
+        $bypass_maturity = ! empty( $_POST['bypass_maturity'] ) && ( '1' === (string) $_POST['bypass_maturity'] || 'true' === (string) $_POST['bypass_maturity'] );
+        $results = self::execute_batch_payouts( 'manual', $bypass_maturity );
         wp_send_json_success( $results );
     }
 
     /**
      * Main batch execution engine.
      *
-     * Disburses payouts aggregated per vendor for all mature, completed orders.
+     * Disburses payouts aggregated per vendor for all mature, eligible orders.
      *
      * @param string $source 'cron' or 'manual'
+     * @param bool   $bypass_maturity Allow immediate execution on manual trigger
      * @return array Summary of execution results
      */
-    public static function execute_batch_payouts( string $source = 'cron' ): array {
+    public static function execute_batch_payouts( string $source = 'cron', bool $bypass_maturity = false ): array {
         global $wpdb, $WCFMmp;
 
         // Process Mutex Lock: Ensure only one automated payout batch executes at any moment
@@ -262,6 +264,7 @@ class ThaaniyamHub_Payout_Scheduler {
                 'vendors_paid' => 0,
                 'total_amount' => 0.0,
                 'errors'       => [ $msg ],
+                'diagnostics'  => [ $msg ],
             ];
         }
 
@@ -269,12 +272,13 @@ class ThaaniyamHub_Payout_Scheduler {
         set_transient( $lock_key, time(), 300 );
 
         try {
-            $start_time  = current_time( 'mysql' );
-            $delay_days  = absint( get_option( 'thaaniyamhub_auto_payout_delay_days', 4 ) );
-            $min_amount  = max( 0.0, (float) get_option( 'thaaniyamhub_auto_payout_min_amount', 0 ) );
+            $start_time    = current_time( 'mysql' );
+            $delay_days    = $bypass_maturity ? 0 : absint( get_option( 'thaaniyamhub_auto_payout_delay_days', 4 ) );
+            $min_amount    = max( 0.0, (float) get_option( 'thaaniyamhub_auto_payout_min_amount', 0 ) );
+            $ceiling_limit = max( 0.0, (float) get_option( 'thaaniyamhub_payout_ceiling_limit', 0 ) );
 
             thaaniyamhub_log(
-                sprintf( 'ThaaniyamHub_Payout_Scheduler: Starting automated payout run [Source: %s, Delay: %d days, Min Amount: ₹%s]', $source, $delay_days, $min_amount ),
+                sprintf( 'ThaaniyamHub_Payout_Scheduler: Starting automated payout run [Source: %s, Delay: %d days (Bypass: %s), Min Amount: ₹%s, Ceiling: ₹%s]', $source, $delay_days, $bypass_maturity ? 'YES' : 'NO', $min_amount, $ceiling_limit > 0 ? $ceiling_limit : 'NO_LIMIT' ),
                 'info',
                 'thaaniyamhub-cashfree-payout'
             );
@@ -290,22 +294,30 @@ class ThaaniyamHub_Payout_Scheduler {
                 'vendors_paid'   => 0,
                 'total_amount'   => 0.0,
                 'errors'         => [ $err_msg ],
+                'diagnostics'    => [ $err_msg ],
             ];
         }
 
+        $diagnostics = [];
         // 1. Fetch all active vendors with eligible commissions
-        $eligible_by_vendor = self::get_all_eligible_commissions_grouped_by_vendor( $delay_days );
+        $eligible_by_vendor = self::get_all_eligible_commissions_grouped_by_vendor( $delay_days, $diagnostics );
 
         if ( empty( $eligible_by_vendor ) ) {
-            $msg = sprintf( __( 'No eligible vendor commissions found (Criteria: Completed >= %d days ago, withdraw_status = pending, not in dispute).', 'thaaniyamhub-multi-vendor-orders' ), $delay_days );
+            $allowed_label = implode( ', ', self::get_allowed_payout_order_statuses() );
+            $msg = sprintf(
+                __( 'No eligible vendor commissions found for disbursement (Criteria: Status in [%s], Delay: %d days).', 'thaaniyamhub-multi-vendor-orders' ),
+                $allowed_label,
+                $delay_days
+            );
             thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$msg}", 'info', 'thaaniyamhub-cashfree-payout' );
-            self::record_last_run( $start_time, 0, 0.0, 0, [], $source );
+            self::record_last_run( $start_time, 0, 0.0, 0, $diagnostics, $source );
             return [
                 'success'        => true,
                 'message'        => $msg,
                 'vendors_paid'   => 0,
                 'total_amount'   => 0.0,
                 'errors'         => [],
+                'diagnostics'    => $diagnostics,
             ];
         }
 
@@ -323,6 +335,7 @@ class ThaaniyamHub_Payout_Scheduler {
 
             // Check if vendor account is disabled
             if ( get_user_meta( $vendor_id, '_disable_vendor', true ) ) {
+                $diagnostics[] = sprintf( __( 'Vendor #%d is disabled. Skipped.', 'thaaniyamhub-multi-vendor-orders' ), $vendor_id );
                 continue;
             }
 
@@ -343,15 +356,27 @@ class ThaaniyamHub_Payout_Scheduler {
 
             // Check minimum payout threshold
             if ( $min_amount > 0 && $vendor_sum < $min_amount ) {
-                thaaniyamhub_log(
-                    sprintf( 'ThaaniyamHub_Payout_Scheduler: Vendor #%d eligible earnings ₹%s is below minimum threshold ₹%s. Skipping.', $vendor_id, $vendor_sum, $min_amount ),
-                    'info',
-                    'thaaniyamhub-cashfree-payout'
-                );
+                $thresh_msg = sprintf( __( 'Vendor #%d: Eligible earnings ₹%s is below minimum threshold ₹%s. Deferred to next cycle.', 'thaaniyamhub-multi-vendor-orders' ), $vendor_id, $vendor_sum, $min_amount );
+                thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$thresh_msg}", 'info', 'thaaniyamhub-cashfree-payout' );
+                $diagnostics[] = $thresh_msg;
                 continue;
             }
 
             if ( $vendor_sum <= 0 ) {
+                continue;
+            }
+
+            // Security Check: Enforce Automated Payout Ceiling Limit
+            if ( $ceiling_limit > 0 && $vendor_sum > $ceiling_limit ) {
+                $ceiling_msg = sprintf(
+                    __( 'Vendor #%d: Total payout ₹%s exceeds automated payout ceiling ₹%s. Deferred for manual administrator review.', 'thaaniyamhub-multi-vendor-orders' ),
+                    $vendor_id,
+                    number_format( $vendor_sum, 2 ),
+                    number_format( $ceiling_limit, 2 )
+                );
+                thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$ceiling_msg}", 'warning', 'thaaniyamhub-cashfree-payout' );
+                $diagnostics[] = $ceiling_msg;
+                $errors[]      = $ceiling_msg;
                 continue;
             }
 
@@ -363,19 +388,34 @@ class ThaaniyamHub_Payout_Scheduler {
             if ( ! $has_bank && ! $has_upi ) {
                 $err = sprintf( __( 'Vendor #%d has no Bank Account or UPI ID configured in payment setup. Skipping payout of ₹%s.', 'thaaniyamhub-multi-vendor-orders' ), $vendor_id, $vendor_sum );
                 thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$err}", 'warning', 'thaaniyamhub-cashfree-payout' );
-                $errors[] = $err;
+                $errors[]      = $err;
+                $diagnostics[] = $err;
                 continue;
             }
 
-            // Process Single Aggregated Disbursal for this Vendor
-            $payout_res = self::disburse_vendor_batch(
-                $vendor_id,
-                $vendor_sum,
-                $commission_ids_list,
-                $order_ids_list,
-                $payout_profile,
-                $source
-            );
+            // Security Check: Per-Vendor Concurrency Mutex Lock
+            $vendor_lock_key = 'thaaniyamhub_payout_vlock_' . $vendor_id;
+            if ( get_transient( $vendor_lock_key ) ) {
+                $vlock_msg = sprintf( __( 'Vendor #%d payout is currently in progress by another process. Skipped.', 'thaaniyamhub-multi-vendor-orders' ), $vendor_id );
+                thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$vlock_msg}", 'warning', 'thaaniyamhub-cashfree-payout' );
+                $diagnostics[] = $vlock_msg;
+                continue;
+            }
+            set_transient( $vendor_lock_key, time(), 60 );
+
+            try {
+                // Process Single Aggregated Disbursal for this Vendor
+                $payout_res = self::disburse_vendor_batch(
+                    $vendor_id,
+                    $vendor_sum,
+                    $commission_ids_list,
+                    $order_ids_list,
+                    $payout_profile,
+                    $source
+                );
+            } finally {
+                delete_transient( $vendor_lock_key );
+            }
 
             if ( $payout_res['success'] ) {
                 $vendors_paid++;
@@ -388,7 +428,9 @@ class ThaaniyamHub_Payout_Scheduler {
                     'status'       => $payout_res['status'],
                 ];
             } else {
-                $errors[] = sprintf( 'Vendor #%d: %s', $vendor_id, $payout_res['error'] );
+                $err_detail = sprintf( 'Vendor #%d: %s', $vendor_id, $payout_res['error'] );
+                $errors[]      = $err_detail;
+                $diagnostics[] = $err_detail;
             }
         }
 
@@ -410,6 +452,7 @@ class ThaaniyamHub_Payout_Scheduler {
             'total_amount'   => $total_disbursed,
             'errors'         => $errors,
             'payout_details' => $payout_details,
+            'diagnostics'    => $diagnostics,
         ];
         } finally {
             delete_transient( $lock_key );
@@ -693,24 +736,44 @@ class ThaaniyamHub_Payout_Scheduler {
     }
 
     /**
+     * Get list of WooCommerce order statuses eligible for automated vendor payouts.
+     * Configurable in WooCommerce -> ThaaniyamHub Settings -> Cashfree Payouts.
+     *
+     * @return array Array of status slugs without 'wc-' prefix
+     */
+    public static function get_allowed_payout_order_statuses(): array {
+        $setting = get_option( 'thaaniyamhub_auto_payout_order_status', 'completed_processing' );
+        if ( 'completed' === $setting ) {
+            return [ 'completed' ];
+        } elseif ( 'wcfm' === $setting && function_exists( 'get_wcfm_marketplace_active_withdrwal_order_status' ) ) {
+            $wcfm_statuses = get_wcfm_marketplace_active_withdrwal_order_status();
+            $mapped = [];
+            foreach ( array_keys( $wcfm_statuses ) as $s ) {
+                $mapped[] = str_replace( 'wc-', '', $s );
+            }
+            return ! empty( $mapped ) ? array_unique( $mapped ) : [ 'completed', 'processing' ];
+        }
+        return [ 'completed', 'processing' ];
+    }
+
+    /**
      * Query and return all mature eligible commissions grouped by vendor_id.
      *
      * Criteria:
-     *   1. Order is 'completed' (or child suborder is completed).
-     *   2. Order completed date is >= $delay_days ago.
+     *   1. Order status is in allowed payout statuses (default: completed, processing).
+     *   2. Order maturity date is >= $delay_days ago (or delay bypassed).
      *   3. withdraw_status = 'pending'.
      *   4. is_withdrawable = 1, is_refunded = 0, refund_status != 'requested', is_trashed = 0.
-     *   5. Not in an existing withdrawal request.
-     *   6. Not marked 'disbursed' or 'processing' in ThaaniyamHub ledger.
+     *   5. Not marked 'disbursed' or 'processing' in ThaaniyamHub ledger.
      *
-     * @param int $delay_days
+     * @param int   $delay_days
+     * @param array $diagnostics Passed by reference to collect execution insights
      * @return array [ vendor_id => [ commission_row, ... ] ]
      */
-    public static function get_all_eligible_commissions_grouped_by_vendor( int $delay_days = 4 ): array {
+    public static function get_all_eligible_commissions_grouped_by_vendor( int $delay_days = 4, array &$diagnostics = [] ): array {
         global $wpdb;
 
         // Query wcfm_marketplace_orders directly — fully compatible with HPOS
-        // (Order details, status, and dates are loaded via wc_get_order() below).
         $sql = "SELECT c.* 
                 FROM {$wpdb->prefix}wcfm_marketplace_orders AS c
                 WHERE c.withdraw_status = 'pending'
@@ -722,11 +785,13 @@ class ThaaniyamHub_Payout_Scheduler {
 
         $rows = $wpdb->get_results( $sql );
         if ( empty( $rows ) ) {
+            $diagnostics[] = __( 'No pending withdrawable commission records found in database.', 'thaaniyamhub-multi-vendor-orders' );
             return [];
         }
 
-        $now_ts    = time();
-        $cutoff_ts = $now_ts - ( $delay_days * DAY_IN_SECONDS );
+        $now_ts           = time();
+        $cutoff_ts        = $now_ts - ( $delay_days * DAY_IN_SECONDS );
+        $allowed_statuses = self::get_allowed_payout_order_statuses();
 
         $grouped = [];
 
@@ -736,29 +801,45 @@ class ThaaniyamHub_Payout_Scheduler {
 
             $order = wc_get_order( $order_id );
             if ( ! $order ) {
+                $diagnostics[] = sprintf( __( 'Commission #%d: Order #%d not found in WooCommerce.', 'thaaniyamhub-multi-vendor-orders' ), $row->ID, $order_id );
                 continue;
             }
 
-            // Check order status: must be completed (single-level independent order)
+            // Check order status against allowed configuration
             $status = $order->get_status();
-            if ( 'completed' !== $status ) {
+            if ( ! in_array( $status, $allowed_statuses, true ) ) {
+                $diagnostics[] = sprintf(
+                    __( 'Order #%d (Vendor #%d): Status is "%s" (allowed: %s).', 'thaaniyamhub-multi-vendor-orders' ),
+                    $order_id,
+                    $vendor_id,
+                    $status,
+                    implode( ', ', $allowed_statuses )
+                );
                 continue;
             }
 
-            // Check Maturity Delay: Order completion date must be <= $cutoff_ts
-            $completed_date = $order->get_date_completed();
-            $completed_ts   = $completed_date ? $completed_date->getTimestamp() : 0;
+            // Check Maturity Delay
+            if ( $delay_days > 0 ) {
+                $completed_date = $order->get_date_completed();
+                $ref_ts         = $completed_date ? $completed_date->getTimestamp() : 0;
+                if ( ! $ref_ts ) {
+                    $created_date = $order->get_date_created();
+                    $ref_ts       = $created_date ? $created_date->getTimestamp() : 0;
+                }
 
-            if ( ! $completed_ts ) {
-                // Fallback to order creation date if date_completed is not recorded
-                // Uses WC_Order API instead of get_post_field() for HPOS compatibility
-                $created_date = $order->get_date_created();
-                $completed_ts = $created_date ? $created_date->getTimestamp() : 0;
-            }
-
-            if ( $completed_ts > $cutoff_ts ) {
-                // Order is completed but has not yet reached maturity delay
-                continue;
+                if ( $ref_ts > $cutoff_ts ) {
+                    $days_elapsed = max( 0.0, round( ( $now_ts - $ref_ts ) / DAY_IN_SECONDS, 1 ) );
+                    $days_rem     = max( 0.1, round( ( $cutoff_ts - $now_ts + ( $delay_days * DAY_IN_SECONDS ) ) / DAY_IN_SECONDS, 1 ) );
+                    $diagnostics[] = sprintf(
+                        __( 'Order #%d (Vendor #%d): In maturity window (elapsed: %s days, required: %d days, ~%s days remaining).', 'thaaniyamhub-multi-vendor-orders' ),
+                        $order_id,
+                        $vendor_id,
+                        $days_elapsed,
+                        $delay_days,
+                        $days_rem
+                    );
+                    continue;
+                }
             }
 
             // Verify against ThaaniyamHub vendor ledger status
@@ -771,6 +852,12 @@ class ThaaniyamHub_Payout_Scheduler {
             ) );
 
             if ( in_array( $ledger_status, [ 'disbursed', 'processing' ], true ) ) {
+                $diagnostics[] = sprintf(
+                    __( 'Order #%d (Vendor #%d): Ledger status is "%s" (already processed or disbursed).', 'thaaniyamhub-multi-vendor-orders' ),
+                    $order_id,
+                    $vendor_id,
+                    $ledger_status
+                );
                 continue;
             }
 
@@ -781,6 +868,112 @@ class ThaaniyamHub_Payout_Scheduler {
         }
 
         return $grouped;
+    }
+
+    /**
+     * Compute a live summary of pending vendor commissions, readiness, and profile status.
+     * Used by the Payouts Settings Tab UI to give administrators immediate visual clarity.
+     *
+     * @return array
+     */
+    public static function get_pending_payouts_summary(): array {
+        global $wpdb;
+
+        $sql = "SELECT c.* 
+                FROM {$wpdb->prefix}wcfm_marketplace_orders AS c
+                WHERE c.withdraw_status = 'pending'
+                  AND c.is_withdrawable = 1
+                  AND c.is_refunded = 0
+                  AND c.is_trashed = 0
+                  AND (c.refund_status IS NULL OR c.refund_status != 'requested')
+                  AND c.total_commission > 0";
+
+        $rows = $wpdb->get_results( $sql );
+        $summary = [
+            'total_pending_amount' => 0.0,
+            'total_pending_orders' => 0,
+            'eligible_now_amount'  => 0.0,
+            'in_maturity_amount'   => 0.0,
+            'status_skip_amount'   => 0.0,
+            'vendors_ready'        => [],
+            'vendors_missing_info' => [],
+            'vendors_count'        => 0,
+        ];
+
+        if ( empty( $rows ) ) {
+            return $summary;
+        }
+
+        $delay_days       = absint( get_option( 'thaaniyamhub_auto_payout_delay_days', 4 ) );
+        $now_ts           = time();
+        $cutoff_ts        = $now_ts - ( $delay_days * DAY_IN_SECONDS );
+        $allowed_statuses = self::get_allowed_payout_order_statuses();
+        $gateway          = new WCFMmp_Gateway_Cashfree();
+
+        $vendor_amounts = [];
+
+        foreach ( $rows as $row ) {
+            $comm_amount = (float) ( $row->total_commission ?? 0.0 );
+            $order_id    = (int) $row->order_id;
+            $vendor_id   = (int) $row->vendor_id;
+
+            $summary['total_pending_amount'] += $comm_amount;
+            $summary['total_pending_orders']++;
+
+            $order = wc_get_order( $order_id );
+            if ( ! $order ) {
+                continue;
+            }
+
+            $status = $order->get_status();
+            if ( ! in_array( $status, $allowed_statuses, true ) ) {
+                $summary['status_skip_amount'] += $comm_amount;
+                continue;
+            }
+
+            $completed_date = $order->get_date_completed();
+            $ref_ts         = $completed_date ? $completed_date->getTimestamp() : 0;
+            if ( ! $ref_ts ) {
+                $created_date = $order->get_date_created();
+                $ref_ts       = $created_date ? $created_date->getTimestamp() : 0;
+            }
+
+            if ( $delay_days > 0 && $ref_ts > $cutoff_ts ) {
+                $summary['in_maturity_amount'] += $comm_amount;
+            } else {
+                $summary['eligible_now_amount'] += $comm_amount;
+                if ( ! isset( $vendor_amounts[ $vendor_id ] ) ) {
+                    $vendor_amounts[ $vendor_id ] = 0.0;
+                }
+                $vendor_amounts[ $vendor_id ] += $comm_amount;
+            }
+        }
+
+        foreach ( $vendor_amounts as $vid => $v_amt ) {
+            $profile  = $gateway->get_vendor_payout_details( $vid );
+            $has_bank = ! empty( $profile['account_number'] ) && ! empty( $profile['ifsc'] );
+            $has_upi  = ! empty( $profile['upi_id'] );
+            $user     = get_userdata( $vid );
+            $name     = $profile['account_name'] ?: ( $user ? $user->display_name : ( 'Vendor #' . $vid ) );
+
+            if ( $has_bank || $has_upi ) {
+                $summary['vendors_ready'][] = [
+                    'id'     => $vid,
+                    'name'   => $name,
+                    'amount' => $v_amt,
+                    'type'   => $has_upi ? 'UPI' : 'Bank (' . ( $profile['bank_name'] ?: 'IMPS' ) . ')',
+                ];
+            } else {
+                $summary['vendors_missing_info'][] = [
+                    'id'     => $vid,
+                    'name'   => $name,
+                    'amount' => $v_amt,
+                ];
+            }
+        }
+
+        $summary['vendors_count'] = count( $vendor_amounts );
+        return $summary;
     }
 
     /**
