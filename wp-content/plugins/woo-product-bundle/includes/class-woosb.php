@@ -303,14 +303,15 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             $removed_item = $cart->removed_cart_contents[ $cart_item_key ] ?? null;
 
             // Remove all items in the same bundle by bundle_id if available
-            if ( ! empty( $removed_item['woosb_bundle']['bundle_id'] ) ) {
-                $bundle_id = $removed_item['woosb_bundle']['bundle_id'];
+            $bundle_id = $this->helper->get_bundle_id( $removed_item );
 
-                foreach ( $cart->cart_contents as $other_key => $other_item ) {
-                    if ( isset( $other_item['woosb_bundle']['bundle_id'] ) && $other_item['woosb_bundle']['bundle_id'] === $bundle_id ) {
-                        WC()->cart->remove_cart_item( $other_key );
-                    }
+            if ( ! empty( $bundle_id ) ) {
+                foreach ( $this->helper->get_bundle_cart_keys( $cart->cart_contents, $bundle_id ) as $other_key ) {
+                    WC()->cart->remove_cart_item( $other_key );
                 }
+
+                // The bundle is fully handled by bundle_id, stored parent/child keys can be stale (e.g. WPML re-keying)
+                return;
             }
 
             $new_keys = [];
@@ -375,7 +376,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 $ori_ids   = array_filter( array_column( $ori_items, 'id' ) );
 
                 if ( isset( $_REQUEST['woosb_ids'] ) ) {
-                    $ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                    $ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                     $product->build_items( $ids );
                 }
 
@@ -456,7 +457,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         }
 
                         if ( ! $exclude_unpurchasable ) {
-                            if ( $_product->is_type( 'variable' ) || $_product->is_type( 'woosb' ) || ! $_product->is_in_stock() || ! $_product->is_purchasable() ) {
+                            if ( $_product->is_type( 'variable' ) || $_product->is_type( 'woosb' ) || ! $_product->is_in_stock() || ! $this->helper->is_purchasable( $_product, 'validation' ) ) {
                                 /* translators: product name */
                                 wc_add_notice( sprintf( esc_html__( '"%s" is un-purchasable.', 'woo-product-bundle' ), esc_html( $_product->get_name() ) ), 'error' );
                                 wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
@@ -580,30 +581,41 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                 // make sure that is a bundle
                 if ( isset( $_REQUEST['woosb_ids'] ) ) {
-                    $ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ?? '' ) );
+                    $ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ) );
                     unset( $_REQUEST['woosb_ids'] );
                 }
 
                 if ( ! empty( $ids ) ) {
                     $cart_item_data['woosb_ids'] = $ids;
 
-                    // Ensure unique group key for bundle instance
+                    // Deterministic group key: identical bundles (same product + same items) share the same key so they get merged in the cart
                     if ( empty( $cart_item_data['woosb_group_key'] ) ) {
-                        $cart_item_data['woosb_group_key'] = md5( uniqid( (string) $product_id, true ) );
+                        $cart_item_data['woosb_group_key'] = $this->get_group_key( $product_id, $ids );
                     }
 
                     // Structured bundle context
                     if ( empty( $cart_item_data['woosb_bundle'] ) ) {
                         $cart_item_data['woosb_bundle'] = [
-                            'version'   => '2.0',
-                            'role'      => 'parent',
-                            'bundle_id' => 'woosb_' . $cart_item_data['woosb_group_key'],
+                                'version'   => '2.0',
+                                'role'      => 'parent',
+                                'bundle_id' => 'woosb_' . $cart_item_data['woosb_group_key'],
                         ];
                     }
                 }
             }
 
             return $cart_item_data;
+        }
+
+        function get_group_key( $product_id, $ids ) {
+            // return true to make every added bundle unique (never merged), false to merge identical bundles
+            if ( apply_filters( 'woosb_unique_group_key', false, $product_id, $ids ) ) {
+                $group_key = md5( uniqid( (string) $product_id, true ) );
+            } else {
+                $group_key = md5( 'woosb|' . $product_id . '|' . ( is_scalar( $ids ) ? (string) $ids : wp_json_encode( $ids ) ) );
+            }
+
+            return apply_filters( 'woosb_group_key', $group_key, $product_id, $ids );
         }
 
         function add_to_cart( $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ) {
@@ -654,7 +666,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             $exclude_unpurchasable = WC()->cart->cart_contents[ $cart_item_key ]['data']->exclude_unpurchasable();
 
             // Save the current key associated with woosb_parent_key
-            $group_key            = WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] ?? ( WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] = md5( uniqid( (string) $product_id, true ) ) );
+            $group_key            = WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] ?? ( WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] = $this->get_group_key( $product_id, WC()->cart->cart_contents[ $cart_item_key ]['woosb_ids'] ?? $cart_item_key ) );
             $bundle_id            = WC()->cart->cart_contents[ $cart_item_key ]['woosb_bundle']['bundle_id'] ?? ( 'woosb_' . $group_key );
             $base_discount_amount = (float) WC()->cart->cart_contents[ $cart_item_key ]['data']->get_meta( 'woosb_discount_amount' );
 
@@ -665,14 +677,14 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             WC()->cart->cart_contents[ $cart_item_key ]['woosb_base_discount_amount'] = $base_discount_amount;
             WC()->cart->cart_contents[ $cart_item_key ]['woosb_discount']             = $discount_percentage;
             WC()->cart->cart_contents[ $cart_item_key ]['woosb_bundle']               = [
-                'version'          => '2.0',
-                'role'             => 'parent',
-                'bundle_id'        => $bundle_id,
-                'product_id'       => $product_id,
-                'pricing_mode'     => $fixed_price ? 'fixed' : 'auto',
-                'discount_amount'  => $discount_amount,
-                'discount_percent' => $discount_percentage,
-                'items'            => $items,
+                    'version'          => '2.0',
+                    'role'             => 'parent',
+                    'bundle_id'        => $bundle_id,
+                    'product_id'       => $product_id,
+                    'pricing_mode'     => $fixed_price ? 'fixed' : 'auto',
+                    'discount_amount'  => $discount_amount,
+                    'discount_percent' => $discount_percentage,
+                    'items'            => $items,
             ];
 
             if ( is_array( $items ) && ( count( $items ) > 0 ) ) {
@@ -690,7 +702,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         continue;
                     }
 
-                    if ( ( ! $_product->is_purchasable() || ! $_product->is_in_stock() ) && $exclude_unpurchasable ) {
+                    if ( ( ! $this->helper->is_purchasable( $_product, 'add_to_cart' ) || ! $_product->is_in_stock() ) && $exclude_unpurchasable ) {
                         // exclude unpurchasable
                         continue;
                     }
@@ -707,51 +719,54 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                     // add to cart
                     $_data = [
-                        'woosb_qty'                  => $_qty,
-                        'woosb_parent_id'            => $product_id,
-                        'woosb_parent_key'           => $cart_item_key,
-                        'woosb_group_key'            => $group_key,
-                        'woosb_fixed_price'          => $fixed_price,
-                        'woosb_discount_amount'      => $discount_amount,
-                        'woosb_base_discount_amount' => $base_discount_amount,
-                        'woosb_discount'             => $discount_percentage,
-                        'woosb_bundle'               => [
-                            'version'          => '2.0',
-                            'role'             => 'child',
-                            'bundle_id'        => $bundle_id,
-                            'parent_id'        => $product_id,
-                            'qty_per_bundle'   => $_qty,
-                            'pricing_mode'     => $fixed_price ? 'fixed' : 'auto',
-                            'discount_amount'  => $discount_amount,
-                            'discount_percent' => $discount_percentage,
-                        ],
+                            'woosb_qty'                  => $_qty,
+                            'woosb_parent_id'            => $product_id,
+                            'woosb_parent_key'           => $cart_item_key,
+                            'woosb_group_key'            => $group_key,
+                            'woosb_fixed_price'          => $fixed_price,
+                            'woosb_discount_amount'      => $discount_amount,
+                            'woosb_base_discount_amount' => $base_discount_amount,
+                            'woosb_discount'             => $discount_percentage,
+                            'woosb_bundle'               => [
+                                    'version'          => '2.0',
+                                    'role'             => 'child',
+                                    'bundle_id'        => $bundle_id,
+                                    'parent_id'        => $product_id,
+                                    'qty_per_bundle'   => $_qty,
+                                    'pricing_mode'     => $fixed_price ? 'fixed' : 'auto',
+                                    'discount_amount'  => $discount_amount,
+                                    'discount_percent' => $discount_percentage,
+                            ],
                     ];
 
                     $_data = apply_filters( 'woosb_bundled_cart_item_data', $_data, $item, $cart_item_key );
 
                     do_action( 'woosb_before_add_to_cart_item', $item, $cart_item_key, $product_id, $quantity, $_data );
 
-                    $_key = WC()->cart->add_to_cart( $_id, $_qty * $quantity, $_variation_id, $_variation, $_data );
+                    // WC_Cart::add_to_cart() checks is_purchasable() itself, so run it inside the bundled context
+                    $this->helper->start_bundled_context();
+
+                    try {
+                        $_key = WC()->cart->add_to_cart( $_id, $_qty * $quantity, $_variation_id, $_variation, $_data );
+                    } finally {
+                        $this->helper->end_bundled_context();
+                    }
 
                     do_action( 'woosb_after_add_to_cart_item', $_key, $item, $cart_item_key, $product_id, $quantity, $_data );
 
                     if ( empty( $_key ) ) {
                         if ( ! $exclude_unpurchasable ) {
                             // can't add the bundled product
-                            if ( isset( WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'] ) ) {
-                                $keys = WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'];
-
-                                foreach ( $keys as $key ) {
-                                    // remove all bundled products
-                                    WC()->cart->remove_cart_item( $key );
-                                }
-
-                                // remove the bundle
-                                WC()->cart->remove_cart_item( $cart_item_key );
-
-                                // break out of the loop
-                                break;
+                            foreach ( $this->helper->get_bundle_cart_keys( WC()->cart->cart_contents, $bundle_id, 'child' ) as $key ) {
+                                // remove all bundled products
+                                WC()->cart->remove_cart_item( $key );
                             }
+
+                            // remove the bundle
+                            WC()->cart->remove_cart_item( $cart_item_key );
+
+                            // break out of the loop
+                            break;
                         }
                     } elseif ( ! isset( WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'] ) || ! in_array( $_key, WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'], true ) ) {
                         // save the current key
@@ -832,27 +847,31 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             }
 
             // Group items into bundles and child products
-            $bundles  = [];
-            $children = [];
+            $bundles           = [];
+            $children          = [];
+            $parent_bundle_ids = [];
 
             foreach ( $cart_contents as $cart_item_key => $cart_item ) {
-                $bundle_id = $cart_item['woosb_bundle']['bundle_id'] ?? $cart_item['woosb_group_key'] ?? null;
+                $bundle_id = $this->helper->get_bundle_id( $cart_item );
 
-                if ( ! empty( $cart_item['woosb_ids'] ) || ( ! empty( $cart_item['woosb_bundle']['role'] ) && $cart_item['woosb_bundle']['role'] === 'parent' ) ) {
+                if ( $this->helper->is_bundle_parent( $cart_item ) ) {
                     // Bundle Parent
                     if ( empty( $bundle_id ) ) {
+                        // legacy parent without bundle_id
                         $bundle_id = 'woosb_' . $cart_item_key;
                     }
-                    $bundles[ $bundle_id ] = [
-                        'key'  => $cart_item_key,
-                        'item' => $cart_item,
+
+                    $bundles[ $bundle_id ]                = [
+                            'key'  => $cart_item_key,
+                            'item' => $cart_item,
                     ];
-                } elseif ( ! empty( $cart_item['woosb_parent_key'] ) || ( ! empty( $cart_item['woosb_bundle']['role'] ) && $cart_item['woosb_bundle']['role'] === 'child' ) ) {
+                    $parent_bundle_ids[ $cart_item_key ] = $bundle_id;
+                } elseif ( $this->helper->is_bundle_child( $cart_item ) ) {
                     // Bundle Child
                     $children[ $cart_item_key ] = [
-                        'key'       => $cart_item_key,
-                        'bundle_id' => $bundle_id,
-                        'item'      => $cart_item,
+                            'key'       => $cart_item_key,
+                            'bundle_id' => $bundle_id,
+                            'item'      => $cart_item,
                     ];
                 }
             }
@@ -893,12 +912,12 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 // Synchronize child quantity with parent quantity
                 if ( ! empty( $child_item['woosb_qty'] ) && isset( $cart_contents[ $parent_key ]['quantity'] ) ) {
                     $target_qty                                         = $child_item['woosb_qty'] * $cart_contents[ $parent_key ]['quantity'];
-                    $cart_contents[ $child_key ]['quantity']             = $target_qty;
+                    $cart_contents[ $child_key ]['quantity']            = $target_qty;
                     WC()->cart->cart_contents[ $child_key ]['quantity'] = $target_qty;
                 }
 
                 // Map child under parent
-                $parent_bundle_id = $cart_contents[ $parent_key ]['woosb_bundle']['bundle_id'] ?? $cart_contents[ $parent_key ]['woosb_group_key'] ?? ( 'woosb_' . $parent_key );
+                $parent_bundle_id                           = $parent_bundle_ids[ $parent_key ] ?? ( 'woosb_' . $parent_key );
                 $bundle_children_map[ $parent_bundle_id ][] = $child_key;
             }
 
@@ -964,13 +983,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         // Calculate unit display price to align with frontend displayed bundle pricing
                         if ( $display_incl_tax ) {
                             $_display_price = wc_get_price_including_tax( $_product, [
-                                'price' => $_price,
-                                'qty'   => 1,
+                                    'price' => $_price,
+                                    'qty'   => 1,
                             ] );
                         } else {
                             $_display_price = wc_get_price_excluding_tax( $_product, [
-                                'price' => $_price,
-                                'qty'   => 1,
+                                    'price' => $_price,
+                                    'qty'   => 1,
                             ] );
                         }
 
@@ -1000,8 +1019,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         $final_display_line  = max( 0.0, $orig_display_line - $line_discount );
                         $final_display_unit  = $child_qty_in_bundle > 0 ? ( $final_display_line / $child_qty_in_bundle ) : 0.0;
 
-                        $tax_factor       = $child_tax_factors[ $child_key ] ?? 1.0;
-                        $final_raw_unit   = $tax_factor > 0 ? ( $final_display_unit / $tax_factor ) : $final_display_unit;
+                        $tax_factor     = $child_tax_factors[ $child_key ] ?? 1.0;
+                        $final_raw_unit = $tax_factor > 0 ? ( $final_display_unit / $tax_factor ) : $final_display_unit;
 
                         $cart_contents[ $child_key ]['data']->set_price( $final_raw_unit );
                         $cart_contents[ $child_key ]['data']->get_price();
@@ -1017,13 +1036,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                             if ( ! is_null( WC()->cart ) && WC()->cart->display_prices_including_tax() ) {
                                 $_child_display = wc_get_price_including_tax( $child_item['data'], [
-                                    'price' => $child_item['data']->get_price(),
-                                    'qty'   => $child_qty_in_bundle,
+                                        'price' => $child_item['data']->get_price(),
+                                        'qty'   => $child_qty_in_bundle,
                                 ] );
                             } else {
                                 $_child_display = wc_get_price_excluding_tax( $child_item['data'], [
-                                    'price' => $child_item['data']->get_price(),
-                                    'qty'   => $child_qty_in_bundle,
+                                        'price' => $child_item['data']->get_price(),
+                                        'qty'   => $child_qty_in_bundle,
                                 ] );
                             }
 
@@ -1034,13 +1053,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     if ( $parent_price > 0 ) {
                         if ( ! is_null( WC()->cart ) && WC()->cart->display_prices_including_tax() ) {
                             $_parent_display = wc_get_price_including_tax( $parent_item['data'], [
-                                'price' => $parent_price,
-                                'qty'   => 1,
+                                    'price' => $parent_price,
+                                    'qty'   => 1,
                             ] );
                         } else {
                             $_parent_display = wc_get_price_excluding_tax( $parent_item['data'], [
-                                'price' => $parent_price,
-                                'qty'   => 1,
+                                    'price' => $parent_price,
+                                    'qty'   => 1,
                             ] );
                         }
 
@@ -1225,7 +1244,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
             if ( isset( $values['woosb_ids'] ) ) {
                 // use _ to hide the data
-                $order_item->update_meta_data( '_woosb_ids', $values['woosb_ids'] );
+                $order_item->update_meta_data( '_woosb_ids', $this->helper->clean_ids( $values['woosb_ids'] ) );
             }
 
             if ( isset( $values['woosb_price'] ) ) {
@@ -1289,21 +1308,25 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         function cart_item_remove_link( $link, $cart_item_key ) {
             $item = WC()->cart->cart_contents[ $cart_item_key ] ?? null;
 
-            if ( ! empty( $item['woosb_bundle']['bundle_id'] ) && ( $item['woosb_bundle']['role'] ?? '' ) === 'child' ) {
-                $bundle_id = $item['woosb_bundle']['bundle_id'];
+            if ( $this->helper->is_bundle_child( $item ) ) {
+                $bundle_id = $this->helper->get_bundle_id( $item );
 
-                foreach ( WC()->cart->cart_contents as $other_item ) {
-                    if ( ( $other_item['woosb_bundle']['bundle_id'] ?? '' ) === $bundle_id && ( $other_item['woosb_bundle']['role'] ?? '' ) === 'parent' ) {
+                if ( ! empty( $bundle_id ) ) {
+                    // hide the remove link while the parent of this bundle still exists
+                    if ( $this->helper->get_bundle_parent_key( WC()->cart->cart_contents, $bundle_id ) ) {
                         return '';
                     }
+
+                    return $link;
                 }
-            }
 
-            if ( isset( WC()->cart->cart_contents[ $cart_item_key ]['woosb_parent_key'] ) ) {
-                $parent_key = WC()->cart->cart_contents[ $cart_item_key ]['woosb_parent_key'];
+                // legacy items without bundle_id: match by cart item keys
+                if ( isset( $item['woosb_parent_key'] ) ) {
+                    $parent_key = $item['woosb_parent_key'];
 
-                if ( isset( WC()->cart->cart_contents[ $parent_key ] ) || array_search( $parent_key, array_column( WC()->cart->cart_contents, 'woosb_key', 'key' ) ) ) {
-                    return '';
+                    if ( isset( WC()->cart->cart_contents[ $parent_key ] ) || array_search( $parent_key, array_column( WC()->cart->cart_contents, 'woosb_key', 'key' ) ) ) {
+                        return '';
+                    }
                 }
             }
 
@@ -1386,7 +1409,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             }
 
             $edit_link = $this->helper->get_setting( 'edit_link', 'no' ) === 'yes';
-            $edit_ids  = isset( $_GET['edit'] ) ? explode( ',', base64_decode( sanitize_text_field( wp_unslash( $_GET['edit'] ?? '' ) ) ) ) : [];
+            $edit_ids  = isset( $_GET['edit'] ) ? explode( ',', base64_decode( sanitize_text_field( wp_unslash( $_GET['edit'] ) ) ) ) : [];
             $edit_key  = sanitize_key( wp_unslash( $_GET['key'] ?? '' ) );
 
             if ( $edit_link && ! empty( $edit_ids ) && ! empty( $edit_key ) && ( $product->has_optional() || $product->has_variables() ) && ( $edit_item = WC()->cart->get_cart_item( $edit_key ) ) ) {
@@ -1498,7 +1521,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             foreach ( $items as $k => $item ) {
                                 if ( $_product = wc_get_product( $item['id'] ) ) {
                                     // exclude heading/paragraph
-                                    $_unpurchasable = ! $_product->is_purchasable() || ! $_product->is_in_stock() || ! $_product->has_enough_stock( $item['qty'] );
+                                    $_unpurchasable = ! $this->helper->is_purchasable( $_product, 'price' ) || ! $_product->is_in_stock() || ! $_product->has_enough_stock( $item['qty'] );
 
                                     if ( $exclude_unpurchasable && ! $_unpurchasable ) {
                                         $items[ $k ]['price'] = 0;
@@ -1572,7 +1595,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                             foreach ( $items as $item ) {
                                 if ( $_product = wc_get_product( $item['id'] ) ) {
-                                    if ( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! $_product->is_in_stock() || ! $_product->has_enough_stock( $item['qty'] ) ) ) {
+                                    if ( $exclude_unpurchasable && ( ! $this->helper->is_purchasable( $_product, 'price' ) || ! $_product->is_in_stock() || ! $_product->has_enough_stock( $item['qty'] ) ) ) {
                                         continue;
                                     }
 
@@ -1607,7 +1630,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                         foreach ( $items as $item ) {
                             if ( $_product = wc_get_product( $item['id'] ) ) {
-                                if ( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! $_product->is_in_stock() || ! $_product->has_enough_stock( $item['qty'] ) ) ) {
+                                if ( $exclude_unpurchasable && ( ! $this->helper->is_purchasable( $_product, 'price' ) || ! $_product->is_in_stock() || ! $_product->has_enough_stock( $item['qty'] ) ) ) {
                                     continue;
                                 }
 
@@ -1681,23 +1704,14 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         function cart_loaded_from_session( $cart ) {
             foreach ( $cart->cart_contents as $cart_item_key => $cart_item ) {
                 // remove orphaned products
-                $is_child = ! empty( $cart_item['woosb_parent_key'] ) || ( ! empty( $cart_item['woosb_bundle']['role'] ) && $cart_item['woosb_bundle']['role'] === 'child' );
-
-                if ( $is_child ) {
+                if ( $this->helper->is_bundle_child( $cart_item ) ) {
                     $has_parent = false;
-                    $bundle_id  = $cart_item['woosb_bundle']['bundle_id'] ?? $cart_item['woosb_group_key'] ?? null;
+                    $bundle_id  = $this->helper->get_bundle_id( $cart_item );
 
                     if ( $bundle_id ) {
-                        foreach ( $cart->cart_contents as $other_item ) {
-                            $other_bundle_id = $other_item['woosb_bundle']['bundle_id'] ?? $other_item['woosb_group_key'] ?? null;
-                            $other_is_parent = ! empty( $other_item['woosb_ids'] ) || ( ! empty( $other_item['woosb_bundle']['role'] ) && $other_item['woosb_bundle']['role'] === 'parent' );
-
-                            if ( $other_is_parent && $other_bundle_id === $bundle_id ) {
-                                $has_parent = true;
-                                break;
-                            }
-                        }
+                        $has_parent = (bool) $this->helper->get_bundle_parent_key( $cart->cart_contents, $bundle_id );
                     } elseif ( isset( $cart_item['woosb_parent_key'] ) && isset( $cart->cart_contents[ $cart_item['woosb_parent_key'] ] ) ) {
+                        // legacy items without bundle_id
                         $has_parent = true;
                     }
 
@@ -1724,7 +1738,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     foreach ( $items as $item ) {
                         $_product = wc_get_product( $item['id'] );
 
-                        if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) || ! $_product->is_in_stock() || ! $_product->is_purchasable() || empty( $item['qty'] ) || ! $_product->has_enough_stock( $item['qty'] * $cart_item['quantity'] ) ) {
+                        if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) || ! $_product->is_in_stock() || ! $this->helper->is_purchasable( $_product, 'order_again' ) || empty( $item['qty'] ) || ! $_product->has_enough_stock( $item['qty'] * $cart_item['quantity'] ) ) {
                             $add_items = false;
                             break;
                         }
@@ -1939,7 +1953,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 return;
             }
 
-            $edit_ids = isset( $_GET['edit'] ) ? explode( ',', base64_decode( sanitize_text_field( wp_unslash( $_GET['edit'] ?? '' ) ) ) ) : [];
+            $edit_ids = isset( $_GET['edit'] ) ? explode( ',', base64_decode( sanitize_text_field( wp_unslash( $_GET['edit'] ) ) ) ) : [];
 
             if ( $items = $product->get_items() ) {
                 $order                 = 1;
@@ -2041,7 +2055,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             $item_class .= ' woosb-product-hidden';
                         }
 
-                        if ( ( ! $product->is_type( 'variable' ) && ( ! $product->is_in_stock() || ! $product->has_enough_stock( $item_qty ) || ! $product->is_purchasable() ) ) || ( $product->is_type( 'variable' ) && ! $product->child_is_in_stock() && ! $product->child_is_on_backorder() ) ) {
+                        if ( ( ! $product->is_type( 'variable' ) && ( ! $product->is_in_stock() || ! $product->has_enough_stock( $item_qty ) || ! $this->helper->is_purchasable( $product, 'display' ) ) ) || ( $product->is_type( 'variable' ) && ! $product->child_is_in_stock() && ! $product->child_is_on_backorder() ) ) {
                             if ( ! apply_filters( 'woosb_allow_unpurchasable_qty', false ) ) {
                                 $item_qty = 0;
                             }
@@ -2050,7 +2064,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         }
 
                         $item_price = $this->helper->get_price_to_display( $product );
-
+                        $item_link  = apply_filters( 'woosb_item_has_link', $product->is_visible(), $product ) && ( $this->helper->get_setting( 'bundled_link', 'yes' ) !== 'no' );
                         $item_attrs = apply_filters( 'woosb_item_attrs', [
                                 'key'          => $key,
                                 'name'         => $product->get_name(),
@@ -2069,14 +2083,14 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                         if ( $this->helper->get_setting( 'bundled_thumb', 'yes' ) !== 'no' ) { ?>
                             <div class="woosb-thumb">
-                                <?php if ( $product->is_visible() && ( $this->helper->get_setting( 'bundled_link', 'yes' ) !== 'no' ) ) {
+                                <?php if ( $item_link ) {
                                     echo '<a ' . ( $this->helper->get_setting( 'bundled_link', 'yes' ) === 'yes_popup' ? 'class="woosq-link no-ajaxy" data-id="' . esc_attr( $item['id'] ) . '" data-context="woosb"' : '' ) . ' href="' . esc_url( $product->get_permalink() ) . '" ' . ( $this->helper->get_setting( 'bundled_link', 'yes' ) === 'yes_blank' ? 'target="_blank"' : '' ) . '>';
                                 } ?>
                                 <div class="woosb-thumb-ori">
                                     <?php echo apply_filters( 'woosb_item_thumbnail', $product->get_image( $this->helper::get_image_size() ), $product ); ?>
                                 </div>
                                 <div class="woosb-thumb-new"></div>
-                                <?php if ( $product->is_visible() && ( $this->helper->get_setting( 'bundled_link', 'yes' ) !== 'no' ) ) {
+                                <?php if ( $item_link ) {
                                     echo '</a>';
                                 } ?>
                             </div>
@@ -2095,7 +2109,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             $item_name    = '';
                             $product_name = apply_filters( 'woosb_item_product_name', $product->get_name(), $product );
 
-                            if ( $product->is_visible() && ( $this->helper->get_setting( 'bundled_link', 'yes' ) !== 'no' ) ) {
+                            if ( $item_link ) {
                                 $item_name .= '<a ' . ( $this->helper->get_setting( 'bundled_link', 'yes' ) === 'yes_popup' ? 'class="woosq-link no-ajaxy" data-id="' . $item['id'] . '" data-context="woosb"' : '' ) . ' href="' . esc_url( $product->get_permalink() ) . '" ' . ( $this->helper->get_setting( 'bundled_link', 'yes' ) === 'yes_blank' ? 'target="_blank"' : '' ) . '>';
                             }
 
@@ -2105,7 +2119,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                 $item_name .= '<s>' . $product_name . '</s>';
                             }
 
-                            if ( $product->is_visible() && ( $this->helper->get_setting( 'bundled_link', 'yes' ) !== 'no' ) ) {
+                            if ( $item_link ) {
                                 $item_name .= '</a>';
                             }
 
@@ -2127,7 +2141,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         </div>
 
                         <?php if ( $optional ) {
-                            if ( ( $product->is_in_stock() && ( $product->is_type( 'variable' ) || $product->is_purchasable() ) ) || apply_filters( 'woosb_allow_unpurchasable_qty', false ) ) {
+                            if ( ( $product->is_in_stock() && ( $product->is_type( 'variable' ) || $this->helper->is_purchasable( $product, 'display' ) ) ) || apply_filters( 'woosb_allow_unpurchasable_qty', false ) ) {
                                 echo '<div class="' . esc_attr( $this->helper->get_setting( 'plus_minus', 'no' ) === 'yes' ? 'woosb-quantity woosb-quantity-plus-minus' : 'woosb-quantity' ) . '">';
 
                                 if ( $this->helper->get_setting( 'plus_minus', 'no' ) === 'yes' ) {

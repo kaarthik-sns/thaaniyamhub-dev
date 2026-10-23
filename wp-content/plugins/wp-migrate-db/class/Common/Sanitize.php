@@ -46,7 +46,8 @@ class Sanitize
 
     protected static function create_error_string($type, $context, $data, $key)
     {
-        return sprintf(__('Sanitization Error: `%1$s` method was expecting %2$s for the `%3$s` field, but got something else: "%4$s"', 'wp-db-migrate-pro'), $context, $type, $key, $data);
+        /* translators: %1$s is the calling method, %2$s is the expected type, %3$s is the field name, and %4$s is the received value. */
+        return sprintf(__('Sanitization Error: `%1$s` method was expecting %2$s for the `%3$s` field, but got something else: "%4$s"', 'wp-migrate-db'), $context, $type, $key, $data);
     }
 
     /**
@@ -69,7 +70,8 @@ class Sanitize
         if (0 === $recursion_level && is_array($data)) {
             // We always expect associative arrays.
             if (!is_array($key_rules)) {
-                throw new SanitizationFailureException(sprintf(__('%1$s was not expecting data to be an array.', 'wp-db-migrate-pro'), $context));
+                /* translators: %1$s is the calling method. */
+                throw new SanitizationFailureException(sprintf(__('%1$s was not expecting data to be an array.', 'wp-migrate-db'), $context));
             }
             foreach ($data as $key => $value) {
                 // If a key does not have a rule it's not ours and can be removed.
@@ -178,7 +180,8 @@ class Sanitize
 
 	            throw new SanitizationFailureException( self::create_error_string( 'a bool', $context, $data, self::$field_key ) );
             } else {
-                throw new SanitizationFailureException(sprintf(__('Unknown sanitization rule "%1$s" supplied by %2$s', 'wp-db-migrate-pro'), $key_rules, $context));
+                /* translators: %1$s is the unknown sanitization rule, and %2$s is the calling method. */
+                throw new SanitizationFailureException(sprintf(__('Unknown sanitization rule "%1$s" supplied by %2$s', 'wp-migrate-db'), $key_rules, $context));
             }
         }
 

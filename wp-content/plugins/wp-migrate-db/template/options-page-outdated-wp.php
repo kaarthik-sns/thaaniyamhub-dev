@@ -10,6 +10,7 @@
     <p>
         <?php
         printf(
+            /* translators: %1$s is the plugin name, %2$s is the required WordPress version, and %3$s is the My Account URL. */
             __(
                 'This version of %1$s requires WordPress %2$s+. We recommend updating WordPress, but if that\'s not an option you can download version 1.9.x of WP Migrate from <a href="%3$s">My Account</a>.',
                 'wp-migrate-db'

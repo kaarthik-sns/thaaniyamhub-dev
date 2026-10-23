@@ -2,9 +2,9 @@
 Contributors: wpengine, deliciousbrains, bradt, ahmedgeek, philwebs, dalewilliams, tysonreeder, kevinwhoffman
 Tags: migrate, push pull, clone, import site, export site, transfer, restore, backup, wordpress migration plugin, move site, database migration, site migration
 Requires at least: 5.2
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 5.6
-Stable tag: 2.7.11
+Stable tag: 2.7.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -116,6 +116,11 @@ Yes, WP Migrate Lite includes `export` and `find-replace` commands. Qualifying l
 10. Saved migration profiles
 
 == Changelog ==
+
+= WP Migrate 2.7.12 - 2026-10-12 =
+* New: Dependencies have been updated for improved security and stability
+* Fixed: Files in a symlinked folder now migrate to the correct destination when the symlink and folder names differ 
+* Fixed: Single-site migrations are restricted to users with the `manage_options` capability, thanks to sl4x via the Intigriti Bug Bounty program
 
 = WP Migrate 2.7.11 - 2026-08-05 =
 * New: Dependencies have been updated for improved security and stability

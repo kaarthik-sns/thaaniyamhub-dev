@@ -96,7 +96,7 @@ class Menu
         $hook_suffix = add_submenu_page('settings.php',
             $title,
             $title,
-            'manage_network_options',
+            Util::MULTISITE_MIGRATION_CAPABILITY,
             $this->properties->core_slug,
             array($this->template, $template));
 
@@ -119,7 +119,7 @@ class Menu
         add_management_page(
             $this->plugin_manager_base->get_plugin_title(),
             $this->plugin_manager_base->get_plugin_title(),
-            'manage_network_options',
+            Util::MULTISITE_MIGRATION_CAPABILITY,
             $this->properties->core_slug,
             array(
                 $this->template,
@@ -134,7 +134,7 @@ class Menu
         $title       = __('WP Migrate', 'wp-migrate-db');
         $hook_suffix = add_management_page($title,
             $title,
-            'export',
+            Util::SINGLE_SITE_MIGRATION_CAPABILITY,
             $this->properties->core_slug,
             array($this->template, $template));
 

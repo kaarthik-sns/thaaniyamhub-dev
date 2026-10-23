@@ -3,6 +3,7 @@
 namespace DeliciousBrains\WPMDB\Common\Http;
 
 use DeliciousBrains\WPMDB\Common\Properties\Properties;
+use DeliciousBrains\WPMDB\Common\Util\Util;
 
 class WPMDBRestAPIServer {
 
@@ -18,10 +19,9 @@ class WPMDBRestAPIServer {
 	}
 
 	public function permission_callback() {
-		$cap = is_multisite() ? 'manage_network_options' : 'export';
-		$cap = apply_filters( 'wpmdb_ajax_cap', $cap );
+		$cap = Util::get_ajax_cap();
 
-		// Restrict endpoint to only users who have the edit_posts capability.
+		// Restrict endpoint to users who have the required capability.
 		if ( ! current_user_can( $cap ) ) {
 			return new \WP_Error( 'rest_forbidden', esc_html__( 'Only authenticated users can access endpoint.', 'wp-migrate-db' ), [ 'status' => 401 ] );
 		}

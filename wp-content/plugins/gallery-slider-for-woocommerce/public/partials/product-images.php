@@ -68,7 +68,10 @@ if ( ! class_exists( 'WCGS_Product_Gallery' ) ) {
 		 * Constructor
 		 */
 		public function __construct() {
-			$this->product      = $this->get_product();
+			$this->product = $this->get_product();
+			if ( ! $this->product instanceof WC_Product ) {
+				return;
+			}
 			$this->product_id   = $this->product->get_id();
 			$this->product_type = $this->product->get_type();
 			$this->helper       = new WCGS_Public_Helper();

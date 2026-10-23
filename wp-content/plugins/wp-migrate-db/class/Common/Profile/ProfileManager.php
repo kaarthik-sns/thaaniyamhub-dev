@@ -528,6 +528,7 @@ class ProfileManager
         $state_data = Sanitize::sanitize_data($_POST, $key_rules, $context);
 
         if (empty($state_data)) {
+            /* translators: %s is the profile action, such as save or update. */
             return new \WP_Error('profile-save-failed', sprintf(__('Failed to %s profile, state data is empty.', 'wp-migrate-db'), $action));
         }
 

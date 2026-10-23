@@ -405,27 +405,23 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 		 */
 		function wpml_prevent_orphan_removal( $remove, $cart_item_key, $cart_item ) {
 			if ( function_exists( 'wpml_loaded' ) && ! empty( WC()->cart ) && ! empty( WC()->cart->cart_contents ) ) {
-				$bundle_id = $cart_item['woosb_bundle']['bundle_id'] ?? $cart_item['woosb_group_key'] ?? '';
+				$helper    = WPCleverWoosb_Helper();
+				$bundle_id = $helper->get_bundle_id( $cart_item );
+
+				// Match by stable bundle_id
+				if ( ! empty( $bundle_id ) ) {
+					return $helper->get_bundle_parent_key( WC()->cart->cart_contents, $bundle_id ) ? false : $remove;
+				}
+
+				// Legacy items without bundle_id: match by translated parent product ID
 				$parent_id = (int) ( $cart_item['woosb_bundle']['parent_id'] ?? $cart_item['woosb_parent_id'] ?? 0 );
 
-				foreach ( WC()->cart->cart_contents as $key => $item ) {
-					$is_parent = ! empty( $item['woosb_ids'] ) || ( ! empty( $item['woosb_bundle']['role'] ) && $item['woosb_bundle']['role'] === 'parent' );
+				if ( $parent_id > 0 ) {
+					$trans_parent_id = (int) apply_filters( 'wpml_object_id', $parent_id, 'product', true );
 
-					if ( $is_parent ) {
-						$other_bundle_id = $item['woosb_bundle']['bundle_id'] ?? $item['woosb_group_key'] ?? '';
-
-						// Match by bundle_id / group key
-						if ( ! empty( $bundle_id ) && ! empty( $other_bundle_id ) && $bundle_id === $other_bundle_id ) {
+					foreach ( WC()->cart->cart_contents as $item ) {
+						if ( $helper->is_bundle_parent( $item ) && $trans_parent_id === (int) $item['product_id'] ) {
 							return false;
-						}
-
-						// Match by translated parent product ID
-						if ( $parent_id > 0 ) {
-							$trans_parent_id = (int) apply_filters( 'wpml_object_id', $parent_id, 'product', true );
-
-							if ( $trans_parent_id === (int) $item['product_id'] ) {
-								return false;
-							}
 						}
 					}
 				}
@@ -452,15 +448,14 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 				return;
 			}
 
+			$helper   = WPCleverWoosb_Helper();
 			$parents  = [];
 			$children = [];
 
 			foreach ( $cart->cart_contents as $key => $item ) {
-				$role = $item['woosb_bundle']['role'] ?? '';
-
-				if ( $role === 'parent' || ! empty( $item['woosb_ids'] ) ) {
+				if ( $helper->is_bundle_parent( $item ) ) {
 					$parents[ $key ] = $item;
-				} elseif ( $role === 'child' || ! empty( $item['woosb_parent_id'] ) || ! empty( $item['woosb_parent_key'] ) || ! empty( $item['woosb_group_key'] ) ) {
+				} elseif ( $helper->is_bundle_child( $item ) || ! empty( $item['woosb_group_key'] ) ) {
 					$children[ $key ] = $item;
 				}
 			}
@@ -469,36 +464,79 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 				return;
 			}
 
+			// Build lookup maps of the parents (bundle_id => key, previous woosb_key => key)
+			$parents_by_bundle  = [];
+			$parents_by_old_key = [];
+
+			foreach ( $parents as $parent_key => $parent_item ) {
+				$parent_bundle_id = $helper->get_bundle_id( $parent_item );
+
+				if ( ! empty( $parent_bundle_id ) && ! isset( $parents_by_bundle[ $parent_bundle_id ] ) ) {
+					$parents_by_bundle[ $parent_bundle_id ] = $parent_key;
+				}
+
+				if ( ! empty( $parent_item['woosb_key'] ) && ! isset( $parents_by_old_key[ $parent_item['woosb_key'] ] ) ) {
+					$parents_by_old_key[ $parent_item['woosb_key'] ] = $parent_key;
+				}
+			}
+
+			// Assign every child to exactly one parent (child key => parent key)
+			$assignments = [];
+			$claimed     = [];
+
+			foreach ( $children as $child_key => $child_item ) {
+				$child_bundle_id  = $helper->get_bundle_id( $child_item );
+				$child_parent_key = $child_item['woosb_parent_key'] ?? '';
+
+				if ( ! empty( $child_bundle_id ) && isset( $parents_by_bundle[ $child_bundle_id ] ) ) {
+					// 1. Match by unique bundle_id / group key
+					$assignments[ $child_key ] = $parents_by_bundle[ $child_bundle_id ];
+				} elseif ( ! empty( $child_parent_key ) && isset( $parents[ $child_parent_key ] ) ) {
+					// 2. Match by direct parent key
+					$assignments[ $child_key ] = $child_parent_key;
+				} elseif ( ! empty( $child_parent_key ) && isset( $parents_by_old_key[ $child_parent_key ] ) ) {
+					// 3. Match by the parent's previous key (cart item re-keyed by WPML/WCML)
+					$assignments[ $child_key ] = $parents_by_old_key[ $child_parent_key ];
+				}
+
+				if ( isset( $assignments[ $child_key ] ) ) {
+					$claimed[ $assignments[ $child_key ] ] = true;
+				}
+			}
+
+			// 4. Fallback: match by translated parent product ID, only for legacy children without bundle_id that are still unassigned
+			foreach ( $children as $child_key => $child_item ) {
+				if ( isset( $assignments[ $child_key ] ) || empty( $child_item['woosb_parent_id'] ) || '' !== $helper->get_bundle_id( $child_item ) ) {
+					continue;
+				}
+
+				$translated_parent_id = (int) apply_filters( 'wpml_object_id', (int) $child_item['woosb_parent_id'], 'product', true );
+				$candidates           = [];
+
+				foreach ( $parents as $parent_key => $parent_item ) {
+					if ( (int) $parent_item['product_id'] === $translated_parent_id ) {
+						$candidates[] = $parent_key;
+					}
+				}
+
+				if ( empty( $candidates ) ) {
+					continue;
+				}
+
+				// Prefer a parent that does not own any child yet, so identical bundles are never merged
+				$unclaimed                             = array_values( array_diff( $candidates, array_keys( $claimed ) ) );
+				$assignments[ $child_key ]             = ! empty( $unclaimed ) ? $unclaimed[0] : $candidates[0];
+				$claimed[ $assignments[ $child_key ] ] = true;
+			}
+
 			foreach ( $parents as $parent_key => $parent_item ) {
 				$parent_product_id = (int) $parent_item['product_id'];
 				$parent_group_key  = $parent_item['woosb_group_key'] ?? '';
-				$parent_bundle_id  = $parent_item['woosb_bundle']['bundle_id'] ?? $parent_group_key;
+				$parent_bundle_id  = $helper->get_bundle_id( $parent_item );
 				$new_child_keys    = [];
 
 				foreach ( $children as $child_key => $child_item ) {
-					$is_match        = false;
-					$child_bundle_id = $child_item['woosb_bundle']['bundle_id'] ?? $child_item['woosb_group_key'] ?? '';
-
-					// 1. Match by unique bundle_id / group key if available
-					if ( ! empty( $parent_bundle_id ) && ! empty( $child_bundle_id ) ) {
-						if ( $parent_bundle_id === $child_bundle_id ) {
-							$is_match = true;
-						}
-					}
-
-					// 2. Match by direct parent key if already matching
-					if ( ! $is_match && ! empty( $child_item['woosb_parent_key'] ) && $child_item['woosb_parent_key'] === $parent_key ) {
-						$is_match = true;
-					}
-
-					// 3. Match by translated parent product ID
-					if ( ! $is_match && ! empty( $child_item['woosb_parent_id'] ) ) {
-						$translated_parent_id = (int) apply_filters( 'wpml_object_id', (int) $child_item['woosb_parent_id'], 'product', true );
-
-						if ( $translated_parent_id === $parent_product_id ) {
-							$is_match = true;
-						}
-					}
+					$is_match = isset( $assignments[ $child_key ] ) && $assignments[ $child_key ] === $parent_key;
 
 					if ( $is_match ) {
 						// Update child references to current parent key and translated parent product ID

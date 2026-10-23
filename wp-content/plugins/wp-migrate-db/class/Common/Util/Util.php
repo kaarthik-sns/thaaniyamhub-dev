@@ -22,6 +22,8 @@ use DeliciousBrains\WPMDB\Container\Brumann\Polyfill\Unserialize;
  */
 class Util
 {
+    const SINGLE_SITE_MIGRATION_CAPABILITY = 'manage_options';
+    const MULTISITE_MIGRATION_CAPABILITY   = 'manage_network_options';
 
     /**
      * @var Properties
@@ -253,7 +255,9 @@ class Util
         $unserialized_string = @Unserialize::unserialize($serialized_string, array('allowed_classes' => false));
 
         if (false === $unserialized_string && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+            /* translators: %s is the method name. */
             $scope = $method ? sprintf(__('Scope: %s().', 'wp-migrate-db'), $method) : false;
+            /* translators: %s is additional scope information, or empty. */
             $error = sprintf(__('WPMDB Error: Data cannot be unserialized. %s', 'wp-migrate-db'), $scope);
             error_log($error);
         }
@@ -1401,7 +1405,58 @@ class Util
     }
 
     /**
-     * Gets the directory for each stage
+     * Capability required to run migrations, exports, and related admin actions.
+     *
+     * Uses MULTISITE_MIGRATION_CAPABILITY on multisite and SINGLE_SITE_MIGRATION_CAPABILITY otherwise.
+     * The wpmdb_ajax_cap filter can replace the default for sites that deliberately delegate.
+     * A non-string or empty filter result is ignored and the default is used.
+     *
+     * @return string
+     */
+    public static function get_ajax_cap()
+    {
+        $cap = is_multisite() ? self::MULTISITE_MIGRATION_CAPABILITY : self::SINGLE_SITE_MIGRATION_CAPABILITY;
+
+        $filtered = apply_filters( 'wpmdb_ajax_cap', $cap );
+
+        if ( ! is_string( $filtered ) || '' === $filtered ) {
+            return $cap;
+        }
+
+        return $filtered;
+    }
+
+	/**
+	 * Gets the list of base stage directories indexed by the stage name.
+	 *
+	 * @return array{string,string}
+	 */
+	public static function get_stage_base_dirs() {
+		static $base_dirs;
+
+		$wp_upload_dir = wp_upload_dir();
+
+		if ( ! isset( $base_dirs ) ) {
+			$base_dirs = [
+				'media_files'     => $wp_upload_dir['basedir'],
+	            'theme_files'     => WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'themes',
+	            'themes'          => WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'themes',
+	            'plugin_files'    => WP_PLUGIN_DIR,
+	            'plugins'         => WP_PLUGIN_DIR,
+	            'mu_plugin_files' => WPMU_PLUGIN_DIR,
+	            'muplugins'       => WPMU_PLUGIN_DIR,
+	            'other_files'     => WP_CONTENT_DIR,
+	            'others'          => WP_CONTENT_DIR,
+	            'core_files'      => ABSPATH,
+	            'core'            => ABSPATH
+	        ];
+		}
+
+		return $base_dirs;
+	}
+
+    /**
+     * Gets the directory for the specified stage
      * Defaults to uploads dir if no match
      *
      * @param string $stage
@@ -1409,20 +1464,7 @@ class Util
      **/
     public static function get_stage_base_dir($stage)
     {
-        $wp_upload_dir = wp_upload_dir();
-        $dirs          = [
-            'media_files'     => $wp_upload_dir['basedir'],
-            'theme_files'     => WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'themes',
-            'themes'          => WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'themes',
-            'plugin_files'    => WP_PLUGIN_DIR,
-            'plugins'         => WP_PLUGIN_DIR,
-            'mu_plugin_files' => WPMU_PLUGIN_DIR,
-            'muplugins'       => WPMU_PLUGIN_DIR,
-            'other_files'     => WP_CONTENT_DIR,
-            'others'          => WP_CONTENT_DIR,
-            'core_files'      => ABSPATH ,
-            'core'            => ABSPATH
-        ];
+		$dirs = self::get_stage_base_dirs();
         $stage = in_array($stage, array_keys($dirs)) ? $stage : 'media_files';
         return self::slash_one_direction($dirs[$stage]);
     }

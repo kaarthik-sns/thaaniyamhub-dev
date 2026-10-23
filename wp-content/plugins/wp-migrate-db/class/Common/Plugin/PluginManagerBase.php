@@ -184,7 +184,8 @@ class PluginManagerBase
         // reminder notice
         if ($reminder_links) {
             $templates[$reminder_notice_name] = [
-                'message' => sprintf(__('<strong>Uploads directory not writable</strong> &mdash; the following directory is not writable: <code>%s</code>. Update the file permissions for this folder to enable backups and export migrations. <a href="https://deliciousbrains.com/wp-migrate-db-pro/doc/uploads-folder-permissions/" target="_blank">More information</a>.<br><br>'), $this->filesystem->get_upload_info('path')),
+                /* translators: %s is the uploads directory path. */
+                'message' => sprintf(__('<strong>Uploads directory not writable</strong> &mdash; the following directory is not writable: <code>%s</code>. Update the file permissions for this folder to enable backups and export migrations. <a href="https://deliciousbrains.com/wp-migrate-db-pro/doc/uploads-folder-permissions/" target="_blank">More information</a>.<br><br>', 'wp-migrate-db'), $this->filesystem->get_upload_info('path')),
                 'link'    => $reminder_links,
                 'id'      => $reminder_notice_name,
             ];

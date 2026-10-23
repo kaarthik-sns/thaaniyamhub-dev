@@ -80,7 +80,7 @@ class Command
 		$assoc_args['export_dest'] = Util::sanitize_file_path($args[0]);
 
 		if (empty($assoc_args['export_dest'])) {
-			\WP_CLI::error(Cli::cleanup_message(__('You must provide a destination filename.', 'wp-migrate-db-cli')));
+			\WP_CLI::error(Cli::cleanup_message(__('You must provide a destination filename.', 'wp-migrate-db')));
 		}
 
 		$profile = $this->_get_profile_data_from_args($args, $assoc_args);
@@ -204,7 +204,7 @@ class Command
 		}
 
 		if (empty($wpmdb_cli)) {
-			\WP_CLI::error(__('WP Migrate CLI class not available.', 'wp-migrate-db-cli'));
+			\WP_CLI::error(__('WP Migrate CLI class not available.', 'wp-migrate-db'));
 
 			return;
 		}
@@ -212,10 +212,11 @@ class Command
 		$result = $wpmdb_cli->cli_migration($profile);
 
 		if (!is_wp_error($result)) {
-			$success_msg = sprintf(__('Export saved to: %s', 'wp-migrate-db-cli'), $result);
+			/* translators: %s is the export destination file path. */
+			$success_msg = sprintf(__('Export saved to: %s', 'wp-migrate-db'), $result);
 
 			if ('find_replace' === $profile['current_migration']['intent']) {
-				$success_msg = __('Find & Replace complete', 'wp-migrate-db-cli');
+				$success_msg = __('Find & Replace complete', 'wp-migrate-db');
 			}
 
 			\WP_CLI::success($success_msg);

@@ -72,6 +72,36 @@ class WCGS_Public_Style extends WCGS_Public_Settings {
 	}
 
 	/**
+	 * Validate a CSS color value for safe interpolation.
+	 *
+	 * Hex (#RGB / #RRGGBB) via WP core's sanitize_hex_color(); rgb()/rgba() via a bounded format
+	 * check; anything else falls back to $default. Never trusts the raw value in CSS output, so a
+	 * malformed color cannot break out of its CSS declaration. Several defaults in this plugin are
+	 * rgba(), which sanitize_hex_color() alone would reject — hence the rgba() branch.
+	 *
+	 * @since 3.2.1
+	 * @param mixed  $value   Raw color value.
+	 * @param string $default Fallback (a valid hex/rgba string, or '' to allow "no color").
+	 * @return string
+	 */
+	private function safe_color( $value, $default = '#000000' ) {
+		$value = (string) $value;
+		if ( '' === $value ) {
+			return $default;
+		}
+		if ( function_exists( 'sanitize_hex_color' ) && null !== sanitize_hex_color( $value ) ) {
+			return $value;
+		}
+		if ( preg_match( '/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $value ) ) {
+			return $value;
+		}
+		if ( preg_match( '/^rgba?\(\s*(\d{1,3}\s*,\s*){2}\d{1,3}(?:\s*,\s*(?:\d+(?:\.\d+)?|\.\d+))?\s*\)$/', $value ) ) {
+			return $value;
+		}
+		return $default;
+	}
+
+	/**
 	 * Wcgs css.
 	 *
 	 * @return void
@@ -79,21 +109,21 @@ class WCGS_Public_Style extends WCGS_Public_Settings {
 	public function wcgs_css() {
 		$settings                          = $this->settings;
 		$gallery_bottom_gap                = isset( $settings['gallery_bottom_gap'] ) ? $settings['gallery_bottom_gap'] : 30;
-		$caption_color                     = isset( $settings['caption_color'] ) ? $settings['caption_color'] : '#ffffff';
+		$caption_color                     = isset( $settings['caption_color'] ) ? $this->safe_color( $settings['caption_color'], '#ffffff' ) : '#ffffff';
 		$thumbnails_space                  = isset( $settings['thumbnails_space'] ) ? $settings['thumbnails_space'] / 2 : 3;
 		$thumbnails_top                    = isset( $settings['thumbnails_space'] ) ? $settings['thumbnails_space'] : 6;
 		$border_normal_width_for_thumbnail = isset( $settings['border_normal_width_for_thumbnail'] ) ? $settings['border_normal_width_for_thumbnail'] : '';
 		$vertical_thumbs_width             = isset( $settings['vertical_thumbs_width'] ) ? $settings['vertical_thumbs_width'] : '20';
 		$navigation_visibility             = isset( $settings['navigation_visibility'] ) ? $settings['navigation_visibility'] : '';
-		$normal_thumbnail_border_color     = isset( $border_normal_width_for_thumbnail['color'] ) ? $border_normal_width_for_thumbnail['color'] : '';
-		$normal_thumbnail_border_size      = isset( $border_normal_width_for_thumbnail['all'] ) ? $border_normal_width_for_thumbnail['all'] : '2';
+		$normal_thumbnail_border_color     = isset( $border_normal_width_for_thumbnail['color'] ) ? $this->safe_color( $border_normal_width_for_thumbnail['color'], '' ) : '';
+		$normal_thumbnail_border_size      = isset( $border_normal_width_for_thumbnail['all'] ) ? max( 0, (int) $border_normal_width_for_thumbnail['all'] ) : 2;
 
-		$hover_thumbnail_border_color   = isset( $border_normal_width_for_thumbnail['color3'] ) ? $border_normal_width_for_thumbnail['color3'] : '#0085BA';
+		$hover_thumbnail_border_color   = isset( $border_normal_width_for_thumbnail['color3'] ) ? $this->safe_color( $border_normal_width_for_thumbnail['color3'], '#0085BA' ) : '#0085BA';
 		$normal_thumbnail_border_radius = isset( $border_normal_width_for_thumbnail['radius'] ) ? $border_normal_width_for_thumbnail['radius'] : '0';
 		$thumbnail_border               = isset( $settings['border_width_for_active_thumbnail'] ) ? $settings['border_width_for_active_thumbnail'] : '';
 
-		$active_thumbnail_border_color2 = isset( $thumbnail_border['color2'] ) ? $thumbnail_border['color2'] : '#0085BA';
-		$active_thumbnail_border_size   = isset( $thumbnail_border['all'] ) ? $thumbnail_border['all'] : '0';
+		$active_thumbnail_border_color2 = isset( $thumbnail_border['color2'] ) ? $this->safe_color( $thumbnail_border['color2'], '#0085BA' ) : '#0085BA';
+		$active_thumbnail_border_size   = isset( $thumbnail_border['all'] ) ? max( 0, (int) $thumbnail_border['all'] ) : 0;
 		$thumb_position                 = '2';
 		$video_icon_type                = isset( $settings['video_icon'] ) ? $settings['video_icon'] : 'play-01';
 		$thumbnails_top                 = $this->thumbnails_sliders_height;
@@ -153,6 +183,59 @@ class WCGS_Public_Style extends WCGS_Public_Settings {
 		}
 
 		$gallery_width = isset( $settings['gallery_width'] ) ? $settings['gallery_width'] : 50;
+		// Defense-in-depth (L-3): validate every value interpolated into the CSS below. These arrive
+		// unsanitized from settings via WCGS_Public_Settings::setData(); a malformed value could
+		// otherwise break out of a CSS declaration. Colors pass safe_color() (hex/rgba, else default);
+		// sizes clamp to a non-negative integer. Done once here so every interpolation site is covered.
+		// $color_props and $color_defaults are parallel arrays (property name => its field fallback).
+		$color_props    = array(
+			'navigation_icon_color',
+			'navigation_icon_hover_color',
+			'navigation_icon_bg_color',
+			'navigation_icon_hover_bg_color',
+			'thumbnailnavigation_icon_color',
+			'thumbnailnavigation_icon_hover_color',
+			'thumbnailnavigation_icon_bg_color',
+			'thumbnailnavigation_icon_hover_bg_color',
+			'pagination_icon_color',
+			'pagination_icon_active_color',
+			'lightbox_icon_color',
+			'lightbox_icon_hover_color',
+			'lightbox_icon_bg_color',
+			'lightbox_icon_hover_bg_color',
+		);
+		$color_defaults = array(
+			'#fff',
+			'#fff',
+			'rgba(0, 0, 0, 0.5)',
+			'rgba(0, 0, 0, 0.85)',
+			'#fff',
+			'#fff',
+			'rgba(0, 0, 0, 0.5)',
+			'rgba(0, 0, 0, 0.8)',
+			'rgba(115, 119, 121, 0.5)',
+			'rgba(115, 119, 121, 0.8)',
+			'#1e1e1e',
+			'#1e1e1e',
+			'#ffffff',
+			'#ffffff',
+		);
+		foreach ( $color_props as $index => $prop ) {
+			$this->$prop = $this->safe_color( $this->$prop, $color_defaults[ $index ] );
+		}
+
+		$size_props = array(
+			'navigation_icon_size',
+			'navigation_icon_radius',
+			'image_border_radius',
+			'thumbnailnavigation_icon_size',
+			'lightbox_icon_size',
+			'lightbox_caption_size',
+		);
+		foreach ( $size_props as $prop ) {
+			$this->$prop = max( 0, (int) $this->$prop );
+		}
+
 		$dynamic_css   = '';
 
 		switch ( $this->thumbnails_hover_effect ) {

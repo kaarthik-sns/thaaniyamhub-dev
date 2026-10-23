@@ -76,9 +76,11 @@ class  Assets
                 'migration_cancelled'                   => _x('Migration cancelled', 'The migration has been cancelled', 'wp-migrate-db'),
                 'migration_cancelled_success'           => __('The migration has been stopped and all temporary files and data have been cleaned up.', 'wp-migrate-db'),
                 'welcome_title'                         => __('Welcome to WP Migrate! &#127881;', 'wp-migrate-db'),
+                /* translators: %1$s is the Quick Start Guide URL, and %2$s is the Videos URL. */
                 'welcome_text'                          => __('Hey, this is the first time activating your license, nice! Your migrations are about to get awesome! If you haven’t already, you should check out our <a href="%1$s" target="_blank">Quick Start Guide</a> and <a href="%2$s" target="_blank">Videos</a>. If you run into any trouble at all, use the <strong>Help tab</strong> above to submit a support request.', 'wp-migrate-db'),
                 'invalid_sql_file'                      => __('The selected file does not have a recognized file type. Please upload a valid SQL file to continue.', 'wp-migrate-db'),
                 'please_select_sql_file'                => __('Please select an SQL export file above to continue.', 'wp-migrate-db'),
+                /* translators: %s is the import file name. */
                 'importing_file_to_db'                  => __('Importing data from %s', 'wp-migrate-db'),
                 'plugins_url'                           => network_admin_url('plugins.php'),
                 'permalinks_link'                       => network_admin_url('options-permalink.php'),

@@ -131,8 +131,13 @@ class Woo_Gallery_Slider_Admin_Notices {
 	 * @return void
 	 **/
 	public function dismiss_review_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'error' => esc_html__( 'Unauthorized.', 'gallery-slider-for-woocommerce' ) ), 403 );
+			return;
+		}
+
 		$post_data = wp_unslash( $_POST );
-		$nonce     = isset( $post_data['nonce'] ) ? sanitize_key( $post_data['nonce'] ) : '';
+		$nonce     = isset( $post_data['nonce'] ) ? sanitize_text_field( $post_data['nonce'] ) : '';
 		if ( ! wp_verify_nonce( $nonce, 'sp_woogs_review_notice' ) ) {
 			return;
 		}

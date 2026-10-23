@@ -9,7 +9,7 @@
  * Plugin Name:       Reno Product Gallery (formerly WooGallery)
  * Plugin URI:        https://renoproductgallery.com/?ref=143
  * Description:       Reno Product Gallery plugin allows you to insert additional images for each variation to let visitors see different images when product variations are switched. Increase your sales by transforming the WooCommerce default product gallery instantly to a beautiful thumbnails gallery slider on a single product page.
- * Version:           3.2.0
+ * Version:           3.2.1
  * Author:            Reno Product Gallery Team, ShapedPlugin LLC
  * Author URI:        https://renoproductgallery.com/
  * License: GPLv3
@@ -18,7 +18,7 @@
  * Requires PHP: 7.0
  * Requires Plugins: woocommerce
  * WC requires at least: 4.5
- * WC tested up to: 10.9.4
+ * WC tested up to: 11.2.1
  * Text Domain:       gallery-slider-for-woocommerce
  * Domain Path:       /languages
  */
@@ -31,7 +31,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Currently plugin version.
  */
-define( 'WOO_GALLERY_SLIDER_VERSION', '3.2.0' );
+define( 'WOO_GALLERY_SLIDER_VERSION', '3.2.1' );
 define( 'WOO_GALLERY_SLIDER_FILE', __FILE__ );
 define( 'WOO_GALLERY_SLIDER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WOO_GALLERY_SLIDER_URL', plugin_dir_url( __FILE__ ) );

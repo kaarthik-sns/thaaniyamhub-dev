@@ -150,6 +150,11 @@ if ( ! class_exists( 'ShapedPlugin_Offer_Banner' ) ) {
 		 * @return void
 		 */
 		public function dismiss_offer_banner() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( array( 'error' => esc_html__( 'Unauthorized.', 'gallery-slider-for-woocommerce' ) ), 403 );
+				return;
+			}
+
 			check_ajax_referer( 'smart_tabs_offer_dismiss', 'nonce' );
 			$offer_id = isset( $_POST['offer_id'] ) ? sanitize_text_field( wp_unslash( $_POST['offer_id'] ) ) : '';
 

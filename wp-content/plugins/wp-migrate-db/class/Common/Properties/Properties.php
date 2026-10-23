@@ -120,6 +120,8 @@ class Properties
 	 */
 	public function init() {
 		// This needs to be after init so that translation functions work.
-        $this->invalid_content_verification_error = __('Invalid content verification signature, please verify the connection information on the remote site and try again.', 'wp-migrate-db') . sprintf(__(' Remote URL: %s ', 'Ex. Remote URL: http://wp.dev', 'wp-migrate-db'), Util::home_url());
+        $this->invalid_content_verification_error = __('Invalid content verification signature, please verify the connection information on the remote site and try again.', 'wp-migrate-db')
+            /* translators: %s is the remote site URL, e.g. http://wp.dev */
+            . sprintf(_x(' Remote URL: %s ', 'Ex. Remote URL: http://wp.dev', 'wp-migrate-db'), Util::home_url());
 	}
 }

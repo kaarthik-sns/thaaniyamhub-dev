@@ -746,6 +746,7 @@ class Table
         }
 
         if (!$table_structure) {
+            /* translators: %s is the table name. */
             $this->error_log->setError(sprintf(__('Failed to retrieve table structure for table \'%s\', please ensure your database is online. (#125)', 'wp-migrate-db'), $table));
 
             return false;
@@ -866,6 +867,7 @@ class Table
                 $create = $this->create_temp_table($table);
 
                 if (true !== $create) {
+                    /* translators: %s is the table name. */
                     $message = sprintf(__('Error creating temporary table. Table "%s" does not exist.', 'wp-migrate-db'), esc_html($table));
 
                     return $this->http->end_ajax(
@@ -917,6 +919,7 @@ class Table
         if ($is_backup) {
             $stow .= ("\n\n");
             $stow .= ("#\n");
+            /* translators: %s is the table name. */
             $stow .= ('# ' . sprintf(__('Delete any existing table %s', 'wp-migrate-db'), $this->table_helper->backquote($table_to_stow)) . "\n");
             $stow .= ("#\n");
             $stow .= ("\n");
@@ -928,6 +931,7 @@ class Table
         if ($is_backup) {
             $stow .= ("\n\n");
             $stow .= ("#\n");
+            /* translators: %s is the table name. */
             $stow .= ('# ' . sprintf(__('Table structure of table %s', 'wp-migrate-db'), $this->table_helper->backquote($table_to_stow)) . "\n");
             $stow .= ("#\n");
             $stow .= ("\n");
@@ -994,6 +998,7 @@ class Table
         if ($is_backup) {
             $this->stow("\n\n", false, $fp);
             $this->stow("#\n", false, $fp);
+            /* translators: %s is the table name. */
             $this->stow('# ' . sprintf(__('Data contents of table %s', 'wp-migrate-db'), $this->table_helper->backquote($table_to_stow)) . "\n", false, $fp);
             $this->stow("#\n", false, $fp);
         }
@@ -1200,10 +1205,12 @@ class Table
                     $table = str_replace($this->props->temp_prefix, '', $table);
 
                     if ('import' === $context) {
-                        $message = sprintf(__('The imported table `%1s` contains characters which are invalid in the target schema.<br><br>If this is a WP Migrate export file, ensure that the `Compatible with older versions of MySQL` setting under `Advanced Options` is unchecked and try exporting again.<br><br> See&nbsp;<a href="%2s">our documentation</a> for more information.', 'wp-migrate-db'), $table, 'https://deliciousbrains.com/wp-migrate-db-pro/doc/invalid-text/#imports');
+                        /* translators: %1$s is the table name, and %2$s is a documentation URL. */
+                        $message = sprintf(__('The imported table `%1$s` contains characters which are invalid in the target schema.<br><br>If this is a WP Migrate export file, ensure that the `Compatible with older versions of MySQL` setting under `Advanced Options` is unchecked and try exporting again.<br><br> See&nbsp;<a href="%2$s">our documentation</a> for more information.', 'wp-migrate-db'), $table, 'https://deliciousbrains.com/wp-migrate-db-pro/doc/invalid-text/#imports');
                         $return  = new WP_Error('import_sql_execution_failed', $message);
                     } else {
-                        $message = sprintf(__('The table `%1s` contains characters which are invalid in the target database. See&nbsp;<a href="%2s" target="_blank">our documentation</a> for more information.', 'wp-migrate-db'), $table, 'https://deliciousbrains.com/wp-migrate-db-pro/doc/invalid-text/');
+                        /* translators: %1$s is the table name, and %2$s is a documentation URL. */
+                        $message = sprintf(__('The table `%1$s` contains characters which are invalid in the target database. See&nbsp;<a href="%2$s" target="_blank">our documentation</a> for more information.', 'wp-migrate-db'), $table, 'https://deliciousbrains.com/wp-migrate-db-pro/doc/invalid-text/');
 
                         return $message;
                     }
@@ -1882,6 +1889,7 @@ class Table
 
         $stow = "\n";
         $stow .= "#\n";
+        /* translators: %s is the table name. */
         $stow .= '# ' . sprintf(__('End of data contents of table %s', 'wp-migrate-db'), $this->table_helper->backquote($target_table_name)) . "\n";
         $stow .= "# --------------------------------------------------------\n";
         $stow .= "\n";
@@ -2016,8 +2024,11 @@ class Table
         $charset = (defined('DB_CHARSET') ? DB_CHARSET : 'utf8');
         $this->stow('# ' . __('WordPress MySQL database migration', 'wp-migrate-db') . "\n", false, $fp);
         $this->stow("#\n", false, $fp);
+        /* translators: %s is the generation date and time. */
         $this->stow('# ' . sprintf(__('Generated: %s', 'wp-migrate-db'), date('l j. F Y H:i T')) . "\n", false, $fp);
+        /* translators: %s is the database hostname. */
         $this->stow('# ' . sprintf(__('Hostname: %s', 'wp-migrate-db'), DB_HOST) . "\n", false, $fp);
+        /* translators: %s is the database name. */
         $this->stow('# ' . sprintf(__('Database: %s', 'wp-migrate-db'), $this->table_helper->backquote(DB_NAME)) . "\n", false, $fp);
 
         $home_url = apply_filters('wpmdb_backup_header_url', Util::home_url());

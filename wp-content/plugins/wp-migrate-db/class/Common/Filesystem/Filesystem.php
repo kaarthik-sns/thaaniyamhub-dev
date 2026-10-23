@@ -515,7 +515,6 @@ class Filesystem
      */
     public function scandir($abs_path, $stage = '', $offset = 0, $limit = -1, &$scan_count = 0)
     {
-        $symlink = is_link($abs_path);
         $dirlist = @scandir($abs_path, SCANDIR_SORT_DESCENDING);
 
         if (false === $dirlist || empty($dirlist)) {
@@ -541,25 +540,30 @@ class Filesystem
                 continue;
             }
 
-            $return[$entry] = $this->get_file_info($entry, $abs_path, $symlink, $stage);
+            $return[$entry] = $this->get_file_info($entry, $abs_path, $stage);
         }
 
         return $return;
     }
 
     /**
-     * @param string $entry
-     * @param string $abs_path
-     * @param bool   $symlink
-     * @param string $stage
+     * Build file metadata for a scanned directory entry.
+     *
+     * $abs_path (and the resulting full path) must sit under the stage's base
+     * directory from Util::get_stage_base_dir(). Subpath is that base stripped
+     * from the scanned path, not realpath(), so a symlink keeps the name
+     * WordPress sees rather than the symlink target.
+     *
+     * @param string $entry    Basename of the file or directory.
+     * @param string $abs_path Absolute path of the parent directory being scanned.
+     * @param string $stage    Migration stage key (e.g. media_files, theme_files, plugin_files).
      *
      * @return array
      */
-    public function get_file_info($entry, $abs_path, $symlink = false, $stage = '')
+    public function get_file_info($entry, $abs_path, $stage = '')
     {
         $abs_path  = $this->slash_one_direction($abs_path);
         $full_path = trailingslashit($abs_path) . $entry;
-        $real_path = realpath($full_path); // Might be different due to symlinks.
 
         $upload_info                  = wp_get_upload_dir();
         $uploads_basedir              = $upload_info['basedir'];
@@ -575,12 +579,8 @@ class Filesystem
         $return['type']               = $this->is_dir($abs_path . DIRECTORY_SEPARATOR . $entry) ? 'd' : 'f';
         $return['size']               = $this->filesize($abs_path . DIRECTORY_SEPARATOR . $entry);
         $return['filemtime']          = filemtime($abs_path . DIRECTORY_SEPARATOR . $entry);
-
-        if ($symlink) {
-            $return['subpath'] = DIRECTORY_SEPARATOR . basename(dirname($real_path)) . DIRECTORY_SEPARATOR . $entry;
-        } else {
-            $return['subpath'] = str_replace(Util::get_stage_base_dir($stage), '', $full_path);
-        }
+        // Scanned path, not realpath(), so a symlink keeps the name WordPress sees.
+        $return['subpath']            = str_replace(Util::get_stage_base_dir($stage), '', $full_path);
 
         $exploded              = explode(DIRECTORY_SEPARATOR, $return['subpath']);
         $return['folder_name'] = isset($exploded[1]) ? $exploded[1] : $return['relative_path'];
@@ -771,6 +771,91 @@ class Filesystem
         return str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
     }
 
+	/**
+	 * Gets an array of the base paths of all of the stages in the WordPress
+	 * install.
+	 *
+	 * Paths are returned as-is (slash-normalised only). They are deliberately NOT
+	 * passed through realpath(), so that all path comparisons are relative to
+	 * known static values within the plugin.
+	 *
+	 * Paths could be filtered to empty string or set to empty string.
+	 * If any paths are empty they are not included.
+	 *
+	 * Use a static variable to store the calculated list as this method could
+	 * be called frequently.
+	 *
+	 * @return string[]
+	 */
+	public function get_stage_base_dirs_list() {
+		static $base_dirs;
+
+		if (! isset($base_dirs)) {
+			$base_dirs = array_values( Util::get_stage_base_dirs() );
+			$base_dirs = array_map( array( $this, 'slash_one_direction' ), $base_dirs );
+			// Filter out non-string and empty-string.
+			$base_dirs = array_filter( $base_dirs, function ( $dir ) {
+				return is_string( $dir ) && $dir !== '';
+			} );
+			$base_dirs = array_unique( $base_dirs );
+
+		}
+
+		return $base_dirs;
+	}
+
+	/**
+	 * Whether an absolute path is a part of the current WordPress site and
+	 * therefore valid to be migrated.
+	 *
+	 * This is used to protect against path traversal attacks.
+	 *
+	 * This is a purely lexical (string-based) check: the filesystem is not
+	 * touched and symlinks are NOT followed. This is intentional — the plugin
+	 * migrates files between installs by their path relative to the migration
+	 * stage.
+	 *
+	 * Directory traversal is blocked by rejecting any path containing a `..`
+	 * segment. We do not resolve these - they should never be present.
+	 *
+	 * @param string $absolute_path - A path to a file or directory
+	 *
+	 * @return bool
+	 */
+	public function is_site_file( $absolute_path ) {
+		// "Cache" the normalized base dirs for performance.
+		static $normalized_base_dirs = null;
+
+		if ( is_null( $normalized_base_dirs ) ) {
+			$normalized_base_dirs = array_map(
+				function ( $dir ) {
+					return wp_normalize_path( trailingslashit( $dir ) );
+				},
+				$this->get_stage_base_dirs_list()
+			);
+		}
+
+		if ( ! is_string( $absolute_path ) || '' === $absolute_path ) {
+			return false;
+		}
+
+		// Do all comparisons and manipulation with forward slashes and a
+		// trailing slash.
+		$path = wp_normalize_path( trailingslashit( $absolute_path ) );
+
+		if ( in_array( '..', explode( '/', $path ), true ) ) {
+			return false;
+		}
+
+		foreach ( $normalized_base_dirs as $root ) {
+			if ( 0 === strpos( $path, $root ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
     function download_file()
     {
         $is_full_site_export = !empty($_GET['fullSiteExport']);
@@ -838,6 +923,7 @@ class Filesystem
             } else {
                 $last_error = error_get_last();
                 $msg        = isset($last_error['message']) ? '<p>Error: ' . $last_error['message'] . '</p>' : '';
+                /* translators: %s is the PHP error message. */
                 wp_die(sprintf(__('<h3>Output prevented download. </h3> %s', 'wp-migrate-db'), $msg));
             }
         } else {

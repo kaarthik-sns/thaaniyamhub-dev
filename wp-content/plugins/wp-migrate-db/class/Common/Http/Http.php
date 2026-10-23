@@ -87,6 +87,7 @@ class Http
                     return wp_send_json_error($json['msg']);
                 }
 
+                /* translators: %s is the JSON response. */
                 return wp_send_json_error(sprintf(__('An error occurred - JSON response: %s', 'wp-migrate-db'), $json));
             }
         }
@@ -129,13 +130,14 @@ class Http
         $result = Util::check_ajax_referer($action, 'nonce', false);
 
         if (false === $result) {
+            /* translators: %s is the AJAX action name. */
             return $this->end_ajax(new \WP_Error('wpmdb_invalid_nonce', sprintf(__('Invalid nonce for: %s', 'wp-migrate-db'), $action)));
         }
 
-        $cap = (is_multisite()) ? 'manage_network_options' : 'export';
-        $cap = apply_filters('wpmdb_ajax_cap', $cap);
+        $cap = Util::get_ajax_cap();
 
         if (!current_user_can($cap)) {
+            /* translators: %s is the AJAX action name. */
             $return = array('wpmdb_error' => 1, 'body' => sprintf(__('Access denied for: %s', 'wp-migrate-db'), $action));
             $this->end_ajax(json_encode($return));
         }
@@ -184,7 +186,7 @@ class Http
         }
 
         // Verify user has appropriate capability
-        $cap = is_multisite() ? 'manage_network_options' : 'export';
+        $cap = Util::get_ajax_cap();
         if (!current_user_can($cap)) {
             wp_die(__('You do not have permission to download files.', 'wp-migrate-db'));
         }

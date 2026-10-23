@@ -147,7 +147,7 @@ class PluginHelper
         $verification = $this->http_helper->verify_signature($filtered_post, $this->settings['key']);
 
         if (!$verification) {
-            return $this->http->end_ajax(new \WP_Error('wpmdbtpf_invalid_post_data', __('Could not validate $_POST data.') . ' (#100tp)'));
+            return $this->http->end_ajax(new \WP_Error('wpmdbtpf_invalid_post_data', __('Could not validate $_POST data.', 'wp-migrate-db') . ' (#100tp)'));
         }
 
         $abs_path = '';
@@ -233,7 +233,7 @@ class PluginHelper
         }
 
         if (empty($_POST['queue_status'])) {
-            return $this->transfer_util->ajax_error(__('Saving queue status to remote failed.'));
+            return $this->transfer_util->ajax_error(__('Saving queue status to remote failed.', 'wp-migrate-db'));
         }
 
         $queue_status = filter_var($_POST['queue_status'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);

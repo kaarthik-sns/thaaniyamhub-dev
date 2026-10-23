@@ -67,8 +67,9 @@ class WPMDB_PHP_Checker {
 				<p>%s %s</p>
 		</div>';
 
-		$plugin  = 'wp-migrate-db-pro.php' === basename( $this->path ) ? __( 'WP Migrate' ) : __( 'WP Migrate Lite' );
-		$message = sprintf( __( 'requires PHP version %s or higher to run and has been deactivated. You are currently running version %s. <a href="%s">Learn More »</a>', 'wp-migrate-db' ), self::$min_php, PHP_VERSION, self::$php_doc_link );
+		$plugin  = 'wp-migrate-db-pro.php' === basename( $this->path ) ? __( 'WP Migrate', 'wp-migrate-db' ) : __( 'WP Migrate Lite', 'wp-migrate-db' );
+		/* translators: %1$s is the required PHP version, %2$s is the current PHP version, and %3$s is a documentation URL. */
+		$message = sprintf( __( 'requires PHP version %1$s or higher to run and has been deactivated. You are currently running version %2$s. <a href="%3$s">Learn More »</a>', 'wp-migrate-db' ), self::$min_php, PHP_VERSION, self::$php_doc_link );
 
 		echo sprintf( $str, $plugin, $message );
 	}

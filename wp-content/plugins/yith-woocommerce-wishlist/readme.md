@@ -151,9 +151,10 @@ Yes, of course you can. To avoid Wishlist page to show product prices, you can h
 
 ## Changelog
 
-### 4.18.1 - Released on 7 September 2026 =
+### 4.19.1 - Released on 19 October 2026 =
 
-* Fix: security vulnerability when changing the wishlist title
+* Update: YITH plugin framework
+* Dev: use specific selectors for prettyPhoto to prevent potential XSS vulnerabilities
 
 ## Support
 

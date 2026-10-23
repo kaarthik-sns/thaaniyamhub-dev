@@ -556,6 +556,14 @@ if ( ! class_exists( 'WCGS_Options' ) ) {
 		 * @return bool
 		 */
 		public function set_options( $ajax = false ) {
+			// Authorization (capability-first). The settings menu is gated by this same capability via
+			// the wcgs_ui_permission filter; enforce it on the save path too, so a leaked nonce alone
+			// cannot overwrite wcgs_settings (which would enable stored XSS via wcgs_additional_js/css).
+			$capability = apply_filters( 'wcgs_ui_permission', $this->args['menu_capability'] ?? 'manage_options' );
+			if ( ! current_user_can( $capability ) ) {
+				return false;
+			}
+
 			// Retrieve nonce.
 			$nonce = '';
 			if ( $ajax && ! empty( $_POST['nonce'] ) ) {

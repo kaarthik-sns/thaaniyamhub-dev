@@ -105,7 +105,7 @@ class FinalizeMigration
         $migration_state = get_site_option('wpmdb_migration_state');
 
         if (!isset($migration_state['site_details'])) {
-            return $this->http->end_ajax(new \WP_Error('wpmdb_finalize_failed', __('Unable to finalize the migration, migration state empty.')));
+            return $this->http->end_ajax(new \WP_Error('wpmdb_finalize_failed', __('Unable to finalize the migration, migration state empty.', 'wp-migrate-db')));
         }
 
         $state_data                 = Persistence::setPostData($key_rules, __METHOD__);

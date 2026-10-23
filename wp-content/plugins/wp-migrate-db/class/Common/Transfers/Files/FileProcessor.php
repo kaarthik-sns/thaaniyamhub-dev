@@ -92,7 +92,7 @@ class FileProcessor
 
             if ($is_single) {
                 $basename                      = wp_basename($current_dir);
-                $file_info                     = $this->filesystem->get_file_info(wp_basename($current_dir), $abs_path, false, $stage);
+                $file_info                     = $this->filesystem->get_file_info(wp_basename($current_dir), $abs_path, $stage);
                 $files_in_directory[$basename] = $file_info;
             } else {
                 $files_in_directory = $this->get_files_by_path($current_dir, $stage);
@@ -326,6 +326,7 @@ class FileProcessor
         $abs_path = $file['absolute_path'];
 
         if (!file_exists($abs_path)) {
+            /* translators: %s is the file path. */
             return $this->http->end_ajax(new \WP_Error('wpmdb-file-does-not-exist', sprintf(__('File %s does not exist', 'wp-migrate-db'), $abs_path)));
         }
 

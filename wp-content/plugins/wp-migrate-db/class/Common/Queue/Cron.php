@@ -83,7 +83,8 @@ class Cron {
 	public function schedule_cron( $schedules ) {
 		$schedules[ $this->id ] = array(
 			'interval' => MINUTE_IN_SECONDS * $this->interval,
-			'display'  => sprintf( __( 'Every %d Minutes' ), $this->interval ),
+			/* translators: %d is the number of minutes between cron runs. */
+			'display'  => sprintf( __( 'Every %d Minutes', 'wp-migrate-db' ), $this->interval ),
 		);
 
 		return $schedules;

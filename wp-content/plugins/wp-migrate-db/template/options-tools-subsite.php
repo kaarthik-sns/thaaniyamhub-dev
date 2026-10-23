@@ -8,5 +8,7 @@
 	<h1><?php
 		echo esc_html( $this->plugin_manager->get_plugin_title() ); ?></h1>
 
-	<p><?php printf( esc_html__( '%1$s only runs at the Network Admin level. As there is no Tools menu in the Network Admin, the %2$s menu item is located under Settings.', 'wp-migrate-db' ), esc_html( $this->plugin_manager->get_plugin_title() ), sprintf( '"<a href="%s">%s</a>"', esc_url( network_admin_url( 'settings.php?page=' . $this->props->core_slug ) ), esc_html( $this->plugin_manager->get_plugin_title() ) ) ); ?></p>
+	<p><?php
+		/* translators: %1$s is the plugin name, and %2$s is a link to the plugin settings page. */
+		printf( esc_html__( '%1$s only runs at the Network Admin level. As there is no Tools menu in the Network Admin, the %2$s menu item is located under Settings.', 'wp-migrate-db' ), esc_html( $this->plugin_manager->get_plugin_title() ), sprintf( '"<a href="%s">%s</a>"', esc_url( network_admin_url( 'settings.php?page=' . $this->props->core_slug ) ), esc_html( $this->plugin_manager->get_plugin_title() ) ) ); ?></p>
 </div>

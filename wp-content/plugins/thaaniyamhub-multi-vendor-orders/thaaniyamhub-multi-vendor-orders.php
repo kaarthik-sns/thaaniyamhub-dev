@@ -13,7 +13,7 @@ defined('ABSPATH') || exit;
 // =========================================================================
 // VERSION COMPATIBILITY AND DEPENDENCY CONSTANTS
 // =========================================================================
-define('THAANIYAMHUB_WOO_MAX_TESTED', '11.1.2');
+define('THAANIYAMHUB_WOO_MAX_TESTED', '11.2.1');
 define('THAANIYAMHUB_SHIPROCKET_MAX_TESTED', '2.0.9');
 define('THAANIYAMHUB_WCFM_MAX_TESTED', '6.8.1');
 define('THAANIYAMHUB_WCFMU_MAX_TESTED', '6.7.8');

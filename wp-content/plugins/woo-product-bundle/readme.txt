@@ -3,7 +3,7 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 7.1
-Stable tag: 8.7.1
+Stable tag: 8.7.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,25 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.7.7 =
+* Fixed: Merge identical items in the cart
+
+= 8.7.6 =
+* Fixed: Missing bundled sub-products when using import/export
+
+= 8.7.5 =
+* Updated: Optimized the code
+* Updated: Compatible with WP 7.1 & Woo 11.2
+
+= 8.7.4 =
+* Fixed: Quantity updater for bundles
+
+= 8.7.3 =
+* Fixed: Security issue - bundle ids from request, cart session, and order item meta are now sanitized and rebuilt from whitelisted components only, preventing stored XSS.
+
+= 8.7.2 =
+* Fixed: Fatal out-of-memory error (infinite recursion) on pages rendering a bundle whose stored stock status differs from the computed one. get_stock_status(), get_backorders(), and get_stock_quantity() no longer call wc_update_product_stock_status() — which fires woocommerce_before_product_object_save and re-enters the getter — and instead write directly via update_post_meta() protected by a per-product re-entrancy guard. Resolves compatibility issue with WP Activity Log, Avada, and any third-party code that reads stock status inside a product-save hook.
 
 = 8.7.1 =
 * Fixed: Bundle price calculation when adding products to an order

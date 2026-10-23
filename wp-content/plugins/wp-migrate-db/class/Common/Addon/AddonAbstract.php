@@ -119,6 +119,7 @@ abstract class AddonAbstract
         $installed      = $GLOBALS['wpmdb_meta']['wp-migrate-db-pro']['version'];
         $wpmdb_basename = sprintf('%s/%s.php', $GLOBALS['wpmdb_meta']['wp-migrate-db-pro']['folder'], 'wp-migrate-db');
         $update         = wp_nonce_url(network_admin_url('update.php?action=upgrade-plugin&plugin=' . urlencode($wpmdb_basename)), 'upgrade-plugin_' . $wpmdb_basename);
+        /* translators: %1$s is the addon name, %2$s is the required WP Migrate version, %3$s is the installed version, and %4$s is the update URL. */
         $str            .= sprintf(__('The version of %1$s you have installed requires version %2$s of WP Migrate. You currently have %3$s installed. <strong><a href="%4$s">Update Now</a></strong>', 'wp-migrate-db'), $addon_name, $required, $installed, $update);
 
         return $str;

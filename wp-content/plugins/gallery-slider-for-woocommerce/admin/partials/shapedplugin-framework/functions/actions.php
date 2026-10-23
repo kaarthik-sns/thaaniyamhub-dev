@@ -22,14 +22,31 @@ if ( ! function_exists( 'wcgs_reset_ajax' ) ) {
 	 * @version 1.0.0
 	 */
 	function wcgs_reset_ajax() {
-		$capability      = apply_filters( 'wcgs_ui_permission', 'manage_options' );
-		$is_user_capable = current_user_can( $capability ) ? true : false;
+		$capability = apply_filters( 'wcgs_ui_permission', 'manage_options' );
+
+		// Capability first (house style) — reject before any nonce work.
+		if ( ! current_user_can( $capability ) ) {
+			wp_send_json_error( array( 'error' => esc_html__( 'Error: Unauthorized.', 'gallery-slider-for-woocommerce' ) ), 403 );
+			return;
+		}
 
 		$nonce  = ( ! empty( $_POST['nonce'] ) ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
 		$unique = ( ! empty( $_POST['unique'] ) ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : '';
 
-		if ( ! wp_verify_nonce( $nonce, 'wcgs_backup_nonce' ) || ! $is_user_capable ) {
-			wp_send_json_error( array( 'error' => esc_html__( 'Error: Invalid nonce verification.', 'gallery-slider-for-woocommerce' ) ) );
+		if ( ! wp_verify_nonce( $nonce, 'wcgs_backup_nonce' ) ) {
+			wp_send_json_error( array( 'error' => esc_html__( 'Error: Invalid nonce verification.', 'gallery-slider-for-woocommerce' ) ), 403 );
+			return;
+		}
+
+		// Allow-list the resettable keys (input validation on the sensitive param) — only the
+		// framework's own option(s) may be deleted here; extend the filter for registered instances.
+		$allowed = apply_filters(
+			'wcgs_reset_allowed_options',
+			array( 'wcgs_settings' ) // framework $this->unique values; extend only for registered instances.
+		);
+		if ( ! in_array( $unique, $allowed, true ) ) {
+			wp_send_json_error( array( 'error' => esc_html__( 'Error: Invalid option.', 'gallery-slider-for-woocommerce' ) ), 403 );
+			return;
 		}
 
 		// Success.

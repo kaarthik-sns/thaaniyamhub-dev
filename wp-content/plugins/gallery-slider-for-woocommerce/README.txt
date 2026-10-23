@@ -2,10 +2,10 @@
 Contributors: shapedplugin, rubel_miah, khalilu, shamimmiashuhagh
 Tags: woocommerce product gallery carousel, woocommerce product gallery slider, product image zoom, additional variation images gallery, product featured video
 Requires at least: 5.3
-Tested up to: 7.0
+Tested up to: 7.1
 WC requires at least: 4.5
-WC tested up to: 10.9.4
-Stable tag: 3.2.0
+WC tested up to: 11.2.1
+Stable tag: 3.2.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,7 +26,7 @@ All-in-One WooCommerce Product Gallery (Image and Video) Solution to Enhance You
 ✅ **Create Product Video Gallery** 🔥
 ✅ **Add Advanced Product Image Zoom** 🔥
 ✅ **Add Advanced Product Image Lightbox**
-✅ **Add Product Featured Video on the Shop/Archive Page** 🔥
+✅ **Add Product Featured Video on the Shop/Archive Pages** 🔥
 
 ✅ **Outstanding Product Gallery Slider**
 
@@ -272,8 +272,7 @@ Here are key zoom features you'll love:
 
 ✅ **Advanced Product Image Lightbox** 🔥🔥🔥
 
-* 4 Additional Lightbox sliding effects: Fade, Rotate,
-* Circular and Tube
+* 4 Additional Lightbox sliding effects: Fade, Rotate, Circular and Tube
 * Lightbox overlay background
 * 5 Lightbox icon display positions
 * Configure lightbox icon size
@@ -335,7 +334,7 @@ When you have a product thumbnails slider, it's essential to have an active main
 [Live Demo](https://demo.renoproductgallery.com/gallery-image-caption/)
 
 
-## 🏆 UPGRADE TO WOOGALLERY PRO! ##
+## 🏆 UPGRADE TO RENO PRODUCT GALLERY PRO! ##
 
 [youtube https://www.youtube.com/watch?v=-NaP5vqQaH4]
 
@@ -385,22 +384,39 @@ Yes, the plugin is compatible with the most popular WooCommerce themes. We’re 
 
 1. Product Gallery Slider
 2. Additional Variation Gallery Images
-3. Product Image Zoom
-4. Product Image Lightbox
-5. General
-6. Gallery Slider
-7. Navigation and Pagination
-8. Thumbnails Navigation
-9. Product Image
-10. Product Image Zoom
-11. Product Video Gallery
-12. Lightbox
-13. Shop Page Video
-14. Advanced Controls
-15. Additional CSS & JS
+3. Thumbnails Left Layout
+4. Thumbnails Right Layout
+5. Product Image Zoom
+6. Product Image Lightbox
+7. General Settings
+8. Gallery Slider Settings
+9. Navigation and Pagination
+10. Thumbnails Navigation
+11. Product Image
+12. Product Image Zoom
+13. Product Video Gallery
+14. Lightbox Settings
+15. Advanced Controls
+16. Additional CSS & JS
+17. Import & Export
+18. Migration
+19. Speed Optimization Settings
+20. Manage Layouts
+21. Assign layouts
 
 
 == Changelog ==
+
+
+= Version 3.2.1 – Oct 14, 2026 =
+* Improved: Stronger permission checks when saving and resetting settings.
+* Improved: Only the settings the slider needs are now loaded on product pages.
+* Improved: Color and size settings are now validated for safer, more reliable styling.
+* Improved: The Get Help screen now follows the same access rules as the settings page.
+* Improved: The Video URL field section heading style.
+* Fix: A fatal error found rarely when the gallery shortcode ran outside the WooCommerce product loop.
+* Tested: WordPress 7.1.3 compatibility.
+* Tested: WooCommerce 11.2.1 compatibility.
 
 = Version 3.2.0 – Jul 28, 2026 =
 * New: WooGallery is now Reno Product Gallery. Everything else remains the same — your settings, layouts, and galleries are unchanged, and no reinstallation is required.

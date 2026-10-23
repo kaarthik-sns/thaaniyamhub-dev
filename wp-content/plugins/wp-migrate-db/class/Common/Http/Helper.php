@@ -4,6 +4,7 @@ namespace DeliciousBrains\WPMDB\Common\Http;
 
 use DeliciousBrains\WPMDB\Common\Settings\Settings;
 use DeliciousBrains\WPMDB\Common\Properties\DynamicProperties;
+use DeliciousBrains\WPMDB\Common\Util\Util;
 
 class Helper
 {
@@ -96,8 +97,7 @@ class Helper
 
 		$_POST = $_REQUEST = json_decode(file_get_contents('php://input'), true);
 
-		$cap = (is_multisite()) ? 'manage_network_options' : 'export';
-		$cap = apply_filters('wpmdb_ajax_cap', $cap);
+		$cap = Util::get_ajax_cap();
 
 		if (!current_user_can($cap)) {
 			self::$http->end_ajax(

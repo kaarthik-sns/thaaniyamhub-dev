@@ -229,4 +229,80 @@ class WCGS_Public_Helper {
 				return $result;
 		}
 	}
+
+	/**
+	 * Return only the settings keys the public JavaScript consumes.
+	 *
+	 * The full `wcgs_settings` option is admin-facing configuration; the frontend slider script reads
+	 * only a known subset (see public/js/woo-gallery-slider-public.js). Shipping the entire option to
+	 * every visitor in the page source discloses layout/feature config for no benefit. This allow-lists
+	 * exactly the keys the public JS reads, so nothing the script needs is dropped while the remainder
+	 * stays server-side. Extend the list only when a new key is actually consumed by the public script.
+	 *
+	 * @since 3.2.1
+	 * @param array $settings Full `wcgs_settings` option (may already be merged with an assigned layout).
+	 * @return array Subset containing only the public-facing keys that are present.
+	 */
+	public function public_settings_subset( $settings ) {
+		if ( ! is_array( $settings ) ) {
+			return array();
+		}
+
+		$public_keys = array(
+			'accessibility',
+			'autoplay',
+			'autoplay_interval',
+			'autoplay_speed',
+			'fade_slide',
+			'free_mode',
+			'gallery_fs_btn',
+			'gallery_layout',
+			'gallery_responsive_width',
+			'gallery_width',
+			'grayscale',
+			'infinite_loop',
+			'l_img_counter',
+			'lightbox',
+			'lightbox_caption',
+			'lightbox_sliding_effect',
+			'mobile_zoom',
+			'mouse_wheel',
+			'navigation',
+			'navigation_visibility',
+			'pagination',
+			'pagination_type',
+			'pagination_visibility',
+			'slide_orientation',
+			'slider_height_type',
+			'thumb_gallery_show',
+			'thumb_nav_visibility',
+			'thumbnail_style',
+			'thumbnailnavigation',
+			'thumbnails_item_to_show',
+			'thumbnails_sliders_space',
+			'video_popup_place',
+			'wcgs_image_lazy_load',
+			'zoom',
+			'zoom_type',
+		);
+
+		/**
+		 * Extend the public-facing settings subset.
+		 *
+		 * Only add keys the public JavaScript actually reads; everything else stays server-side.
+		 *
+		 * @since 3.2.1
+		 * @param array $public_keys Allow-listed setting keys exposed to the frontend.
+		 */
+		$public_keys = apply_filters( 'wcgs_public_settings_keys', $public_keys );
+
+		$subset = array();
+		foreach ( $public_keys as $key ) {
+			if ( array_key_exists( $key, $settings ) ) {
+				$subset[ $key ] = $settings[ $key ];
+			}
+		}
+
+		return $subset;
+	}
 }

@@ -55,7 +55,7 @@ class QueueHelper
     public function populate_queue($file_data, $intent, $stage, $migration_state_id, $full_site_export = false )
     {
         if (!$file_data) {
-            return $this->transfer_util->ajax_error(__('File list empty or incomplete. Please contact support.'));
+            return $this->transfer_util->ajax_error(__('File list empty or incomplete. Please contact support.', 'wp-migrate-db'));
         }
 
         if (is_wp_error($file_data)) {

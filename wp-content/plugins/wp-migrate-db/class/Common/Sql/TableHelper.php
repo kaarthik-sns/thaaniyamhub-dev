@@ -149,7 +149,8 @@ class TableHelper
             }
 
             if (true === $abort_utf8mb4 && 0 !== $replace_count) {
-                $return = sprintf(__('The source site supports utf8mb4 data but the target does not, aborting migration to avoid possible data corruption. Please see %1$s for more information. (#148)', 'wp-migrate-db-pro'), sprintf('<a href="%s">%s</a>', 'https://deliciousbrains.com/wp-migrate-db-pro/doc/source-site-supports-utf8mb4/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin', __('our documentation', 'wp-migrate-db-pro')));
+                /* translators: %1$s is a link to documentation. */
+                $return = sprintf(__('The source site supports utf8mb4 data but the target does not, aborting migration to avoid possible data corruption. Please see %1$s for more information. (#148)', 'wp-migrate-db'), sprintf('<a href="%s">%s</a>', 'https://deliciousbrains.com/wp-migrate-db-pro/doc/source-site-supports-utf8mb4/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin', __('our documentation', 'wp-migrate-db')));
                 $return = array('wpmdb_error' => 1, 'body' => $return);
                 $result = $this->http->end_ajax(json_encode($return));
 

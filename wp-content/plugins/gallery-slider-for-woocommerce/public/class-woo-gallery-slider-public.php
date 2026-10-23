@@ -394,7 +394,7 @@ class Woo_Gallery_Slider_Public {
 				'wcgs_object',
 				array(
 					'wcgs_data'             => $this->json_data,
-					'wcgs_settings'         => $this->settings,
+					'wcgs_settings'         => $this->helper->public_settings_subset( $this->settings ),
 					'wcgs_other_variations' => apply_filters( 'wcgs_other_variations', '.spswp-shop-variations' ), // To exclude other variations like related products variations.
 					'wcgs_body_font_size'   => apply_filters( 'wcgs_body_font_size', '14' ),
 					'wcgs_public_url'       => plugin_dir_url( __FILE__ ),

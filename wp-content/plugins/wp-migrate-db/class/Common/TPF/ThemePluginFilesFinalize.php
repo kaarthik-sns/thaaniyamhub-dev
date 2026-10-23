@@ -135,7 +135,8 @@ class ThemePluginFilesFinalize
                     $folder_name = $this->transfer_helpers->get_folder_name($file_folder, $dest_path, $tmp_path, $manifest['manifest']);
 
                     if (!$folder_name) {
-                        return $this->http->end_ajax(new \WP_Error('wpmdb_no_folder_name', sprintf(__('Unable to determine folder name for theme %s'), $folder)));
+                        /* translators: %s is the theme folder name. */
+                        return $this->http->end_ajax(new \WP_Error('wpmdb_no_folder_name', sprintf(__('Unable to determine folder name for theme %s', 'wp-migrate-db'), $folder)));
                     }
                 }
 
@@ -205,7 +206,8 @@ class ThemePluginFilesFinalize
         ];
 
         if (!$fs->file_exists($source)) {
-            $message = sprintf(__('Temporary file not found when finalizing %s Files migration: %s ', 'wp-migrate-db'), $singular_stages[$stage], $source);
+            /* translators: %1$s is the file type (Theme, Plugin, etc.), and %2$s is the source file path. */
+            $message = sprintf(__('Temporary file not found when finalizing %1$s Files migration: %2$s ', 'wp-migrate-db'), $singular_stages[$stage], $source);
             $this->error_log->log_error($message);
 
             return new \WP_Error('wpmdbpro_theme_plugin_files_error', $message);
@@ -213,6 +215,7 @@ class ThemePluginFilesFinalize
 
         if ($fs->file_exists($dest)) {
             if (!$fs->is_writable($dest)) {
+                /* translators: %s is the destination file path. */
                 $message = sprintf(__('Unable to overwrite destination file when finalizing Theme & Plugin Files migration: %s', 'wp-migrate-db'), $source);
                 $this->error_log->log_error($message);
                 error_log($message);
@@ -229,7 +232,8 @@ class ThemePluginFilesFinalize
         }
 
         if (!$fs->move($source, $dest)) {
-            $message = sprintf(__('Unable to move file into place when finalizing Theme & Plugin Files migration. Source: %s | Destination: %s', 'wp-migrate-db'), $source, $dest);
+            /* translators: %1$s is the source file path, and %2$s is the destination file path. */
+            $message = sprintf(__('Unable to move file into place when finalizing Theme & Plugin Files migration. Source: %1$s | Destination: %2$s', 'wp-migrate-db'), $source, $dest);
             $this->error_log->log_error($message);
             error_log($message);
 
@@ -316,7 +320,8 @@ class ThemePluginFilesFinalize
             $queue_info    = json_decode(file_get_contents($manifest_path), true);
 
             if (!$queue_info) {
-                throw new \Exception(sprintf(__('Unable to verify file migration, %s does not exist.'), $manifest_path));
+                /* translators: %s is the manifest file path. */
+                throw new \Exception(sprintf(__('Unable to verify file migration, %s does not exist.', 'wp-migrate-db'), $manifest_path));
             }
 
             if (!isset($queue_info['total'])) {

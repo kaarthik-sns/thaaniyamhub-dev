@@ -581,6 +581,10 @@ span.tooltip-icon {
   width: 100%;
 }
 
+.compat-field-wcgs_notice .field h2{
+  font-size: 12px;
+}
+
 .compat-field-wcgs_video {
   position: relative;
 }

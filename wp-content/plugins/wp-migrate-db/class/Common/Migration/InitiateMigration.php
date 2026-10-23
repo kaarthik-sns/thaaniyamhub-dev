@@ -330,7 +330,8 @@ class InitiateMigration
                 $upload_path = $this->filesystem->get_upload_info('path');
 
                 if (false === $this->filesystem->is_writable($upload_path)) {
-                    $error = sprintf(__('<p><strong>Export Failed</strong> — We can\'t save your export to the following folder:<br><strong>%s</strong></p><p>Please adjust the permissions on this folder. <a href="%s" target="_blank">See our documentation for more information »</a></p>', 'wp-migrate-db'), $upload_path, 'https://deliciousbrains.com/wp-migrate-db-pro/doc/uploads-folder-permissions/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin');
+                    /* translators: %1$s is the uploads folder path, and %2$s is a documentation URL. */
+                    $error = sprintf(__('<p><strong>Export Failed</strong> — We can\'t save your export to the following folder:<br><strong>%1$s</strong></p><p>Please adjust the permissions on this folder. <a href="%2$s" target="_blank">See our documentation for more information »</a></p>', 'wp-migrate-db'), $upload_path, 'https://deliciousbrains.com/wp-migrate-db-pro/doc/uploads-folder-permissions/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin');
 
                     return $this->http->end_ajax(
                         new \WP_Error(

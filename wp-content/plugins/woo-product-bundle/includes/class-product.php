@@ -13,6 +13,19 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 		protected static ?bool $_global_stock_on       = null;
 		protected static ?bool $_manage_stock_optional = null;
 
+		/**
+		 * Re-entrancy guard: prevents recursive DB writes when a third-party hook
+		 * (e.g. an audit-log plugin) reads get_stock_status() inside the
+		 * woocommerce_before_product_object_save action that our own persist call
+		 * would fire via wc_update_product_stock_status().
+		 *
+		 * Keyed by product ID so bundles rendered on the same request do not
+		 * block each other, only the bundle currently being written.
+		 *
+		 * @var array<int,bool>
+		 */
+		protected static array $_persisting_stock = [];
+
 		// Instance-level caches (invalidated when items change via build_items)
 		protected ?array $stock_data_cache            = null;
 		protected ?bool  $exclude_unpurchasable_cache = null;
@@ -284,7 +297,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					continue;
 				}
 
-				$is_purchasable = $product->is_purchasable();
+				$is_purchasable = $this->helper->is_purchasable( $product, 'stock' );
 				$is_in_stock    = $this->helper->is_in_stock( $product );
 
 				if ( $exclude_unpurchasable && ( ! $is_purchasable || ! $is_in_stock ) ) {
@@ -469,15 +482,40 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				$status = $data['stock_status'];
 			}
 
-			if ( $context === 'view' && $status !== $parent_status ) {
-				$this->set_stock_status( $status );
+			/*
+			 * Only persist when the status has drifted AND we are not already in the
+			 * middle of a persist for this product.
+			 *
+			 * We intentionally bypass wc_update_product_stock_status() here because
+			 * that function calls $product->save(), which fires the WooCommerce hook
+			 * woocommerce_before_product_object_save. Any third-party code (audit-log
+			 * plugins, theme hooks, etc.) that reads get_stock_status() inside that
+			 * hook would re-enter this method, detect the same drift, and call
+			 * wc_update_product_stock_status() again — creating infinite recursion
+			 * until PHP exhausts memory (observed: ~4 000 nested frames at 1 GB).
+			 *
+			 * A direct update_post_meta() + wc_delete_product_transients() achieves
+			 * the same persistence without triggering any product-save hooks.
+			 * The $context check is intentionally omitted from the guard so that a
+			 * 'edit' read during the save cycle also cannot trigger a write.
+			 */
+			$product_id = $this->get_id();
 
-				if ( apply_filters( 'woosb_update_stock', true ) ) {
-					if ( function_exists( 'wc_update_product_stock_status' ) ) {
-						wc_update_product_stock_status( $this->get_id(), $status );
-					} else {
-						update_post_meta( $this->get_id(), '_stock_status', $status );
+			if ( (string) $status !== (string) $parent_status && ! isset( self::$_persisting_stock[ $product_id ] ) ) {
+				self::$_persisting_stock[ $product_id ] = true;
+
+				try {
+					// Update in-memory state so subsequent reads within this request
+					// return the corrected value without hitting the DB again.
+					$this->set_stock_status( $status );
+
+					if ( apply_filters( 'woosb_update_stock', true, 'stock_status' ) ) {
+						// Direct meta write — avoids firing woocommerce_before_product_object_save.
+						update_post_meta( $product_id, '_stock_status', wc_clean( $status ) );
+						wc_delete_product_transients( $product_id );
 					}
+				} finally {
+					unset( self::$_persisting_stock[ $product_id ] );
 				}
 			}
 
@@ -492,43 +530,48 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				return $parent_quantity;
 			}
 
-			$product_id = $this->id;
+			$product_id = $this->get_id();
 			$data       = $this->compute_stock_data();
 
+			// Determine the quantity we want to surface.
 			if ( ! $data['computed'] ) {
-				// Guards triggered: sync _stock unless inventory management is fully disabled
-				if ( ! self::is_inventory_disabled() && apply_filters( 'woosb_update_stock', true ) ) {
-					update_post_meta( $product_id, '_stock', $parent_quantity );
+				$target_quantity = $parent_quantity;
+			} else {
+				$min_available = $data['min_stock_quantity'];
+
+				if ( $min_available === null ) {
+					// No managing items found (all skipped or backorders allowed).
+					$target_quantity = $parent_quantity;
+				} elseif ( $this->is_manage_stock() && $parent_quantity < $min_available ) {
+					// Bundle itself manages stock and its own quantity is lower.
+					$target_quantity = $parent_quantity;
+				} else {
+					$target_quantity = $min_available;
 				}
-
-				return $parent_quantity;
 			}
 
-			$min_available = $data['min_stock_quantity'];
+			/*
+			 * Persist the computed quantity only when it has drifted from the stored
+			 * value, and we are not already mid-persist for this product.
+			 * Direct update_post_meta() is used to avoid firing product-save hooks
+			 * (same rationale as get_stock_status()).
+			 */
+			if (
+				(string) $target_quantity !== (string) $parent_quantity
+				&& ! isset( self::$_persisting_stock[ $product_id ] )
+				&& ! self::is_inventory_disabled()
+				&& apply_filters( 'woosb_update_stock', true, 'stock_quantity' )
+			) {
+				self::$_persisting_stock[ $product_id ] = true;
 
-			// No managing items found (all skipped or backorders allowed)
-			if ( $min_available === null ) {
-				if ( apply_filters( 'woosb_update_stock', true ) ) {
-					update_post_meta( $product_id, '_stock', $parent_quantity );
+				try {
+					update_post_meta( $product_id, '_stock', $target_quantity );
+				} finally {
+					unset( self::$_persisting_stock[ $product_id ] );
 				}
-
-				return $parent_quantity;
 			}
 
-			// Use parent quantity if it's lower and bundle itself manages stock
-			if ( $this->is_manage_stock() && $parent_quantity < $min_available ) {
-				if ( apply_filters( 'woosb_update_stock', true ) ) {
-					update_post_meta( $product_id, '_stock', $parent_quantity );
-				}
-
-				return $parent_quantity;
-			}
-
-			if ( apply_filters( 'woosb_update_stock', true ) ) {
-				update_post_meta( $product_id, '_stock', $min_available );
-			}
-
-			return $min_available;
+			return $target_quantity;
 		}
 
 		public function get_backorders( $context = 'view' ) {
@@ -545,11 +588,23 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				$backorders = $data['backorders'];
 			}
 
-			if ( $context === 'view' && $backorders !== $parent_backorders ) {
-				$this->set_backorders( $backorders );
+			/*
+			 * Persist drifted backorders value — guarded against re-entrancy for the
+			 * same reasons as get_stock_status() (see that method's inline comment).
+			 */
+			$product_id = $this->get_id();
 
-				if ( apply_filters( 'woosb_update_stock', true ) ) {
-					update_post_meta( $this->get_id(), '_backorders', $backorders );
+			if ( $backorders !== $parent_backorders && ! isset( self::$_persisting_stock[ $product_id ] ) ) {
+				self::$_persisting_stock[ $product_id ] = true;
+
+				try {
+					$this->set_backorders( $backorders );
+
+					if ( apply_filters( 'woosb_update_stock', true, 'backorders' ) ) {
+						update_post_meta( $product_id, '_backorders', wc_clean( $backorders ) );
+					}
+				} finally {
+					unset( self::$_persisting_stock[ $product_id ] );
 				}
 			}
 

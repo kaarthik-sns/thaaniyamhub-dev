@@ -269,6 +269,7 @@ class Util
         }
 
         if (!empty($failures)) {
+            /* translators: %s is a list of file paths that failed to transfer. */
             throw new \Exception(sprintf(__('The following files failed to transfer: <br> %s', 'wp-migrate-db'), implode('<br>', $failures)));
         }
     }
@@ -311,14 +312,16 @@ class Util
         $tmp_path = $this->get_queue_tmp_path($stage, $full_site_export);
 
         if (!$this->filesystem->mkdir($tmp_path)) {
-            throw new \Exception(sprintf(__('Unable to create folder for file transfers: %s'), $tmp_path));
+            /* translators: %s is the folder path. */
+            throw new \Exception(sprintf(__('Unable to create folder for file transfers: %s', 'wp-migrate-db'), $tmp_path));
         }
 
         $filename = $this->get_queue_manifest_file_name($migration_state_id);
         $manifest = @file_put_contents($tmp_path . DIRECTORY_SEPARATOR . $filename, json_encode($data));
 
         if (!$manifest) {
-            throw new \Exception(sprintf(__('Unable to create the transfer manifest file. Verify the web server can write to this file/folder: `%s`'), $tmp_path . DIRECTORY_SEPARATOR . '.manifest'));
+            /* translators: %s is the manifest file path. */
+            throw new \Exception(sprintf(__('Unable to create the transfer manifest file. Verify the web server can write to this file/folder: `%s`', 'wp-migrate-db'), $tmp_path . DIRECTORY_SEPARATOR . '.manifest'));
         }
 
         return $manifest;
@@ -609,13 +612,13 @@ class Util
         $contents = file_get_contents($manifest_path);
 
         if (!$contents) {
-            $this->http->end_ajax(new \WP_Error('wpmdb_load_manifest_failed', __("Failed to load manifest file.")));
+            $this->http->end_ajax(new \WP_Error('wpmdb_load_manifest_failed', __("Failed to load manifest file.", 'wp-migrate-db')));
         }
 
         $queue_info = json_decode($contents, true);
 
         if (!$queue_info) {
-            $this->http->end_ajax(new \WP_Error('wpmdb_parse_manifest_failed', __("Failed to parse manifest file.")));
+            $this->http->end_ajax(new \WP_Error('wpmdb_parse_manifest_failed', __("Failed to parse manifest file.", 'wp-migrate-db')));
         }
 
         return $queue_info;
@@ -713,6 +716,7 @@ class Util
         ];
 
         if ( ! $this->filesystem->mkdir( $tmp ) ) {
+            /* translators: %s is the temporary folder path. */
             $message = sprintf( __( 'File transfer error - Unable to create a temporary folder. (%s)', 'wp-migrate-db' ), $tmp );
             $this->error_log->log_error( $message );
 
@@ -727,6 +731,7 @@ class Util
         }
 
         if ( ! $this->filesystem->touch( $test_file ) ) {
+            /* translators: %s is the test file path. */
             $message = sprintf( __( 'File transfer error - Unable to create a PHP file on the server. (%s)', 'wp-migrate-db' ), $test_file );
             $this->error_log->log_error( $message );
 
@@ -737,6 +742,7 @@ class Util
         }
 
         if ( ! file_put_contents( $test_file, 'test' ) ) {
+            /* translators: %s is the test file path. */
             $message = sprintf( __( 'File transfer error - Unable to update file contents using using PHP\'s file_put_contents() function. (%s)', 'wp-migrate-db' ), $test_file );
             $this->error_log->log_error( $message );
 
@@ -747,6 +753,7 @@ class Util
         }
 
         if ( ! rename( $test_file, $renamed_file ) ) {
+            /* translators: %s is the destination file path. */
             $message = sprintf( __( 'File transfer error - Unable to move file to the correct location using PHP\'s rename() function. (%s)', 'wp-migrate-db' ), $renamed_file );
             $this->error_log->log_error( $message );
 
@@ -758,6 +765,7 @@ class Util
 
         //Clean up
         if ( ! $this->remove_tmp_folder( $options_to_dirs[$base] ) ) {
+            /* translators: %s is the file path. */
             $message = sprintf( __( 'File transfer error - Unable to delete file using PHP\'s unlink() function. (%s)', 'wp-migrate-db' ), $renamed_file );
             $this->error_log->log_error( $message );
 

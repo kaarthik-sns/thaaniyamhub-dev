@@ -251,6 +251,7 @@ class RemotePost extends Http
                 return new \WP_Error(
                     'wpmdb-remote-post-http-blocked-external',
                     sprintf(
+                        /* translators: %1$s is the blocked host name, %2$s is a documentation URL, and %3$s is the request scope. */
                         __('We\'ve detected that <code>WP_HTTP_BLOCK_EXTERNAL</code> is enabled and the host <strong>%1$s</strong> has not been added to <code>WP_ACCESSIBLE_HOSTS</code>. Please disable <code>WP_HTTP_BLOCK_EXTERNAL</code> or add <strong>%1$s</strong> to <code>WP_ACCESSIBLE_HOSTS</code> to continue. <a href="%2$s" target="_blank">More information</a>. (#147 - scope: %3$s)', 'wp-migrate-db'),
                         esc_attr($host),
                         'https://deliciousbrains.com/wp-migrate-db-pro/doc/wp_http_block_external/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin',
@@ -262,11 +263,13 @@ class RemotePost extends Http
             case self::RESPONSE_UNEXPECTED_ERROR:
                 return new \WP_Error(
                     'wpmdb-remote-post-unexpected_error',
+                    /* translators: %s is the request scope. */
                     sprintf(__('The connection failed, an unexpected error occurred, please contact support. (#121 - scope: %s)', 'wp-migrate-db'), $scope)
                 );
             case self::RESPONSE_TIMED_OUT:
                 return new \WP_Error(
                     self::RESPONSE_TIMED_OUT,
+                    /* translators: %s is the request scope. */
                     sprintf(__('The connection to the remote server has timed out, no changes have been committed. (#134 - scope: %s)', 'wp-migrate-db'), $scope)
                 );
                 break;
@@ -275,13 +278,15 @@ class RemotePost extends Http
             case self::RESPONSE_443_ERROR:
                 return new \WP_Error(
                     self::RESPONSE_443_ERROR,
+                    /* translators: %s is the request scope. */
                     sprintf(__('Couldn\'t connect over HTTPS. You might want to try regular HTTP instead. (#121 - scope: %s)', 'wp-migrate-db'), $scope)
                 );
             case self::RESPONSE_SSL_ERROR:
                 return new \WP_Error(
                     self::RESPONSE_SSL_ERROR,
                     sprintf(
-                        __('<strong>HTTPS Connection Error:</strong>  (#121 - scope: %s) This typically means that the version of OpenSSL that your local site is using to connect to the remote is incompatible or, more likely, being rejected by the remote server because it\'s insecure. <a href="%s" target="_blank">See our documentation</a> for possible solutions.', 'wp-migrate-db'),
+                        /* translators: %1$s is the request scope, and %2$s is a documentation URL. */
+                        __('<strong>HTTPS Connection Error:</strong>  (#121 - scope: %1$s) This typically means that the version of OpenSSL that your local site is using to connect to the remote is incompatible or, more likely, being rejected by the remote server because it\'s insecure. <a href="%2$s" target="_blank">See our documentation</a> for possible solutions.', 'wp-migrate-db'),
                         $scope,
                         'https://deliciousbrains.com/wp-migrate-db-pro/doc/ssl-errors/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin'
                     )
@@ -294,21 +299,25 @@ class RemotePost extends Http
             case self::RESPONSE_500_ERROR:
                 return new \WP_Error(
                     self::RESPONSE_500_ERROR,
-                    sprintf(__('Unable to connect to the remote server, the remote server responded with: %s %s (scope: %s)', 'wp-migrate-db'), $response_code, $message, $scope)
+                    /* translators: %1$s is the HTTP status code, %2$s is the response message, and %3$s is the request scope. */
+                    sprintf(__('Unable to connect to the remote server, the remote server responded with: %1$s %2$s (scope: %3$s)', 'wp-migrate-db'), $response_code, $message, $scope)
                 );
             case self::RESPONSE_STATUS_ERROR:
                 return new \WP_Error(
                     self::RESPONSE_STATUS_ERROR,
+                    /* translators: %1$s is the HTTP status code, %2$s is the response message, and %3$s is the request scope. */
                     sprintf(__('Unable to connect to the remote server, please check the connection details - %1$s %2$s (#129 - scope: %3$s)', 'wp-migrate-db'), $response_code, $message, $scope)
                 );
             case self::RESPONSE_MDB_INACTIVE:
                 return new \WP_Error(
                     self::RESPONSE_MDB_INACTIVE,
+                    /* translators: %s is the request scope. */
                     sprintf(__('WP Migrate does not seem to be installed or active on the remote site. (#131 - scope: %s)', 'wp-migrate-db'), $scope)
                 );
             case self::RESPONSE_EMPTY_RESPONSE:
                 return new \WP_Error(
                     self::RESPONSE_EMPTY_RESPONSE,
+                    /* translators: %1$s is the request scope, and %2$s is a documentation link. */
                     sprintf(__('A response was expected from the remote, instead we got nothing. (#146 - scope: %1$s) Please review %2$s for possible solutions.', 'wp-migrate-db'), $scope, sprintf('<a href="%s" target="_blank">%s</a>', 'https://deliciousbrains.com/wp-migrate-db-pro/doc/a-response-was-expected-from-the-remote/?utm_campaign=error%2Bmessages&utm_source=MDB%2BPaid&utm_medium=insideplugin', __('our documentation', 'wp-migrate-db')))
                 );
             case self::RESPONSE_REMOTE_ERROR:
@@ -469,6 +478,7 @@ class RemotePost extends Http
      */
     protected function handle_unresolvable_host($url)
     {
+        /* translators: %s is the remote URL. */
         $error = sprintf(__('We could not find: %s. Are you sure this is the correct URL?', 'wp-migrate-db'), $url);
 
         $url_bits = Util::parse_url($url);

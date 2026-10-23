@@ -83,6 +83,7 @@ class FullSiteExport
                 $add_file      = $zip->addFile($file['absolute_path'], $path . DIRECTORY_SEPARATOR . $relative_path);
                 if ( ! $add_file) {
                     return new \WP_Error('wp-migrate-db-could-not-add-file-to-archive',
+                        /* translators: %s is the file name. */
                         sprintf(__('Could not add %s to ZIP Archive', 'wp-migrate-db'), $file['name']));
                 }
                 $count++;
@@ -171,11 +172,13 @@ class FullSiteExport
     public function delete_export_zip($zip_filename)
     {
         if (false === file_exists($zip_filename)){
+             /* translators: %s is the ZIP archive file path. */
              return new \WP_Error('wp-migrate-db-could-not-find-archive-file', sprintf(__(' ZIP Archive %s does not exist', 'wp-migrate-db'), $zip_filename));
 
         }
         $removed = unlink($zip_filename);
         if (false === $removed) {
+            /* translators: %s is the ZIP archive file path. */
             return new \WP_Error('wp-migrate-db-could-not-delete-archive-file', sprintf(__(' ZIP Archive %s could not be deleted', 'wp-migrate-db'), $zip_filename));
         }
         return true;

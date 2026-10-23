@@ -454,6 +454,13 @@ if ( ! class_exists( 'WCGS_Metabox' ) ) {
 				return $post_id;
 			}
 
+			// Capability gate (defense-in-depth). WordPress core already enforces `edit_post` before
+			// `save_post` fires; this rejects any caller that nonetheless lacks the capability for the
+			// post being saved. Runs after the nonce so the handler stays scoped to this form submission.
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				return $post_id;
+			}
+
 			// XSS ok.
 			// No worries, This "POST" requests is sanitizing in the below foreach.
 			$request = ( ! empty( $_POST[ $this->unique ] ) ) ? wp_unslash( $_POST[ $this->unique ] ) : array(); // phpcs:ignore 

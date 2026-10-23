@@ -256,7 +256,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <th><?php esc_html_e( 'Default custom display price', 'woo-product-bundle' ); ?></th>
                                         <td>
                                             <label>
-                                                <input type="text" class="regular-text"
+                                                <input type="text" class="large-text"
                                                        name="woosb_settings[price_format_custom]"
                                                        placeholder="<?php /* translators: dynamic price */
                                                        esc_attr_e( 'before %s after', 'woo-product-bundle' ); ?>"
@@ -810,7 +810,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <th><?php esc_html_e( 'From', 'woo-product-bundle' ); ?></th>
                                         <td>
                                             <label>
-                                                <input type="text" name="woosb_localization[from]" class="regular-text"
+                                                <input type="text" name="woosb_localization[from]" class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'from' ) ); ?>"
                                                        placeholder="<?php esc_attr_e( 'From', 'woo-product-bundle' ); ?>"/>
                                             </label>
@@ -820,7 +820,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <th><?php esc_html_e( 'Total text', 'woo-product-bundle' ); ?></th>
                                         <td>
                                             <label>
-                                                <input type="text" name="woosb_localization[total]" class="regular-text"
+                                                <input type="text" name="woosb_localization[total]" class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'total' ) ); ?>"
                                                        placeholder="<?php esc_attr_e( 'Bundle price:', 'woo-product-bundle' ); ?>"/>
                                             </label>
@@ -831,7 +831,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <td>
                                             <label>
                                                 <input type="text" name="woosb_localization[selected]"
-                                                       class="regular-text"
+                                                       class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'selected' ) ); ?>"
                                                        placeholder="<?php esc_attr_e( 'Selected:', 'woo-product-bundle' ); ?>"/>
                                             </label>
@@ -841,7 +841,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <th><?php esc_html_e( 'Saved text', 'woo-product-bundle' ); ?></th>
                                         <td>
                                             <label>
-                                                <input type="text" name="woosb_localization[saved]" class="regular-text"
+                                                <input type="text" name="woosb_localization[saved]" class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'saved' ) ); ?>"
                                                        placeholder="<?php esc_attr_e( '(saved [d])', 'woo-product-bundle' ); ?>"/>
                                             </label>
@@ -854,7 +854,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <td>
                                             <label>
                                                 <input type="text" name="woosb_localization[choose]"
-                                                       class="regular-text"
+                                                       class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'choose' ) ); ?>"
                                                        placeholder="<?php /* translators: %s is the attribute name */
                                                        esc_attr_e( 'Choose %s', 'woo-product-bundle' ); ?>"/> </label>
@@ -866,7 +866,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <th><?php esc_html_e( 'Clear', 'woo-product-bundle' ); ?></th>
                                         <td>
                                             <label>
-                                                <input type="text" name="woosb_localization[clear]" class="regular-text"
+                                                <input type="text" name="woosb_localization[clear]" class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'clear' ) ); ?>"
                                                        placeholder="<?php esc_attr_e( 'Clear', 'woo-product-bundle' ); ?>"/>
                                             </label>
@@ -882,7 +882,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <td>
                                             <div style="margin-bottom: 5px">
                                                 <label>
-                                                    <input type="text" class="regular-text"
+                                                    <input type="text" class="large-text"
                                                            name="woosb_localization[button_add]"
                                                            value="<?php echo esc_attr( $this->helper->localization( 'button_add' ) ); ?>"
                                                            placeholder="<?php esc_attr_e( 'Add to cart', 'woo-product-bundle' ); ?>"/>
@@ -892,7 +892,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                             </div>
                                             <div style="margin-bottom: 5px">
                                                 <label>
-                                                    <input type="text" class="regular-text"
+                                                    <input type="text" class="large-text"
                                                            name="woosb_localization[button_select]"
                                                            value="<?php echo esc_attr( $this->helper->localization( 'button_select' ) ); ?>"
                                                            placeholder="<?php esc_attr_e( 'Select options', 'woo-product-bundle' ); ?>"/>
@@ -902,7 +902,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                             </div>
                                             <div>
                                                 <label>
-                                                    <input type="text" class="regular-text"
+                                                    <input type="text" class="large-text"
                                                            name="woosb_localization[button_read]"
                                                            value="<?php echo esc_attr( $this->helper->localization( 'button_read' ) ); ?>"
                                                            placeholder="<?php esc_attr_e( 'Read more', 'woo-product-bundle' ); ?>"/>
@@ -917,7 +917,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <td>
                                             <label>
                                                 <input type="text" name="woosb_localization[button_single]"
-                                                       class="regular-text"
+                                                       class="large-text"
                                                        value="<?php echo esc_attr( $this->helper->localization( 'button_single' ) ); ?>"
                                                        placeholder="<?php esc_attr_e( 'Add to cart', 'woo-product-bundle' ); ?>"/>
                                             </label>
@@ -2461,11 +2461,12 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
 
             $ids      = [];
             $ids_arr  = [];
-            $ids_data = sanitize_textarea_field( wp_unslash( $_POST['ids'] ?? '' ) );
+            // Do not run sanitize_textarea_field() on the raw string: it strips percent-encoded octets (%5B, %5D...) and breaks parse_str().
+            $ids_data = isset( $_POST['ids'] ) && is_string( $_POST['ids'] ) ? wp_unslash( $_POST['ids'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             parse_str( $ids_data, $ids_arr );
 
             if ( isset( $ids_arr['woosb_ids'] ) && is_array( $ids_arr['woosb_ids'] ) ) {
-                $ids = $ids_arr['woosb_ids'];
+                $ids = $this->helper->sanitize_array( $ids_arr['woosb_ids'] );
             }
 
             echo '<textarea class="woosb_import_export_data" style="width: 100%; height: 200px">' . esc_textarea( ( ! empty( $ids ) ? wp_json_encode( $ids, JSON_PRETTY_PRINT ) : '' ) ) . '</textarea>';

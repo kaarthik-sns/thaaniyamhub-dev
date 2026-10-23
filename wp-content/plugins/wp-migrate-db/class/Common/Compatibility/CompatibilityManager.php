@@ -199,6 +199,7 @@ class CompatibilityManager {
 		$wpmdb_settings = $this->settings;
 
 		if ( ! $this->filesystem->mkdir( $this->mu_plugin_dir ) || ! $this->filesystem->copy( $this->mu_plugin_source, $this->mu_plugin_dest ) ) {
+			/* translators: %s is the mu-plugins directory path. */
 			return sprintf( __( 'The compatibility plugin could not be activated because your mu-plugin directory is currently not writable.  Please update the permissions of the mu-plugins folder:  %s', 'wp-migrate-db' ), $this->mu_plugin_dir );
 		}
 
@@ -232,6 +233,7 @@ class CompatibilityManager {
 	 */
 	public function remove_muplugin() {
 		if ( $this->filesystem->file_exists( $this->mu_plugin_dest ) && ! $this->filesystem->unlink( $this->mu_plugin_dest ) ) {
+			/* translators: %s is the mu-plugins directory path. */
 			return sprintf( __( 'The compatibility plugin could not be deactivated because your mu-plugin directory is currently not writable.  Please update the permissions of the mu-plugins folder: %s', 'wp-migrate-db' ), $this->mu_plugin_dir );
 		}
 

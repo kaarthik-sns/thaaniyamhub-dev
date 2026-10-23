@@ -67,7 +67,7 @@ function wp_migrate_db_loaded()
 
     // @TODO revisit since we're reming is_admin()
     // exit quickly unless: standalone admin; one of our AJAX calls
-    if (is_multisite() && !current_user_can('manage_network_options') && ! Util::wpmdb_is_ajax()) {
+    if (is_multisite() && !current_user_can(Util::MULTISITE_MIGRATION_CAPABILITY) && ! Util::wpmdb_is_ajax()) {
         return false;
     }
     if (function_exists('wp_migrate_db')) {
