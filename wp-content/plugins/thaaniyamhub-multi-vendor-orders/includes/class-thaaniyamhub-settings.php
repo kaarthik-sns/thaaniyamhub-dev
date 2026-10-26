@@ -1110,7 +1110,7 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
                             <span style="font-size: 12px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
                                 <?php esc_html_e( 'Pending Vendor Commissions in Database', 'thaaniyamhub-multi-vendor-orders' ); ?>
                             </span>
-                            <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600;">
+                            <span id="thaaniyamhub_pending_orders_badge" style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px; font-weight: 600;">
                                 <?php echo sprintf( esc_html__( '%d Order(s) Awaiting Payout', 'thaaniyamhub-multi-vendor-orders' ), (int) $pending_summary['total_pending_orders'] ); ?>
                             </span>
                         </div>
@@ -1118,19 +1118,19 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px;">
                             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px;">
                                 <div style="font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase;"><?php esc_html_e( 'Total Unsettled', 'thaaniyamhub-multi-vendor-orders' ); ?></div>
-                                <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">
+                                <div id="thaaniyamhub_total_unsettled_val" style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">
                                     ₹<?php echo esc_html( number_format( (float) $pending_summary['total_pending_amount'], 2 ) ); ?>
                                 </div>
                             </div>
                             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px;">
                                 <div style="font-size: 10px; font-weight: 600; color: #166534; text-transform: uppercase;"><?php esc_html_e( 'Ready For Disbursal', 'thaaniyamhub-multi-vendor-orders' ); ?></div>
-                                <div style="font-size: 16px; font-weight: 700; color: #15803d; margin-top: 2px;">
+                                <div id="thaaniyamhub_ready_disbursal_val" style="font-size: 16px; font-weight: 700; color: #15803d; margin-top: 2px;">
                                     ₹<?php echo esc_html( number_format( (float) $pending_summary['eligible_now_amount'], 2 ) ); ?>
                                 </div>
                             </div>
                             <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 10px 12px;">
                                 <div style="font-size: 10px; font-weight: 600; color: #92400e; text-transform: uppercase;"><?php esc_html_e( 'In Maturity Window', 'thaaniyamhub-multi-vendor-orders' ); ?></div>
-                                <div style="font-size: 16px; font-weight: 700; color: #b45309; margin-top: 2px;">
+                                <div id="thaaniyamhub_in_maturity_val" style="font-size: 16px; font-weight: 700; color: #b45309; margin-top: 2px;">
                                     ₹<?php echo esc_html( number_format( (float) $pending_summary['in_maturity_amount'], 2 ) ); ?>
                                 </div>
                             </div>
@@ -1140,7 +1140,7 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
                         <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
                             <?php esc_html_e( 'Vendor Profile & Payment Readiness:', 'thaaniyamhub-multi-vendor-orders' ); ?>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
+                        <div id="thaaniyamhub_vendor_readiness_list" style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
                             <?php if ( ! empty( $pending_summary['vendors_ready'] ) ) : ?>
                                 <?php foreach ( $pending_summary['vendors_ready'] as $vr ) : ?>
                                     <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; font-size: 12px;">
@@ -1179,19 +1179,17 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
                     <?php endif; ?>
 
                     <!-- Last Run Details Card -->
-                    <?php if ( $last_run ) : ?>
-                    <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-bottom: 16px;">
+                    <div id="thaaniyamhub_last_execution_card" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-bottom: 16px; <?php echo ! empty( $last_run ) ? '' : 'display: none;'; ?>">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <span style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;"><?php esc_html_e( 'Last Execution Summary', 'thaaniyamhub-multi-vendor-orders' ); ?></span>
-                            <span style="font-size: 11px; color: #64748b;"><?php echo esc_html( $last_run['timestamp'] ?? '' ); ?> (<?php echo esc_html( strtoupper( $last_run['source'] ?? 'cron' ) ); ?>)</span>
+                            <span id="thaaniyamhub_last_run_timestamp" style="font-size: 11px; color: #64748b;"><?php echo esc_html( $last_run['timestamp'] ?? '' ); ?> (<?php echo esc_html( strtoupper( $last_run['source'] ?? 'cron' ) ); ?>)</span>
                         </div>
                         <div style="display: flex; gap: 20px; font-size: 13px; color: #1e293b;">
-                            <div><strong><?php esc_html_e( 'Vendors Paid:', 'thaaniyamhub-multi-vendor-orders' ); ?></strong> <?php echo esc_html( $last_run['vendors_paid'] ?? 0 ); ?></div>
-                            <div><strong><?php esc_html_e( 'Total Disbursed:', 'thaaniyamhub-multi-vendor-orders' ); ?></strong> ₹<?php echo esc_html( number_format( (float) ( $last_run['total_disbursed'] ?? 0 ), 2 ) ); ?></div>
-                            <div><strong><?php esc_html_e( 'Status:', 'thaaniyamhub-multi-vendor-orders' ); ?></strong> <span style="font-weight: 700; color: <?php echo ( 'SUCCESS' === ( $last_run['status'] ?? '' ) ) ? '#10b981' : '#f59e0b'; ?>;"><?php echo esc_html( $last_run['status'] ?? '' ); ?></span></div>
+                            <div><strong><?php esc_html_e( 'Vendors Paid:', 'thaaniyamhub-multi-vendor-orders' ); ?></strong> <span id="thaaniyamhub_last_run_vendors_paid"><?php echo esc_html( $last_run['vendors_paid'] ?? 0 ); ?></span></div>
+                            <div><strong><?php esc_html_e( 'Total Disbursed:', 'thaaniyamhub-multi-vendor-orders' ); ?></strong> ₹<span id="thaaniyamhub_last_run_total_disbursed"><?php echo esc_html( number_format( (float) ( $last_run['total_disbursed'] ?? 0 ), 2 ) ); ?></span></div>
+                            <div><strong><?php esc_html_e( 'Status:', 'thaaniyamhub-multi-vendor-orders' ); ?></strong> <span id="thaaniyamhub_last_run_status" style="font-weight: 700; color: <?php echo ( 'SUCCESS' === ( $last_run['status'] ?? '' ) ) ? '#10b981' : '#f59e0b'; ?>;"><?php echo esc_html( $last_run['status'] ?? '' ); ?></span></div>
                         </div>
                     </div>
-                    <?php endif; ?>
 
                     <!-- Action Trigger & Info -->
                     <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px 16px;">
@@ -1265,6 +1263,29 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
                                     var res = response.data;
                                     var html = '<div style="color: #4ade80; font-weight: 700;">✓ ' + (res.message || 'Automated payout run completed.') + '</div>';
 
+                                    // Instantly update Last Execution Summary card in DOM
+                                    if (res.last_run) {
+                                        $('#thaaniyamhub_last_execution_card').show();
+                                        $('#thaaniyamhub_last_run_timestamp').text(res.last_run.timestamp + ' (' + (res.last_run.source || 'manual').toUpperCase() + ')');
+                                        $('#thaaniyamhub_last_run_vendors_paid').text(res.last_run.vendors_paid);
+                                        $('#thaaniyamhub_last_run_total_disbursed').text(parseFloat(res.last_run.total_disbursed).toFixed(2));
+                                        var statusColor = (res.last_run.status === 'SUCCESS') ? '#10b981' : '#f59e0b';
+                                        $('#thaaniyamhub_last_run_status').text(res.last_run.status).css('color', statusColor);
+                                    }
+
+                                    // Instantly update Pending Summary metrics in DOM
+                                    if (res.pending_summary) {
+                                        $('#thaaniyamhub_pending_orders_badge').text(res.pending_summary.total_pending_orders + ' ' + '<?php echo esc_js( __( 'Order(s) Awaiting Payout', 'thaaniyamhub-multi-vendor-orders' ) ); ?>');
+                                        $('#thaaniyamhub_total_unsettled_val').text('₹' + parseFloat(res.pending_summary.total_pending_amount).toFixed(2));
+                                        $('#thaaniyamhub_ready_disbursal_val').text('₹' + parseFloat(res.pending_summary.eligible_now_amount).toFixed(2));
+                                        $('#thaaniyamhub_in_maturity_val').text('₹' + parseFloat(res.pending_summary.in_maturity_amount).toFixed(2));
+                                        
+                                        // Update vendor readiness list if empty
+                                        if (!res.pending_summary.vendors_ready || res.pending_summary.vendors_ready.length === 0) {
+                                            $('#thaaniyamhub_vendor_readiness_list').html('<div style="font-size: 12px; color: #64748b; padding: 6px 0;"><?php echo esc_js( __( 'No vendors currently awaiting disbursal.', 'thaaniyamhub-multi-vendor-orders' ) ); ?></div>');
+                                        }
+                                    }
+
                                     if (res.payout_details && res.payout_details.length > 0) {
                                         html += '<div style="margin-top: 8px; border-top: 1px solid #334155; padding-top: 8px;">';
                                         $.each(res.payout_details, function(i, item) {
@@ -1273,6 +1294,7 @@ class ThaaniyamHub_Settings extends WC_Settings_Page {
                                         });
                                         html += '</div>';
                                     }
+
 
                                     if (res.errors && res.errors.length > 0) {
                                         html += '<div style="margin-top: 8px; border-top: 1px solid #334155; padding-top: 8px; color: #f87171;">';

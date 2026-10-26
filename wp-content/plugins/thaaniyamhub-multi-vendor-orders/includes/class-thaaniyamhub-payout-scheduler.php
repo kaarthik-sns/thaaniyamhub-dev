@@ -462,17 +462,70 @@ class ThaaniyamHub_Payout_Scheduler {
         thaaniyamhub_log( "ThaaniyamHub_Payout_Scheduler: {$summary_msg}", 'info', 'thaaniyamhub-cashfree-payout' );
 
         return [
-            'success'        => true,
-            'message'        => $summary_msg,
-            'vendors_paid'   => $vendors_paid,
-            'total_amount'   => $total_disbursed,
-            'errors'         => $errors,
-            'payout_details' => $payout_details,
-            'diagnostics'    => $diagnostics,
+            'success'         => true,
+            'message'         => $summary_msg,
+            'vendors_paid'    => $vendors_paid,
+            'total_amount'    => $total_disbursed,
+            'errors'          => $errors,
+            'payout_details'  => $payout_details,
+            'diagnostics'     => $diagnostics,
+            'last_run'        => get_option( 'thaaniyamhub_auto_payout_last_run' ),
+            'pending_summary' => self::get_pending_payouts_summary(),
         ];
         } finally {
             delete_transient( $lock_key );
         }
+    }
+
+    /**
+     * Disburse all pending, eligible commissions for a single vendor on demand.
+     *
+     * @param int    $vendor_id
+     * @param bool   $bypass_maturity
+     * @param string $source
+     * @return array
+     */
+    public static function disburse_single_vendor( int $vendor_id, bool $bypass_maturity = true, string $source = 'admin_approval' ): array {
+        $delay_days   = $bypass_maturity ? 0 : absint( get_option( 'thaaniyamhub_auto_payout_delay_days', 4 ) );
+        $diagnostics  = [];
+        $all_eligible = self::get_all_eligible_commissions_grouped_by_vendor( $delay_days, $diagnostics );
+
+        if ( empty( $all_eligible[ $vendor_id ] ) ) {
+            return [
+                'success'     => false,
+                'error'       => __( 'No eligible pending commissions found for this vendor.', 'thaaniyamhub-multi-vendor-orders' ),
+                'diagnostics' => $diagnostics,
+            ];
+        }
+
+        $items          = $all_eligible[ $vendor_id ];
+        $amount         = 0.0;
+        $order_ids      = [];
+        $commission_ids = [];
+
+        foreach ( $items as $item ) {
+            $amount           += (float) ( $item->total_commission ?? 0.0 );
+            $order_ids[]       = (int) $item->order_id;
+            $commission_ids[]  = (int) $item->ID;
+        }
+
+        $gateway        = new WCFMmp_Gateway_Cashfree();
+        $payout_profile = $gateway->get_vendor_payout_details( $vendor_id );
+        if ( empty( $payout_profile ) || empty( $payout_profile['payout_type'] ) ) {
+            return [
+                'success' => false,
+                'error'   => __( 'Vendor has not configured valid Bank Account or UPI payment details in their profile.', 'thaaniyamhub-multi-vendor-orders' ),
+            ];
+        }
+
+        return self::disburse_vendor_batch(
+            $vendor_id,
+            round( $amount, 2 ),
+            array_values( array_unique( $commission_ids ) ),
+            array_values( array_unique( $order_ids ) ),
+            $payout_profile,
+            $source
+        );
     }
 
     /**
@@ -486,7 +539,7 @@ class ThaaniyamHub_Payout_Scheduler {
      * @param string $source
      * @return array
      */
-    private static function disburse_vendor_batch( int $vendor_id, float $amount, array $commission_ids, array $order_ids, array $payout_profile, string $source = 'cron' ): array {
+    public static function disburse_vendor_batch( int $vendor_id, float $amount, array $commission_ids, array $order_ids, array $payout_profile, string $source = 'cron' ): array {
         global $wpdb, $WCFMmp;
 
         $order_ids          = array_values( array_filter( array_unique( array_map( 'intval', $order_ids ) ), function( $id ) { return $id > 0; } ) );
@@ -960,13 +1013,19 @@ class ThaaniyamHub_Payout_Scheduler {
             } else {
                 $summary['eligible_now_amount'] += $comm_amount;
                 if ( ! isset( $vendor_amounts[ $vendor_id ] ) ) {
-                    $vendor_amounts[ $vendor_id ] = 0.0;
+                    $vendor_amounts[ $vendor_id ] = [
+                        'amount'    => 0.0,
+                        'order_ids' => [],
+                    ];
                 }
-                $vendor_amounts[ $vendor_id ] += $comm_amount;
+                $vendor_amounts[ $vendor_id ]['amount']      += $comm_amount;
+                $vendor_amounts[ $vendor_id ]['order_ids'][]  = $order_id;
             }
         }
 
-        foreach ( $vendor_amounts as $vid => $v_amt ) {
+        foreach ( $vendor_amounts as $vid => $v_data ) {
+            $v_amt    = (float) $v_data['amount'];
+            $v_orders = array_values( array_unique( $v_data['order_ids'] ) );
             $profile  = $gateway->get_vendor_payout_details( $vid );
             $has_bank = ! empty( $profile['account_number'] ) && ! empty( $profile['ifsc'] );
             $has_upi  = ! empty( $profile['upi_id'] );
@@ -975,16 +1034,19 @@ class ThaaniyamHub_Payout_Scheduler {
 
             if ( $has_bank || $has_upi ) {
                 $summary['vendors_ready'][] = [
-                    'id'     => $vid,
-                    'name'   => $name,
-                    'amount' => $v_amt,
-                    'type'   => $has_upi ? 'UPI' : 'Bank (' . ( $profile['bank_name'] ?: 'IMPS' ) . ')',
+                    'id'        => $vid,
+                    'name'      => $name,
+                    'amount'    => $v_amt,
+                    'type'      => $has_upi ? 'UPI' : 'Bank (' . ( $profile['bank_name'] ?: 'IMPS' ) . ')',
+                    'order_ids' => $v_orders,
+                    'details'   => $has_upi ? $profile['upi_id'] : ( 'A/C: *' . substr( (string) $profile['account_number'], -4 ) . ' (' . $profile['ifsc'] . ')' ),
                 ];
             } else {
                 $summary['vendors_missing_info'][] = [
-                    'id'     => $vid,
-                    'name'   => $name,
-                    'amount' => $v_amt,
+                    'id'        => $vid,
+                    'name'      => $name,
+                    'amount'    => $v_amt,
+                    'order_ids' => $v_orders,
                 ];
             }
         }
