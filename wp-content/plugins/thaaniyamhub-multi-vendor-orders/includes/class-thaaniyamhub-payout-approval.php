@@ -735,14 +735,15 @@ class ThaaniyamHub_Payout_Approval {
             return [ 'success' => false, 'error' => 'DB error creating withdrawal: ' . $wpdb->last_error ];
         }
 
-        $withdrawal_id = (int) $wpdb->insert_id;
-        $transfer_id   = sprintf( 'TH_APPR_V%d_W%d_%d', $vendor_id, $withdrawal_id, time() );
-        $remarks       = sprintf( 'ThaaniyamHub Admin-Approved Payout #%d (Orders: %s)', $withdrawal_id, $order_ids_str );
+        $withdrawal_id   = (int) $wpdb->insert_id;
+        $transfer_id     = sprintf( 'TH_APPR_V%d_W%d_%d', $vendor_id, $withdrawal_id, time() );
+        $order_ids_clean = str_replace( ',', ' ', $order_ids_str );
+        $remarks         = sprintf( 'ThaaniyamHub Admin Approved Payout %d Orders %s', $withdrawal_id, $order_ids_clean );
 
         $transfer_data = [
             'amount'     => $amount,
             'transferId' => $transfer_id,
-            'name'       => $payout_profile['account_name'] ?: ( 'Vendor #' . $vendor_id ),
+            'name'       => $payout_profile['account_name'] ?: ( 'Vendor ' . $vendor_id ),
             'email'      => $payout_profile['email']        ?: 'vendor@thaaniyamhub.com',
             'phone'      => $payout_profile['phone']        ?: '9999999999',
             'remarks'    => substr( $remarks, 0, 70 ),

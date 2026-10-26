@@ -213,12 +213,12 @@ if ( class_exists( 'WCFMmp_Abstract_Gateway' ) && ! class_exists( 'WCFMmp_Gatewa
 
             // Generate unique transfer ID
             $transfer_id = sprintf( 'TH_WDRW_%d_%d', $this->withdrawal_id, time() );
-            $remarks     = sprintf( 'ThaaniyamHub Vendor Payout #%d', $this->withdrawal_id );
+            $remarks     = sprintf( 'ThaaniyamHub Vendor Payout %d', $this->withdrawal_id );
 
             $transfer_data = [
                 'amount'     => $net_disbursal,
                 'transferId' => $transfer_id,
-                'name'       => $details['account_name'] ?: ( 'Vendor #' . $this->vendor_id ),
+                'name'       => $details['account_name'] ?: ( 'Vendor ' . $this->vendor_id ),
                 'email'      => $details['email'] ?: 'vendor@thaaniyamhub.com',
                 'phone'      => $details['phone'] ?: '9999999999',
                 'remarks'    => $remarks,

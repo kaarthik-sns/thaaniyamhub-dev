@@ -395,9 +395,21 @@ class ThaaniyamHub_Cashfree_Payout_API {
             $transfer_mode = 'banktransfer';
         }
 
-        $remarks_text = sanitize_text_field( $transfer_data['remarks'] ?? 'ThaaniyamHub Vendor Payout' );
-        $bene_email   = sanitize_email( $transfer_data['email'] ?? 'vendor@thaaniyamhub.com' );
-        $bene_phone   = preg_replace( '/[^0-9]/', '', $transfer_data['phone'] ?? '9999999999' );
+        // Cashfree Payout v2 strictly allows only alphanumeric characters (a-z, A-Z, 0-9) and spaces in transfer_remarks (max 70 chars).
+        // Any special characters like '#', ':', '(', ')', '-', '/', '@' trigger: "transfer_remarks : invalid value provided".
+        $raw_remarks   = $transfer_data['remarks'] ?? 'ThaaniyamHub Vendor Payout';
+        $clean_remarks = preg_replace( '/[^a-zA-Z0-9 ]/', ' ', (string) $raw_remarks );
+        $clean_remarks = trim( preg_replace( '/\s+/', ' ', $clean_remarks ) );
+        $remarks_text  = substr( $clean_remarks ?: 'ThaaniyamHub Vendor Payout', 0, 70 );
+
+        $bene_email    = sanitize_email( $transfer_data['email'] ?? 'vendor@thaaniyamhub.com' );
+        $bene_phone    = preg_replace( '/[^0-9]/', '', $transfer_data['phone'] ?? '9999999999' );
+        $bene_name_raw = sanitize_text_field( $transfer_data['name'] ?? '' );
+        // Sanitize beneficiary name against special symbols like '#'
+        $bene_name     = trim( preg_replace( '/[#:]+/', ' ', $bene_name_raw ) );
+        if ( empty( $bene_name ) ) {
+            $bene_name = 'Vendor';
+        }
 
         $payload = [
             'transfer_id'         => sanitize_text_field( $transfer_data['transferId'] ),
@@ -407,7 +419,7 @@ class ThaaniyamHub_Cashfree_Payout_API {
             'transfer_remarks'    => $remarks_text,
             'remarks'             => $remarks_text,
             'beneficiary_details' => [
-                'beneficiary_name'            => sanitize_text_field( $transfer_data['name'] ),
+                'beneficiary_name'            => $bene_name,
                 'beneficiary_email'           => $bene_email,
                 'beneficiary_phone'           => $bene_phone,
                 'beneficiary_contact_details' => [
