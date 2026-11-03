@@ -88,6 +88,29 @@ if( !function_exists( 'wcfmmp_has_marketplace' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wcfmmp_maybe_flush_rewrite_rules' ) ) {
+	
+
+
+
+
+
+
+
+	function wcfmmp_maybe_flush_rewrite_rules( $module ) {
+		global $WCFM_Query;
+
+		if ( is_object( $WCFM_Query ) && method_exists( $WCFM_Query, 'maybe_flush_rewrite_rules' ) ) {
+			return;
+		}
+
+		if ( ! get_option( 'wcfm_updated_end_point_' . $module ) ) {
+			flush_rewrite_rules();
+			update_option( 'wcfm_updated_end_point_' . $module, 1 );
+		}
+	}
+}
+
 if(!function_exists('wcfm_refund_requests_url')) {
 	function wcfm_refund_requests_url() {
 		global $WCFM;
@@ -215,6 +238,21 @@ function wcfmmp_get_store_url( $user_id ) {
 	}
 	
 	return apply_filters( 'wcfmmp_get_store_url', home_url( $wcfm_store_url . '/' . $user_nicename ), $user_id );
+}
+
+
+
+
+
+
+
+
+
+
+function wcfmmp_get_youtube_video_id( $url ) {
+	if( !is_string( $url ) ) return '';
+	if( !preg_match( '#^(?:https?:)?(?://)?(?:[a-z0-9-]+\.)*(?:youtube\.com/watch\?v=|youtu\.be/)([a-z0-9_-]{11})(?![a-z0-9_-])[^\s"\'<>]*\z#i', trim( $url ), $matches ) ) return '';
+	return $matches[1];
 }
 
 

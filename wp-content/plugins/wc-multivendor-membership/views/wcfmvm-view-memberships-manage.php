@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMgs Memberships Manage View
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/view
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 global $wp, $WCFM, $WCFMvm;
 
@@ -111,7 +111,7 @@ $associated_group = '';
 if( isset( $wp->query_vars['wcfm-memberships-manage'] ) && !empty( $wp->query_vars['wcfm-memberships-manage'] ) ) {
 	$membership_post = get_post( $wp->query_vars['wcfm-memberships-manage'] );
 	
-	// Fetching Membership Data
+	 
 	if($membership_post && !empty($membership_post)) {
 		
 		if( $membership_post->post_type != 'wcfm_memberships' ) {
@@ -208,7 +208,7 @@ if( WCFM_Dependencies::wcfmgs_plugin_active_check() ) {
 							'post_type'        => 'wcfm_vendor_groups',
 							'post_mime_type'   => '',
 							'post_parent'      => '',
-							//'author'	   => get_current_user_id(),
+							 
 							'post_status'      => array('draft', 'pending', 'publish'),
 							'suppress_filters' => true 
 						);

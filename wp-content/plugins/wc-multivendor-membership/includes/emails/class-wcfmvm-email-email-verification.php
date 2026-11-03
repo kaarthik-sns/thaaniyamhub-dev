@@ -1,7 +1,7 @@
 <?php
 
 if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+    exit;  
 
 if (!class_exists('WCFMvm_Email_Email_verification')) :
 
@@ -11,9 +11,9 @@ if (!class_exists('WCFMvm_Email_Email_verification')) :
 		public $verification_code;
 		
 		
-		/**
-		 * Constructor
-		 */
+		
+
+
 		function __construct( $wcfm_email, $wcfm_email_label ) {
 			global $WCFM, $WCFMvm;
 			$this->id = $wcfm_email;
@@ -27,36 +27,36 @@ if (!class_exists('WCFMvm_Email_Email_verification')) :
 			$this->template_plain = 'emails/plain/'.$wcfm_email.'.php';
 			$this->template_base = $WCFMvm->plugin_path . 'views/';
 			
-			// Call parent constructor
+			 
 			parent::__construct();
 		}
 
-		/**
-		 * Get email subject.
-		 *
-		 * @since  3.1.0
-		 * @return string
-		 */
+		
+
+
+
+
+
 		public function get_default_subject() {
 			return apply_filters( 'wcfm_' . str_replace( '-', '_', $this->id ) . '_email_subject', $this->subject, $this->object );
 		}
 
-		/**
-		 * Get email heading.
-		 *
-		 * @since  3.1.0
-		 * @return string
-		 */
+		
+
+
+
+
+
 		public function get_default_heading() {
 			return apply_filters( 'wcfm_' . str_replace( '-', '_', $this->id ) . '_email_heading', $this->heading, $this->object );
 		}
 
-		/**
-		 * trigger function.
-		 *
-		 * @access public
-		 * @return void
-		 */
+		
+
+
+
+
+
 		function trigger( $args ) {
 			global $WCFM;
 			
@@ -95,12 +95,12 @@ if (!class_exists('WCFMvm_Email_Email_verification')) :
 			}
 		}
 
-		/**
-		 * get_content_html function.
-		 *
-		 * @access public
-		 * @return string
-		 */
+		
+
+
+
+
+
 		function get_content_html() {
 			return wc_get_template_html($this->template_html, array(
 																															'email_heading'      => $this->get_heading(),
@@ -112,12 +112,12 @@ if (!class_exists('WCFMvm_Email_Email_verification')) :
 																															), 'wcfm/', $this->template_base);
 		}
 
-		/**
-		 * get_content_plain function.
-		 *
-		 * @access public
-		 * @return string
-		 */
+		
+
+
+
+
+
 		function get_content_plain() {
 			return wc_get_template_html($this->template_plain, array(
 																															'email_heading'      => $this->get_heading(),
@@ -130,12 +130,12 @@ if (!class_exists('WCFMvm_Email_Email_verification')) :
 																															), 'wcfm/', $this->template_base);
 		}
 
-		/**
-		 * Initialise Settings Form Fields
-		 *
-		 * @access public
-		 * @return void
-		 */
+		
+
+
+
+
+
 		function init_form_fields() {
 				global $WCFM, $WCFMvm;
 				$this->form_fields = array(

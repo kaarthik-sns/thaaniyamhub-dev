@@ -27,7 +27,7 @@ class wcfm_stripe_sca_ipn_handler {
 		
 		wcfmvm_create_log("Stripe SCA Subs IPN received. Processing request...");
 		
-		//Include the Stripe library.
+		 
 		if( !class_exists( 'Stripe\Stripe' ) ) {
 			include( $WCFMvm->plugin_path . 'includes/libs/stripe-gateway/init.php');
 		}
@@ -35,7 +35,7 @@ class wcfm_stripe_sca_ipn_handler {
 		$ref_id = filter_input( INPUT_GET, 'ref_id', FILTER_DEFAULT );
 
 		if ( empty( $ref_id ) ) {
-			//no ref id provided, cannot proceed
+			 
 			wcfmvm_create_log( 'Fatal Error! No ref_id provied.' );
 			wp_die( esc_html( 'Fatal Error! No ref_id provied.' ) );
 
@@ -45,17 +45,17 @@ class wcfm_stripe_sca_ipn_handler {
 
 		$trans_info = explode( '|', $ref_id );
 		
-		//Read and sanitize the request parameters.
+		 
 		$membership_id = isset( $trans_info[1] ) ? absint( $trans_info[1] ) : false;
 		$membership_id = absint($membership_id);
 		
 		$member_id = isset( $trans_info[2] ) ? absint( $trans_info[2] ) : false;
 		
 		if( $membership_id && $member_id ) {
-			//Retrieve the CPT for this button
+			 
 			$button_cpt = get_post($membership_id); 
 			if(!$button_cpt){
-				//Fatal error. Could not find this payment button post object.
+				 
 				wcfmvm_create_log("Fatal Error! Failed to retrieve the membership post object for the given Membership ID: ". $membership_id);
 				wp_die("Fatal Error! Membership (ID: ".$membership_id.") does not exist. This request will fail.");
 			}
@@ -64,18 +64,18 @@ class wcfm_stripe_sca_ipn_handler {
 			$plan_id = isset( $subscription['stripe_plan_id'] ) ? $subscription['stripe_plan_id'] : '';
 			$descr = 'Subscription to "' . $plan_id . '" plan';
 				
-			//Validation passed. Go ahead with the charge.
+			 
 			
-			//Sandbox and other settings
+			 
 			if( $this->sandbox_mode ) {
 				wcfmvm_create_log("Sandbox payment mode is enabled. Using test API key details.");
-				$secret_key = $this->stripe_secret_key_test; //Use sandbox API key
+				$secret_key = $this->stripe_secret_key_test;  
 			} else {
-				$secret_key = $this->stripe_secret_key_live; //Use live API key
+				$secret_key = $this->stripe_secret_key_live;  
 			}
 	
 			try {
-				//Set secret API key in the Stripe library
+				 
 				\Stripe\Stripe::setApiKey($secret_key);
 	
 				$events = \Stripe\Event::all(
@@ -98,7 +98,7 @@ class wcfm_stripe_sca_ipn_handler {
 				}
 	
 				if ( false === $sess ) {
-					// Can't find session.
+					 
 					$error_msg = sprintf( "Fatal error! Payment with ref_id %s can't be found", $ref_id );
 					wcfmvm_create_log( $error_msg );
 					wp_die( esc_html( $error_msg ) );
@@ -110,7 +110,7 @@ class wcfm_stripe_sca_ipn_handler {
 	
 				$charge = $pi->charges;
 
-				// Grab the charge ID and set it as the transaction ID.
+				 
 				$txn_id = $charge->data[0]->id;
 				
 				
@@ -134,19 +134,19 @@ class wcfm_stripe_sca_ipn_handler {
 			
 		}
 		
-		// Reset Membership Session
+		 
 		if( WC()->session && WC()->session->get( 'wcfm_membership' ) ) {
 			WC()->session->__unset( 'wcfm_membership' );
 		}
 		
 		wcfmvm_create_log('Transaction data saved.');
 		
-		// Trigger the stripe IPN processed action hook (so other plugins can can listen for this event).
+		 
 		do_action('wcfmvm_stripe_ipn_processed', $token);
 		
 		do_action('wcfmvm_payment_ipn_processed', $token);
 		
-		// Redirect the user to the return URL (or to the homepage if a return URL is not specified for this payment button).
+		 
 		$return_url = apply_filters( 'wcfm_registration_thankyou_url', add_query_arg( 'vmstep', 'thankyou', get_wcfm_membership_url() ) );
 		wcfmvm_create_log("Redirecting customer to: ".$return_url);
 		wcfmvm_create_log("End of Stripe Buy Now IPN processing.");

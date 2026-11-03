@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin core
- *
- * WCfM Emails
- *
- * @author 		WC Lovers
- * @package 	wcfm/core
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFMvm_Emails {
 	
@@ -48,6 +48,6 @@ class WCFMvm_Emails {
 			if( file_exists( $WCFMvm->plugin_path . 'includes/emails/class-wcfmvm-email-' . esc_attr($wcfm_email) . '.php' ) ) {
 				require_once ( $WCFMvm->plugin_path . 'includes/emails/class-wcfmvm-email-' . esc_attr($wcfm_email) . '.php' );
 			}
-		} // End If Statement
+		}  
 	}
 }

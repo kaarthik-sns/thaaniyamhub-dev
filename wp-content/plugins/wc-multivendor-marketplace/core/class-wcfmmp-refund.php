@@ -40,7 +40,6 @@ class WCFMmp_Refund {
 
 		 
 		add_action('after_wcfm_ajax_controller', array(&$this, 'ajax_controller'));
-		add_action('wp_ajax_nopriv_wcfm_ajax_controller', array(&$this, 'ajax_controller'));
 
 		 
 		add_action('wp_ajax_wcfmmp_refund_requests_form_html', array(&$this, 'wcfmmp_refund_requests_form_html'));
@@ -97,11 +96,7 @@ class WCFMmp_Refund {
 		$WCFM_Query->init_query_vars();
 		$WCFM_Query->add_endpoints();
 
-		if (!get_option('wcfm_updated_end_point_refund')) {
-			 
-			flush_rewrite_rules();
-			update_option('wcfm_updated_end_point_refund', 1);
-		}
+		wcfmmp_maybe_flush_rewrite_rules( 'refund' );
 	}
 
 	
@@ -238,7 +233,7 @@ class WCFMmp_Refund {
 					break;
 
 				case 'wcfm-refund-requests-approve':
-					if (!current_user_can('manage_woocommerce') && !current_user_can('wcfm_vendor') && !current_user_can('shop_staff')) {
+					if (!$this->wcfmmp_current_user_can_moderate_refunds()) {
 						wp_send_json_error(esc_html__('You don&#8217;t have permission to do this.', 'woocommerce'));
 						wp_die();
 					}
@@ -248,7 +243,7 @@ class WCFMmp_Refund {
 					break;
 
 				case 'wcfm-refund-requests-cancel':
-					if (!current_user_can('manage_woocommerce') && !current_user_can('wcfm_vendor') && !current_user_can('shop_staff')) {
+					if (!$this->wcfmmp_current_user_can_moderate_refunds()) {
 						wp_send_json_error(esc_html__('You don&#8217;t have permission to do this.', 'woocommerce'));
 						wp_die();
 					}
@@ -258,6 +253,15 @@ class WCFMmp_Refund {
 					break;
 			}
 		}
+	}
+
+	
+
+
+	public function wcfmmp_current_user_can_moderate_refunds() {
+		$capability = apply_filters('wcfmmp_refund_moderation_capability', 'manage_woocommerce');
+
+		return current_user_can($capability) && !wcfm_is_vendor();
 	}
 
 	
@@ -320,6 +324,9 @@ class WCFMmp_Refund {
 
 		$refund_by_customer = isset($WCFMmp->wcfmmp_refund_options['refund_by_customer']) ? $WCFMmp->wcfmmp_refund_options['refund_by_customer'] : 'no';
 		if ($refund_by_customer == 'no') return $actions;
+
+		 
+		if (!is_account_page() || !is_user_logged_in() || ((int) $order->get_customer_id() !== get_current_user_id())) return $actions;
 
 		$order_id = $order->get_id();
 
@@ -485,7 +492,15 @@ class WCFMmp_Refund {
 	public function wcfmmp_refund_status_update_by_refund($refund_id, $status = 'completed', $refund_note = '') {
 		global $WCFM, $WCFMmp, $wpdb;
 
+		$refund_id = absint($refund_id);
 		if (!$refund_id) return;
+
+		 
+		$current_refund_status = $wpdb->get_var($wpdb->prepare('SELECT refund_status FROM ' . $wpdb->prefix . 'wcfm_marketplace_refund_request WHERE ID = %d', $refund_id));
+		if ('requested' !== $current_refund_status) {
+			wcfm_log(sprintf('Refund request #%d not processed, it is not awaiting approval (status: %s).', $refund_id, $current_refund_status ? $current_refund_status : 'not found'));
+			return false;
+		}
 
 		if ($status == 'completed') {
 			$vendor_id = 0;
@@ -508,6 +523,9 @@ class WCFMmp_Refund {
 					$refund_reason     = $refund_info->refund_reason;
 					$is_partially_refunded = $refund_info->is_partially_refunded;
 					$is_refunded = 0;
+
+					 
+					$ledger_reference = $is_partially_refunded ? 'partial-refund' : 'refund';
 
 					$wc_refund_processed = true;
 
@@ -764,12 +782,10 @@ class WCFMmp_Refund {
 						$wpdb->update("{$wpdb->prefix}wcfm_marketplace_refund_request", array('refund_status' => $status, 'refunded_amount' => $c_refunded_amount, 'refund_paid_date' => date('Y-m-d H:i:s', current_time('timestamp', 0))), array('ID' => $refund_id), array('%s', '%s', '%s'), array('%d'));
 
 						 
-						if ($is_partially_refunded) {
-							$WCFMmp->wcfmmp_ledger->wcfmmp_ledger_status_update($refund_id, 'completed', 'partial-refund');
-						} else {
-							$wpdb->update("{$wpdb->prefix}wcfm_marketplace_vendor_ledger", array('debit' => $c_refunded_amount), array('reference_id' => $refund_id, 'reference' => 'refund'), array('%s'), array('%d', '%s'));
-							$WCFMmp->wcfmmp_ledger->wcfmmp_ledger_status_update($refund_id, 'completed', 'refund');
+						if (!$is_partially_refunded) {
+							$wpdb->update("{$wpdb->prefix}wcfm_marketplace_vendor_ledger", array('debit' => $c_refunded_amount), array('reference_id' => $refund_id, 'reference' => $ledger_reference), array('%s'), array('%d', '%s'));
 						}
+						$WCFMmp->wcfmmp_ledger->wcfmmp_ledger_status_update($refund_id, 'completed', $ledger_reference);
 
 						 
 						$wcfm_refund_request_notified = $order->get_meta('_wcfm_refund_request_notified');

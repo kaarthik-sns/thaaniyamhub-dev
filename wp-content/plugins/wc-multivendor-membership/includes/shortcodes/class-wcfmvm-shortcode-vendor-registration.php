@@ -1,27 +1,27 @@
 <?php
 
-/**
- * WCFMvm plugin shortcode
- *
- * Plugin Registration Shortcode output
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/includes/shortcode
- * @version   1.2.0
- */
+
+
+
+
+
+
+
+
+
 
 class WCFM_Vendor_Registration_Shortcode {
 
 	public function __construct() {
 	}
 
-	/**
-	 * Output the WC Frontend Manager Registration shortcode.
-	 *
-	 * @access public
-	 * @param array $atts
-	 * @return void
-	 */
+	
+
+
+
+
+
+
 	static public function output($attr) {
 		global $WCFM, $WCFMvm, $wp, $WCFM_Query;
 		$WCFM->nocache();

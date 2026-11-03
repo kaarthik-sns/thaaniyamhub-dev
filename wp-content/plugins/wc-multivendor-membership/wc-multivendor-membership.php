@@ -4,18 +4,18 @@
  * Plugin URI: https://wclovers.com/product/woocommerce-multivendor-membership
  * Description: A simple membership plugin for your multi-vendor marketplace.
  * Author: WC Lovers
- * Version: 2.12.0
+ * Version: 2.12.1
  * Author URI: https://wclovers.com
  *
  * Text Domain: wc-multivendor-membership
  * Domain Path: /lang/
  *
  * WC requires at least: 7.0.0
- * WC tested up to: 11.0
+ * WC tested up to: 11.2
  *
  */
 
-if(!defined('ABSPATH')) exit; // Exit if accessed directly
+if(!defined('ABSPATH')) exit;  
 
 if ( ! class_exists( 'WCFMvm_Dependencies' ) )
 	require_once 'helpers/class-wcfmvm-dependencies.php';
@@ -33,14 +33,14 @@ if(!class_exists('WCFMvm')) {
 	$WCFMvm = new WCFMvm( __FILE__ );
 	$GLOBALS['WCFMvm'] = $WCFMvm;
 	
-	// Activation Hooks
+	 
 	register_activation_hook( __FILE__, array('wcfmvm', 'activate_wcfmvm') );
 	register_activation_hook( __FILE__, 'flush_rewrite_rules' );
 	
-	// Deactivation Hooks
+	 
 	register_deactivation_hook( __FILE__, array('wcfmvm', 'deactivate_wcfmvm') );
 
-	// Declaring WooCommerce High-Performance Order Storage(HPOS) compatibility 
+	 
 	add_action( 'before_woocommerce_init', function() {
 		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );

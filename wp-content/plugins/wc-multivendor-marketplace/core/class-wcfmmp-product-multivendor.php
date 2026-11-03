@@ -122,11 +122,7 @@ class WCFMmp_Product_Multivendor {
 		$WCFM_Query->init_query_vars();
 		$WCFM_Query->add_endpoints();
 		
-		if( !get_option( 'wcfm_updated_end_point_sell_items_catalog' ) ) {
-			 
-			flush_rewrite_rules();
-			update_option( 'wcfm_updated_end_point_sell_items_catalog', 1 );
-		}
+		wcfmmp_maybe_flush_rewrite_rules( 'sell_items_catalog' );
   }
   
   

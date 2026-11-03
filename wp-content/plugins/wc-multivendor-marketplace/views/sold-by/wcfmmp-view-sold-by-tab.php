@@ -53,11 +53,11 @@ if( $vendor_id ) {
 		}
 		
 		if( $email && ( $store_info['store_hide_email'] == 'no' ) && $WCFM->wcfm_vendor_support->wcfm_vendor_has_capability( $vendor_id, 'vendor_email' ) ) {
-			echo '<div class="wcfmmp_store_tab_info wcfmmp_store_info_address"><i class="wcfmfa fa-envelope" aria-hidden="true"></i>' . $email . '</div>';
+			echo '<div class="wcfmmp_store_tab_info wcfmmp_store_info_address"><i class="wcfmfa fa-envelope" aria-hidden="true"></i>' . esc_html( $email ) . '</div>';
 		}
 		
 		if( $phone && ( $store_info['store_hide_phone'] == 'no' ) && $WCFM->wcfm_vendor_support->wcfm_vendor_has_capability( $vendor_id, 'vendor_phone' ) ) {
-			echo '<div class="wcfmmp_store_tab_info wcfmmp_store_info_address"><i class="wcfmfa fa-phone" aria-hidden="true"></i><span>' . $phone . '</div>';
+			echo '<div class="wcfmmp_store_tab_info wcfmmp_store_info_address"><i class="wcfmfa fa-phone" aria-hidden="true"></i><span>' . esc_html( $phone ) . '</div>';
 		}
 		
 		do_action('after_wcfmmp_sold_by_info_product_page', $vendor_id );

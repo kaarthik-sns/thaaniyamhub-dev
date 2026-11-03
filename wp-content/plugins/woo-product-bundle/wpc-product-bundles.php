@@ -8,7 +8,7 @@ Author URI: https://wpclever.net
 Text Domain: woo-product-bundle
 Domain Path: /languages/
 Requires Plugins: woocommerce
-Version: 8.7.7
+Version: 8.7.8
 Requires at least: 5.9
 WC requires at least: 3.0
 WC tested up to: 11.2
@@ -18,7 +18,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 defined( 'ABSPATH' ) || exit;
 
-! defined( 'WOOSB_VERSION' ) && define( 'WOOSB_VERSION', '8.7.7' );
+! defined( 'WOOSB_VERSION' ) && define( 'WOOSB_VERSION', '8.7.8' );
 ! defined( 'WOOSB_LITE' ) && define( 'WOOSB_LITE', __FILE__ );
 ! defined( 'WOOSB_FILE' ) && define( 'WOOSB_FILE', __FILE__ );
 ! defined( 'WOOSB_URI' ) && define( 'WOOSB_URI', plugin_dir_url( __FILE__ ) );

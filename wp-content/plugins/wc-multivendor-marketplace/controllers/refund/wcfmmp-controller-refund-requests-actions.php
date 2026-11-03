@@ -24,8 +24,8 @@ class WCFMmp_Refund_Requests_Approve_Controller {
 	  parse_str($_POST['wcfm_refund_manage_form'], $wcfm_refund_manage_form_data);
 	  
 	  $commissions = array();
-	  if( isset( $wcfm_refund_manage_form_data['refunds'] ) && !empty( $wcfm_refund_manage_form_data['refunds'] ) ) {
-	  	$refunds     = $wcfm_refund_manage_form_data['refunds'];
+	  $refunds = isset( $wcfm_refund_manage_form_data['refunds'] ) ? array_filter( array_map( 'absint', (array) $wcfm_refund_manage_form_data['refunds'] ) ) : array();
+	  if( !empty( $refunds ) ) {
 	  	$refund_note = strip_tags( $wcfm_refund_manage_form_data['refund_note'] );
 	  	
 	  	 
@@ -92,8 +92,8 @@ class WCFMmp_Refund_Requests_Cancel_Controller {
 	  parse_str($_POST['wcfm_refund_manage_form'], $wcfm_refund_manage_form_data);
 	  
 	  $commissions = array();
-	  if( isset( $wcfm_refund_manage_form_data['refunds'] ) && !empty( $wcfm_refund_manage_form_data['refunds'] ) ) {
-	  	$refunds = $wcfm_refund_manage_form_data['refunds'];
+	  $refunds = isset( $wcfm_refund_manage_form_data['refunds'] ) ? array_filter( array_map( 'absint', (array) $wcfm_refund_manage_form_data['refunds'] ) ) : array();
+	  if( !empty( $refunds ) ) {
 	  	$refund_note = strip_tags( $wcfm_refund_manage_form_data['refund_note'] );
 	  	
 	  	 
@@ -112,7 +112,12 @@ class WCFMmp_Refund_Requests_Cancel_Controller {
 			foreach( $refunds as $refund_id ) {
 				
 				 
-				$WCFMmp->wcfmmp_refund->wcfmmp_refund_status_update_by_refund( $refund_id, 'cancelled', $refund_note );
+				$refund_update_status = $WCFMmp->wcfmmp_refund->wcfmmp_refund_status_update_by_refund( $refund_id, 'cancelled', $refund_note );
+				
+				if( !$refund_update_status ) {
+					echo '{"status": false, "message": "' . __('Refund processing failed, please check wcfm log.', 'wc-multivendor-marketplace') . '"}';
+					die;
+				}
 				
 				do_action( 'wcfmmp_refund_request_cancelled', $refund_id );
 			}

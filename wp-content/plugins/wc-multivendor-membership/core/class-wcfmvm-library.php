@@ -1,14 +1,14 @@
 <?php
 
-/**
- * WCFMvm plugin library
- *
- * Plugin intiate library
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/core
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
 
 class WCFMvm_Library {
 
@@ -59,16 +59,16 @@ class WCFMvm_Library {
 
 		$this->views_path = $WCFMvm->plugin_path . 'views/';
 
-		// Load wcfmvm Scripts
+		 
 		add_action('wcfm_load_scripts', array(&$this, 'load_scripts'));
 		add_action('after_wcfm_load_scripts', array(&$this, 'load_scripts'));
 
-		// Load wcfmvm Styles
+		 
 		add_action('wcfm_load_styles', array(&$this, 'load_styles'));
 		add_action('after_wcfm_load_styles', array(&$this, 'load_styles'));
 
-		// Load wcfmvm views
-		//add_action( 'wcfm_load_views', array( &$this, 'load_views' ) );
+		 
+		 
 		add_action('before_wcfm_load_views', array(&$this, 'load_views'));
 	}
 
@@ -88,7 +88,7 @@ class WCFMvm_Library {
 				$WCFM->library->load_collapsible_lib();
 				$WCFM->library->load_select2_lib();
 				wp_enqueue_script('wcfmvm_membership_manage_js', $this->js_lib_url . 'wcfmvm-script-memberships-manage.js', array('jquery'), $WCFMvm->version, true);
-				// Localized Script
+				 
 				$wcfm_messages = get_wcfmvm_membership_manage_messages();
 				wp_localize_script('wcfmvm_membership_manage_js', 'wcfm_memberships_manage_messages', $wcfm_messages);
 				break;
@@ -200,7 +200,7 @@ class WCFMvm_Library {
 
 			case 'wcfm-capability':
 				if (!wcfm_is_vendor()) {
-					//include_once( $this->views_path . 'wcfmvm-view-capability.php' );
+					 
 				}
 				break;
 		}

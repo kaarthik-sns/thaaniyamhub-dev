@@ -814,11 +814,11 @@ class WCFMmp_Shortcode {
 				break;
 				
 		  case 'store_email':
-				$content .= '<span style="display:inline-block" class="wcfmmp_store_info_content wcfmmp_store_info_content_' . esc_attr( $data_info ) . '">' . apply_filters( 'wcfmmp_additional_store_info', apply_filters( 'wcfmmp_mailto_email', $store_user->get_email(), $store_id ), $data_info, $store_id ) . '</span>';
+				$content .= '<span style="display:inline-block" class="wcfmmp_store_info_content wcfmmp_store_info_content_' . esc_attr( $data_info ) . '">' . apply_filters( 'wcfmmp_additional_store_info', esc_html( apply_filters( 'wcfmmp_mailto_email', $store_user->get_email(), $store_id ) ), $data_info, $store_id ) . '</span>';
 				break;
 			
 			case 'store_phone':
-				$content .=  '<span style="display:inline-block" class="wcfmmp_store_info_content wcfmmp_store_info_content_' . esc_attr( $data_info ) . '">' . apply_filters( 'wcfmmp_additional_store_info', $store_user->get_phone(), $data_info, $store_id ) . '</span>';
+				$content .=  '<span style="display:inline-block" class="wcfmmp_store_info_content wcfmmp_store_info_content_' . esc_attr( $data_info ) . '">' . apply_filters( 'wcfmmp_additional_store_info', esc_html( $store_user->get_phone() ), $data_info, $store_id ) . '</span>';
 				break;
 				
 			case 'store_gravatar':
@@ -830,7 +830,7 @@ class WCFMmp_Shortcode {
 				break;
 				
 			case 'store_support':
-				$content .=  $store_user->get_customer_support_details();
+				$content .=  wp_kses_post( $store_user->get_customer_support_details() );
 				break;
 				
 		  case 'store_social':

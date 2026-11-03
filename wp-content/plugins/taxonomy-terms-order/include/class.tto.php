@@ -89,12 +89,29 @@
                             
                             $TTO_Interface =    new TTO_Interface();
                             
-                            if ($post_type == 'post')
-                                add_submenu_page('edit.php', __('Taxonomy Order', 'taxonomy-terms-order'), __('Taxonomy Order', 'taxonomy-terms-order'), $capability, 'to-interface-'.$post_type, array ( $TTO_Interface, 'Interface' ) );
-                                elseif ($post_type == 'attachment')
-                                add_submenu_page('upload.php', __('Taxonomy Order', 'taxonomy-terms-order'), __('Taxonomy Order', 'taxonomy-terms-order'), $capability, 'to-interface-'.$post_type, array ( $TTO_Interface, 'Interface' ) );   
-                                else
-                                add_submenu_page('edit.php?post_type='.$post_type, __('Taxonomy Order', 'taxonomy-terms-order'), __('Taxonomy Order', 'taxonomy-terms-order'), $capability, 'to-interface-'.$post_type, array ( $TTO_Interface, 'Interface' ) );
+                            $post_type_object = get_post_type_object( $post_type );
+
+                            if ( $post_type === 'post' ) {
+                                $parent_slug = 'edit.php';
+                            } elseif ( $post_type === 'attachment' ) {
+                                $parent_slug = 'upload.php';
+                            } elseif ( $post_type_object && is_string( $post_type_object->show_in_menu ) ) {
+                                // CPT is registered as a submenu of another top-level menu.
+                                $parent_slug = $post_type_object->show_in_menu;
+                            } else {
+                                // Standard standalone CPT menu.
+                                $parent_slug = 'edit.php?post_type=' . $post_type;
+                            }
+
+                            add_submenu_page(
+                                                $parent_slug,
+                                                __( 'Taxonomy Order', 'taxonomy-terms-order' ),
+                                                __( 'Taxonomy Order', 'taxonomy-terms-order' ),
+                                                $capability,
+                                                'to-interface-' . $post_type,
+                                                array( $TTO_Interface, 'Interface' )
+                            );
+
                         }
                 }
                 

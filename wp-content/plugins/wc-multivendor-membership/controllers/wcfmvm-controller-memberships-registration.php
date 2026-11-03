@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin controllers
- *
- * Plugin Memberships Registration Controller
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/controllers
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
 
 class WCFMvm_Memberships_Registration_Controller {
 
@@ -30,7 +30,7 @@ class WCFMvm_Memberships_Registration_Controller {
 		$wcfm_membership = '';
 		$subscription_pay_mode = 'by_wcfm';
 
-		// Google reCaptcha support
+		 
 		if (apply_filters('wcfm_is_allow_registration_recaptcha', true)) {
 			if (function_exists('gglcptch_init')) {
 				if (isset($wcfm_membership_registration_form_data['g-recaptcha-response']) && !empty($wcfm_membership_registration_form_data['g-recaptcha-response'])) {
@@ -38,7 +38,7 @@ class WCFMvm_Memberships_Registration_Controller {
 				}
 				$check_result = apply_filters('gglcptch_verify_recaptcha', true, 'string', 'wcfm_registration_form');
 				if (true === $check_result) {
-					/* do necessary action */
+					 
 				} else {
 					echo '{"status": false, "message": "' . esc_html($check_result) . '"}';
 					die;
@@ -46,7 +46,7 @@ class WCFMvm_Memberships_Registration_Controller {
 			} elseif (function_exists('anr_captcha_form_field')) {
 				$check_result = anr_verify_captcha($wcfm_membership_registration_form_data['g-recaptcha-response']);
 				if (true === $check_result) {
-					/* do necessary action */
+					 
 				} else {
 					echo '{"status": false, "message": "' . esc_html__('Captcha failed, please try again.', 'wc-frontend-manager') . '"}';
 					die;
@@ -81,7 +81,7 @@ class WCFMvm_Memberships_Registration_Controller {
 			die;
 		}
 
-		// WCFM form custom validation filter
+		 
 		$custom_validation_results = apply_filters('wcfm_form_custom_validation', $wcfm_membership_registration_form_data, 'vendor_registration');
 		if (isset($custom_validation_results['has_error']) && !empty($custom_validation_results['has_error'])) {
 			$custom_validation_error = __('There has some error in submitted data.', 'wc-frontend-manager');
@@ -92,7 +92,16 @@ class WCFMvm_Memberships_Registration_Controller {
 			die;
 		}
 
-		// Handle File Uploads - 2.3.0
+		 
+		if (WC()->session && WC()->session->get('wcfm_membership')) {
+			$chosen_membership = WC()->session->get('wcfm_membership');
+			if (('-1' != $chosen_membership) && !wcfm_is_selectable_membership($chosen_membership)) {
+				echo '{"status": false, "message": "' . esc_html__('The selected membership plan is no longer available. Please choose another plan.', 'wc-multivendor-membership') . '"}';
+				die;
+			}
+		}
+
+		 
 		$files_data = array();
 		if (!empty($_FILES)) {
 			foreach ($_FILES as $file_key => $file) {
@@ -153,7 +162,7 @@ class WCFMvm_Memberships_Registration_Controller {
 				$email_verification = isset($membership_type_settings['email_verification']) ? 'yes' : '';
 				$sms_verification   = isset($membership_type_settings['sms_verification']) ? 'yes' : '';
 
-				// EMAIL Verification
+				 
 				if (apply_filters('wcfm_is_allow_email_verification', true)) {
 					$email_verified = false;
 					if (!$has_error) {
@@ -192,7 +201,7 @@ class WCFMvm_Memberships_Registration_Controller {
 					}
 				}
 
-				// SMS Verification - 2.3.0
+				 
 				if (apply_filters('wcfm_is_allow_sms_verification', true) && function_exists('wcfm_is_store_page')) {
 					$sms_verified = false;
 					if (!$has_error) {
@@ -231,7 +240,7 @@ class WCFMvm_Memberships_Registration_Controller {
 					}
 				}
 
-				// WCFM Marketplace Store Name Unique Check
+				 
 				$store_slug = '';
 				if (!$has_error && !wcfm_is_vendor() && isset($wcfm_membership_registration_form_data['store_name']) && !empty($wcfm_membership_registration_form_data['store_name'])) {
 					$store_slug = sanitize_title(wc_clean($wcfm_membership_registration_form_data['store_name']));
@@ -291,54 +300,54 @@ class WCFMvm_Memberships_Registration_Controller {
 					if (!$member_id || is_wp_error($member_id)) {
 						$has_error = true;
 					} else {
-						/*if( !$is_update ) {
-						  if( !defined( 'DOING_WCFM_EMAIL' ) ) 
-							  define( 'DOING_WCFM_EMAIL', true );
-							
-							// Sending Mail to new user
-							$mail_to = $wcfm_membership_registration_form_data['user_email'];
-							$new_account_mail_subject = "{site_name}: New Account Created";
-							$new_account_mail_body = __( 'Dear', 'wc-frontend-membership_registration-vendor-membership' ) . ' {first_name}' .
-																			 ',<br/><br/>' . 
-																			 __( 'Your account has been created as {user_role}. Follow the bellow details to log into the system', 'wc-frontend-membership_registration-vendor-membership' ) .
-																			 '<br/><br/>' . 
-																			 __( 'Site', 'wc-frontend-membership_registration-vendor-membership' ) . ': {site_url}' . 
-																			 '<br/>' .
-																			 __( 'Login', 'wc-frontend-membership_registration-vendor-membership' ) . ': {username}' .
-																			 '<br/>' . 
-																			 __( 'Password', 'wc-frontend-membership_registration-vendor-membership' ) . ': {password}' .
-																			 '<br /><br/>Thank You';
-																			 
-							$wcfmgs_new_account_mail_subject = get_option( 'wcfmgs_new_account_mail_subject' );
-							if( $wcfmgs_new_account_mail_subject ) $new_account_mail_subject =  $wcfmgs_new_account_mail_subject;
-							$wcfmgs_new_account_mail_body = get_option( 'wcfmgs_new_account_mail_body' );
-							if( $wcfmgs_new_account_mail_body ) $new_account_mail_body =  $wcfmgs_new_account_mail_body;
-							
-							$subject = str_replace( '{site_name}', get_bloginfo( 'name' ), $new_account_mail_subject );
-							$subject = apply_filters( 'wcfm_email_subject_wrapper', $subject );
-							$message = str_replace( '{site_url}', get_bloginfo( 'url' ), $new_account_mail_body );
-							$message = str_replace( '{first_name}', $wcfm_membership_registration_form_data['first_name'], $message );
-							$message = str_replace( '{username}', $wcfm_membership_registration_form_data['user_name'], $message );
-							$message = str_replace( '{password}', $password, $message );
-							$message = str_replace( '{user_role}', 'Shop Membership_registration', $message );
-							$message = apply_filters( 'wcfm_email_content_wrapper', $message, __( 'New Account', 'wc-frontend-manager' ) );
-							
-							wp_mail( $mail_to, $subject, $message );
-						}*/
+						
 
-						// Update First Name as Billing & Shipping First Name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+						 
 						if (isset($wcfm_membership_registration_form_data['first_name'])) {
 							update_user_meta($member_id, 'billing_first_name', $wcfm_membership_registration_form_data['first_name']);
 							update_user_meta($member_id, 'shipping_first_name', $wcfm_membership_registration_form_data['first_name']);
 						}
 
-						// Update Last Name as Billing & Shipping Last Name
+						 
 						if (isset($wcfm_membership_registration_form_data['last_name'])) {
 							update_user_meta($member_id, 'billing_last_name', $wcfm_membership_registration_form_data['last_name']);
 							update_user_meta($member_id, 'shipping_last_name', $wcfm_membership_registration_form_data['last_name']);
 						}
 
-						// Update Store Address as Billing & Shipping Address
+						 
 						$wcfmvm_registration_static_fields = wcfm_get_option('wcfmvm_registration_static_fields', array());
 						if (!empty($wcfmvm_registration_static_fields) && isset($wcfm_membership_registration_form_data['wcfmvm_static_infos']) && !empty($wcfm_membership_registration_form_data['wcfmvm_static_infos'])) {
 							foreach ($wcfmvm_registration_static_fields as $wcfmvm_registration_static_field => $wcfmvm_registration_static_field_val) {
@@ -389,26 +398,26 @@ class WCFMvm_Memberships_Registration_Controller {
 							}
 						}
 
-						// Update Store name
+						 
 						if (!wcfm_is_vendor() && isset($wcfm_membership_registration_form_data['store_name']) && !empty($wcfm_membership_registration_form_data['store_name'])) {
 							update_user_meta($member_id, 'store_name', $wcfm_membership_registration_form_data['store_name']);
 							update_user_meta($member_id, 'wcfmmp_store_name', $wcfm_membership_registration_form_data['store_name']);
 						}
 
-						// Update User Membership
+						 
 						if (WC()->session && WC()->session->get('wcfm_membership')) {
 							$wcfm_membership = WC()->session->get('wcfm_membership');
 							update_user_meta($member_id, 'temp_wcfm_membership', $wcfm_membership);
-						} elseif ($wcfm_membership = get_wcfm_free_membership()) {
+						} elseif ($wcfm_membership = get_wcfm_selectable_free_membership()) {
 							update_user_meta($member_id, 'temp_wcfm_membership', $wcfm_membership);
 						}
 
-						// Update Static Infos - 1.0.6
+						 
 						if (isset($wcfm_membership_registration_form_data['wcfmvm_static_infos'])) {
 							update_user_meta($member_id, 'wcfmvm_static_infos', $wcfm_membership_registration_form_data['wcfmvm_static_infos']);
 						}
 
-						// Direct File Upload - 2.3.0
+						 
 						if (!empty($files_data)) {
 							if (!isset($wcfm_membership_registration_form_data['wcfmvm_custom_infos'])) $wcfm_membership_registration_form_data['wcfmvm_custom_infos'] = $files_data;
 							else {
@@ -416,12 +425,12 @@ class WCFMvm_Memberships_Registration_Controller {
 							}
 						}
 
-						// Update Additional Infos - 1.0.5
+						 
 						if (!wcfm_is_vendor() && isset($wcfm_membership_registration_form_data['wcfmvm_custom_infos'])) {
 							update_user_meta($member_id, 'wcfmvm_custom_infos', $wcfm_membership_registration_form_data['wcfmvm_custom_infos']);
 
-							// Toolset User Fields Compatibility added
-							$wcfmvm_registration_custom_fields = wcfm_get_option('wcfmvm_registration_custom_fields', array());
+							 
+							$wcfmvm_registration_custom_fields = wcfmvm_get_registration_custom_fields(get_user_meta($member_id, 'temp_wcfm_membership', true), $member_id);
 							$wcfmvm_custom_infos = (array) $wcfm_membership_registration_form_data['wcfmvm_custom_infos'];
 
 							if (!empty($wcfmvm_registration_custom_fields)) {
@@ -448,7 +457,7 @@ class WCFMvm_Memberships_Registration_Controller {
 							}
 						}
 
-						// Email Verification Update - 1.3.2
+						 
 						if (apply_filters('wcfm_is_allow_email_verification', true) && $email_verification) {
 							if ($email_verified) {
 								update_user_meta($member_id, '_wcfm_email_verified', true);
@@ -461,7 +470,7 @@ class WCFMvm_Memberships_Registration_Controller {
 						}
 						update_user_meta($member_id, 'wcemailverified', 'true');
 
-						// SMS Verification Update - 2.3.0
+						 
 						if (apply_filters('wcfm_is_allow_sms_verification', true) && function_exists('wcfm_is_store_page') && $sms_verification) {
 							if ($sms_verified) {
 								update_user_meta($member_id, '_wcfm_sms_verified', true);
@@ -473,7 +482,7 @@ class WCFMvm_Memberships_Registration_Controller {
 							}
 						}
 
-						// Free Membership Registration - 1.2.0
+						 
 						if (empty($wcfm_memberships_list) || (WC()->session && WC()->session->get('wcfm_membership_free_registration'))) {
 							$member_user = new WP_User(absint($member_id));
 							$shop_name = $wcfm_membership_registration_form_data['store_name'];
@@ -493,7 +502,7 @@ class WCFMvm_Memberships_Registration_Controller {
 							}
 						} elseif (WC()->session && WC()->session->get('wcfm_membership')) {
 							$wcfm_membership = absint(WC()->session->get('wcfm_membership'));
-							// Set WC Cart for WC Checout Pay Mode - 1.3.0
+							 
 							$subscription = (array) get_post_meta($wcfm_membership, 'subscription', true);
 							$subscription_pay_mode = isset($subscription['subscription_pay_mode']) ? $subscription['subscription_pay_mode'] : 'by_wcfm';
 							$subscription_product = isset($subscription['subscription_product']) ? $subscription['subscription_product'] : '';

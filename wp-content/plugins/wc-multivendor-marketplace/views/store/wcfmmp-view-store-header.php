@@ -108,7 +108,7 @@ $store_address_info_class = '';
 							  <i class="wcfmfa fa-envelope" aria-hidden="true"></i>
 							  <span>
 							    <?php if( apply_filters( 'wcfmmp_is_allow_mailto_linked', true ) ) { ?>
-							      <a href="mailto:<?php echo apply_filters( 'wcfmmp_mailto_email', $email, $store_user->get_id() ); ?>"><?php echo esc_attr($email); ?></a>
+							      <a href="mailto:<?php echo esc_attr( apply_filters( 'wcfmmp_mailto_email', $email, $store_user->get_id() ) ); ?>"><?php echo esc_attr($email); ?></a>
 							    <?php } else { ?>
 							    	<?php echo esc_attr($email); ?>
 							    <?php } ?>

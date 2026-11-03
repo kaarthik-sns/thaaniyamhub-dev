@@ -1,15 +1,15 @@
 <?php
-/**
- * The template for email verification content.
- *
- * Override this template by copying it to yourtheme/wcfm/emails/email-verification.php
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/views/emails
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
 if (!defined('ABSPATH'))
-    return; // Exit if accessed directly
+    return;  
   
 global $WCFM;
 

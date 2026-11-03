@@ -3,11 +3,11 @@ Contributors: wclovers
 Tags: woocommerce marketplace, multivendor marketplace, ai marketplace, vendor dashboard, multi vendor, multi seller, woocommerce product vendors
 Donate link: https://www.paypal.me/wclovers/25usd
 Requires at least: 5.5
-Tested up to: 7.0.2
+Tested up to: 7.1.4
 WC requires at least: 7.0
-WC tested up to: 11.0
+WC tested up to: 11.2
 Requires PHP: 7.4
-Stable tag: 3.8.3
+Stable tag: 3.8.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -252,6 +252,27 @@ Explore the frontend interfaces and management screens included in WCFM Marketpl
 == Changelog ==
 
 Below is a record of updates, features, and fixes across all releases.
+
+= 3.8.4 =
+*Updated - 02/11/2026*
+
+* Fixed   - Broken Access Control vulnerability in the marketplace setup wizard, where an unauthenticated visitor could reach the wizard and its plugin installer through wp-admin/admin-ajax.php, reported by mamgad (Patchstack), Credit goes to mamgad for identifying this issue.
+* Security - The setup wizard and each of its plugin install handlers now require the activate_plugins capability, filterable through wcfmmp_setup_page_required_capability.
+* Fixed   - Stored Cross-Site Scripting (XSS) vulnerability in the vendor store phone and social profile fields, where a vendor could inject executable HTML that ran in the admin vendor list, on the store page and in the product page's store tab, reported by Jakub Herman (Wordfence), Credit goes to Jakub Herman for identifying this issue.
+* Security - The store phone, store email, customer support details and social profile links are now escaped wherever they are rendered, including the [wcfm_store_info] shortcode and the store header's email link. Social profile links that use a javascript: or other unsafe URL scheme are no longer linked.
+* Fixed   - Stored Cross-Site Scripting (XSS) vulnerability in the store banner and store list card, where a vendor could place executable HTML around a valid YouTube URL in the video banner, which got past the 3.8.3 fix and ran for anyone who visited the store page or the [wcfm_stores] store list, reported by mroccon (Patchstack), Credit goes to mroccon for identifying this issue.
+* Security - Store video banners now embed a video only when the whole value is a YouTube URL, and build the embed from the video ID alone, so no other part of the banner value is printed.
+* Fixed   - Broken Access Control vulnerability in refund requests, where any vendor or vendor staff member could approve or reject other vendors' refund requests through wp-admin/admin-ajax.php, which created real refunds on those vendors' orders and changed their commissions, reported by mroccon (Patchstack), Credit goes to mroccon for identifying this issue.
+* Security - Approving and rejecting refund requests now requires a store manager who is not a vendor (the manage_woocommerce capability, filterable through wcfmmp_refund_moderation_capability), as the Refund Requests dashboard already showed. Vendors' own requests are still approved automatically when Refund auto-approve is enabled.
+* Fixed   - A refund request could be approved again after it was completed, which refunded the order once more each time. Only refund requests that are still awaiting approval are now approved or rejected.
+* Fixed   - Broken Access Control vulnerability in the WooCommerce and WordPress REST APIs, where vendors and vendor staff kept out of wp-admin could still read every store's orders, refunds, subscriptions, bookings, customers, reviews and reports, including customers' names, emails and phone numbers, and could change WooCommerce settings, payment gateways and webhooks, refund or add notes to other stores' orders, and edit other users' pages and posts. This covered /wp-json/wc/, wc-analytics, wc-admin, WooCommerce Bookings, WooCommerce ShipStation, wp/v2 and the WooCommerce MCP tools, which all trusted the store-wide capabilities the vendor role carries for the WCFM dashboard.
+* Security - While a vendor or vendor staff member without the Backend Access (wp-admin) capability uses a REST route that is not scoped to their own store, those store-wide capabilities are withheld (filterable through wcfmmp_rest_vendor_withheld_capabilities). Vendors and staff with Backend Access keep their role on the REST API, as they do in wp-admin, whose screens run on it (filterable through wcfmmp_rest_vendor_backend_access). The WCFM Marketplace REST API keeps working, and other vendor-scoped routes can be added through wcfmmp_rest_vendor_scoped_routes. Product lists requested through the WooCommerce MCP tools now show only the vendor's own products.
+* Fixed   - Saving a vendor's profile, by the vendor or from the vendor's page in the admin dashboard, deleted the vendor's Additional Info answers to registration fields that were not on the form, such as the fields of a membership plan. The Additional Info section now also shows the registration fields of the vendor's membership plan (WCFM Membership 2.12.1 or later).
+* Fixed   - The customer Refund button also showed in the order details on the order received (thank you) and order tracking pages, including to guest checkout customers, where clicking it did nothing. It now shows only on My Account pages and only to the order's own customer, where a refund can be requested.
+* Fixed   - Approving a partial refund request that covered the rest of an item, such as one unit of a single-unit item, left the request's vendor ledger entry pending. The ledger entry created with the request is now marked completed with the amount refunded.
+* Fixed   - Rewrite rules were rebuilt on every front-end and AJAX request, slowing down page loads.
+* Enhance - WordPress 7.1+ compatibility check added
+* Enhance - WooCommerce 11.2+ compatibility check added
 
 = 3.8.3 =
 *Updated - 30/08/2026*
@@ -1829,6 +1850,6 @@ Below is a record of updates, features, and fixes across all releases.
 
 == Upgrade Notice ==
 
-= 3.8.3 =
+= 3.8.4 =
 
-* Security release: fixes stored XSS in the store list shortcodes (store search and radius filter attributes) and in the store video banner. Update recommended for all sites.
+* Security release: fixes broken access control in the WooCommerce and WordPress REST APIs, in refund request moderation and in the setup wizard, and stored XSS in the store phone, social profile and video banner fields. Adds WordPress 7.1 and WooCommerce 11.2 compatibility. Update strongly recommended for all sites.

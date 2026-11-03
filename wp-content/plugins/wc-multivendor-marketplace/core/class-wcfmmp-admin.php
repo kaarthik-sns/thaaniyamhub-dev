@@ -107,6 +107,13 @@ class WCFMmp_Admin {
 
 
 	function wcfmmp_redirect_to_setup(){
+		 
+		 
+		 
+		if ( wp_doing_ajax() || ! is_user_logged_in() || ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+
 		if ( get_transient( '_wc_activation_redirect' ) ) {
 			delete_transient( '_wc_activation_redirect' );
 			return;

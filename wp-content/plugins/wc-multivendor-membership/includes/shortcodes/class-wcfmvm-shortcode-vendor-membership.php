@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFMvm plugin shortcode
- *
- * Plugin Membership Shortcode output
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/includes/shortcode
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFM_Vendor_Membership_Shortcode {
 	
@@ -15,13 +15,13 @@ class WCFM_Vendor_Membership_Shortcode {
 		
 	}
 
-	/**
-	 * Output the WC Frontend Manager Membership shortcode.
-	 *
-	 * @access public
-	 * @param array $atts
-	 * @return void
-	 */
+	
+
+
+
+
+
+
 	static public function output( $attr ) {
 		global $WCFM, $WCFMvm, $wp, $WCFM_Query;
 		$WCFM->nocache();

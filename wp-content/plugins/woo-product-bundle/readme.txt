@@ -3,7 +3,7 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 7.1
-Stable tag: 8.7.7
+Stable tag: 8.7.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,10 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.7.8 =
+* Fixed: Variations cache
+* Fixed: Incorrect on-backorder status
 
 = 8.7.7 =
 * Fixed: Merge identical items in the cart

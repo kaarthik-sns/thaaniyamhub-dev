@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMgs Memberships Settings View
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/view
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 global $wp, $WCFM, $WCFMvm;
 
@@ -49,12 +49,12 @@ $stripe_secret_key_test    = isset( $membership_payment_settings['stripe_secret_
 $stripe_webhook_secret_live = isset( $membership_payment_settings['stripe_webhook_secret_live'] ) ? $membership_payment_settings['stripe_webhook_secret_live'] : '';
 $stripe_webhook_secret_test = isset( $membership_payment_settings['stripe_webhook_secret_test'] ) ? $membership_payment_settings['stripe_webhook_secret_test'] : '';
 $stripe_webhook_endpoint    = add_query_arg( 'wcfmvm_process_ipn', 'stripe_webhook', get_wcfm_membership_url() );
-/* translators: %s: the site's Stripe webhook endpoint URL */
+ 
 $stripe_webhook_hint        = sprintf( __( 'Add a webhook endpoint for %s in your Stripe dashboard, subscribe it to checkout.session.completed, invoice.payment_succeeded, invoice.payment_failed and customer.subscription.deleted, then paste its signing secret (whsec_...) here. Required for automatic subscription renewals.', 'wc-multivendor-membership' ), $stripe_webhook_endpoint );
 $bank_details              = isset( $membership_payment_settings['bank_details'] ) ? $membership_payment_settings['bank_details'] : '';
 $payment_terms             = isset( $membership_payment_settings['payment_terms'] ) ? $membership_payment_settings['payment_terms'] : '';
 
-// Membership Tax Setting
+ 
 $membership_tax_settings = array();
 if( isset( $wcfm_membership_options['membership_tax_settings'] ) ) $membership_tax_settings = $wcfm_membership_options['membership_tax_settings'];
 $tax_enable  = isset( $membership_tax_settings['enable'] ) ? 'yes' : 'no';
@@ -510,9 +510,9 @@ do_action( 'before_wcfm_membership_settings_manage' );
 																																						'payment_methods' => array( 'label' => __( 'Payment Methods', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[payment_methods]', 'type' => 'checklist', 'class' => 'wcfm-checkbox wcfm_ele payment_options', 'label_class' => 'wcfm_title checkbox_title', 'options' => $wcfm_membership_payment_methods, 'value' => $payment_methods  ),
 																																						'paypal_sandbox' => array( 'label' => __( 'Enable Test Mode', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[paypal_sandbox]', 'type' => 'checkbox', 'class' => 'wcfm-checkbox wcfm_ele', 'label_class' => 'wcfm_title checkbox_title', 'value' => 'yes', 'dfvalue' => $paypal_sandbox ),
 																																						'paypal_email' => array( 'label' => __( 'PayPal Email', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[paypal_email]', 'type' => 'text', 'class' => 'wcfm-text wcfm_ele payment_fields paypal_payment_field', 'label_class' => 'wcfm_title payment_fields paypal_payment_field', 'value' => $paypal_email ),
-																																						//'paypal_api_username' => array( 'label' => __( 'PayPal API Username', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[paypal_api_username]', 'type' => 'text', 'class' => 'wcfm-text wcfm_ele payment_fields paypal_payment_field', 'label_class' => 'wcfm_title payment_fields paypal_payment_field', 'value' => $paypal_api_username ),
-																																						//'paypal_api_password' => array( 'label' => __( 'PayPal API Password', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[paypal_api_password]', 'type' => 'text', 'class' => 'wcfm-text wcfm_ele payment_fields paypal_payment_field', 'label_class' => 'wcfm_title payment_fields paypal_payment_field', 'value' => $paypal_api_password ),
-																																						//'paypal_api_signature' => array( 'label' => __( 'PayPal API Signature', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[paypal_api_signature]', 'type' => 'text', 'class' => 'wcfm-text wcfm_ele payment_fields paypal_payment_field', 'label_class' => 'wcfm_title payment_fields paypal_payment_field', 'value' => $paypal_api_signature ),
+																																						 
+																																						 
+																																						 
 																																						'stripe_published_key_live' => array( 'label' => __( 'Stripe Live Publishable Key', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[stripe_published_key_live]', 'type' => 'password', 'class' => 'wcfm-text wcfm_ele payment_fields stripe_payment_field live_payment_field', 'label_class' => 'wcfm_title payment_fields stripe_payment_field live_payment_field', 'value' => $stripe_published_key_live ),
 																																						'stripe_secret_key_live' => array( 'label' => __( 'Stripe Live Secret Key', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[stripe_secret_key_live]', 'type' => 'password', 'class' => 'wcfm-text wcfm_ele payment_fields stripe_payment_field live_payment_field', 'label_class' => 'wcfm_title payment_fields stripe_payment_field live_payment_field', 'value' => $stripe_secret_key_live ),
 																																						'stripe_published_key_test' => array( 'label' => __( 'Stripe Test Publishable Key', 'wc-multivendor-membership' ), 'name' => 'membership_payment_settings[stripe_published_key_test]', 'type' => 'password', 'class' => 'wcfm-text wcfm_ele payment_fields stripe_payment_field test_payment_field', 'label_class' => 'wcfm_title payment_fields stripe_payment_field test_payment_field', 'value' => $stripe_published_key_test ),
@@ -559,7 +559,7 @@ do_action( 'before_wcfm_membership_settings_manage' );
 					  <div class="wcfm_clearfix"></div>
 						<?php
 							$WCFM->wcfm_fields->wcfm_generate_form_field( apply_filters( 'membership_setting_thankyou_fields', array(  
-																																				//'thankyou_title' => array( 'label' => __( 'Thank You page title', 'wc-multivendor-membership' ), 'name' => 'thankyou_content[title]', 'type' => 'text', 'class' => 'wcfm-text wcfm_ele', 'label_class' => 'wcfm_title', 'value' => $thankyou_title ),
+																																				 
 																																				'free_thankyou_content' => array( 'type' => 'wpeditor', 'class' => 'wcfm-text wcfm_ele wcfm_wpeditor', 'label_class' => 'wcfm_title wcfm_full_ele_title', 'value' => $free_thankyou_content, 'desc' => __( 'Please don\'t include Dashboard URL, it will be automatically append with the content.', 'wc-multivendor-membership' ) ),
 																																				) ) );
 						?>

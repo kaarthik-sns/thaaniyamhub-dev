@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMgs Memberships List View
- *
- * @author 		WC Lovers
- * @package 	wcfmgs/view
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 global $WCFM, $WCFMu, $WCFMgs;
 

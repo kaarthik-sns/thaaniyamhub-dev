@@ -1,14 +1,14 @@
 <?php
 
-/**
- * WCFMvm plugin Install
- *
- * Plugin install script which adds default pages, taxonomies, and database tables to WordPress. Runs on activation and upgrade.
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/helpers
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFMvm_Install {
 
@@ -24,7 +24,7 @@ class WCFMvm_Install {
 			if( isset($wcfm_page_options['wcfm_vendor_registration_page_id']) ) {
 				wp_update_post(array('ID' => $wcfm_page_options['wcfm_vendor_registration_page_id'], 'post_content' => '[wcfm_vendor_registration]'));
 			}
-			//update_option('wcfm_page_options', $wcfm_page_options);
+			 
 		}
 		
 		if ( !get_option("wcfmvm_page_install") ) {
@@ -36,32 +36,32 @@ class WCFMvm_Install {
 		if ( !get_option( 'wcfmvm_table_install' ) ) {
 			$this->wcfmvm_create_tables();
 			update_option( "wcfmvm_table_install", 1 );
-			// Tables are created at the current schema, nothing to update
+			 
 			update_option( 'wcfmvm_db_version', $WCFMvm->version );
 		}
 		
-		// Intialize WCFM End points
+		 
 		if(WCFMvm_Dependencies::wcfm_plugin_active_check()) {
 			$WCFM_Query->init_query_vars();
 			$WCFM_Query->add_endpoints();
 			
-			// Flush rules after install
+			 
 			flush_rewrite_rules();
 		}
 		
 	}
 	
-	/**
-	 * Create a page
-	 *
-	 * @access public
-	 * @param mixed $slug Slug for the new page
-	 * @param mixed $option Option name to store the page's ID
-	 * @param string $page_title (default: '') Title for the new page
-	 * @param string $page_content (default: '') Content for the new page
-	 * @param int $post_parent (default: 0) Parent for the new page
-	 * @return void
-	 */
+	
+
+
+
+
+
+
+
+
+
+
 	function wcfmvm_create_page($slug, $option, $page_title = '', $page_content = '', $post_parent = 0) {
 		global $wpdb;
 		$option_value = get_option($option);
@@ -87,16 +87,16 @@ class WCFMvm_Install {
 		update_option($option, $page_id);
 	}
 
-	/**
-	 * Create pages that the plugin relies on, storing page id's in variables.
-	 *
-	 * @access public
-	 * @return void
-	 */
+	
+
+
+
+
+
 	function wcfmvm_create_pages() {
 		global $WCFM;
 
-		// WCFM page
+		 
 		$this->wcfmvm_create_page(esc_sql(_x('vendor-membership', 'page_slug', 'vendor-membership')), 'wcfm_vendor_membership_page_id', __('Vendor Membership', 'wc-multivendor-membership'), '[wcfm_vendor_membership]');
 		$this->wcfmvm_create_page(esc_sql(_x('vendor-register', 'page_slug', 'vendor-register')), 'wcfm_vendor_registration_page_id', __('Vendor Registration', 'wc-multivendor-membership'), '[wcfm_vendor_registration]');
 		
@@ -107,11 +107,11 @@ class WCFMvm_Install {
 		update_option('wcfm_page_options', $array_pages);
 	}
 	
-	/**
-	 * Create WCFMvm Membership Subscription tables
-	 * @global object $wpdb
-	 * From Version 1.0.0
-	 */
+	
+
+
+
+
 	function wcfmvm_create_tables() {
 		global $wpdb;
 		$collate = '';
@@ -142,22 +142,22 @@ class WCFMvm_Install {
 		}
 	}
 
-	/**
-	 * Schema updates for WCFMvm tables that already exist
-	 * @global object $wpdb
-	 *
-	 * The tables are created once, guarded by the `wcfmvm_table_install` option, so
-	 * column changes have to be applied separately on installs that predate them.
-	 * Runs whenever `wcfmvm_db_version` trails the plugin version, so every statement
-	 * here must be safe to run more than once.
-	 */
+	
+
+
+
+
+
+
+
+
 	static function wcfmvm_update_tables() {
 		global $wpdb;
 
 		$update_tables_query = array();
 
-		// `subscription_amt` used to be an int(10), which truncated the paise / cents
-		// of every subscription amount stored.
+		 
+		 
 		$update_tables_query[] = "ALTER TABLE `" . $wpdb->prefix . "wcfm_membership_subscription` MODIFY `subscription_amt` decimal(19,4) NOT NULL default 0";
 
 		foreach ( $update_tables_query as $update_table_query ) {

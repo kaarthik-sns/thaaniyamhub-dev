@@ -1,51 +1,51 @@
 <?php
-/**
- * WCFM Vendor Membership plugin core
- *
- * Plugin Frontend Controler
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/core
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFMvm_Frontend {
 	
 	public function __construct() {
 		global $WCFM, $WCFMvm;
 		
-		// WCFM Membership Page Template
+		 
  		add_action( 'page_template', array( &$this, 'wcfm_membership_template' ) );
 		
  		if( apply_filters( 'wcfm_is_allow_manage_groups', true ) ) {
-			// WCFM Membership End Points
+			 
 			add_filter( 'wcfm_query_vars', array( &$this, 'wcfmvm_vendor_membership_wcfm_query_vars' ), 90 );
 			add_filter( 'wcfm_endpoint_title', array( &$this, 'wcfmvm_vendor_membership_endpoint_title' ), 90, 2 );
 			add_action( 'init', array( &$this, 'wcfmvm_vendor_membership_init' ), 90 );
 			
-			// WCFM Membership Page
+			 
 			add_filter( 'wcfm_settings_fields_pages', array( $this, 'wcfmvm_settings_fields_pages' ) ); 
 			
-			// WCFM Membership Endpoint Edit
+			 
 			add_filter( 'wcfm_endpoints_slug', array( $this, 'wcfmvm_vendor_membership_endpoints_slug' ) );
 			
-			// WCFM Menu Filter
+			 
 			add_filter( 'wcfm_menus', array( &$this, 'wcfmvm_vendor_membership_menus' ), 300 );
 			add_filter( 'wcfm_menu_dependancy_map', array( &$this, 'wcfmvm_vendor_membership_menu_dependancy_map' ) );
 		}
 		
-		// Vendor Details Page
+		 
 		if( !wcfm_is_vendor() && apply_filters( 'wcfm_is_allow_manage_groups', true ) ) {
-			//add_action( 'after_wcfm_vendors_manage_form', array( &$this, 'wcfmvm_vendor_manage_profile_additional_info' ), 12 );
+			 
 			add_action( 'after_wcfm_vendors_manage_membership_details', array( &$this, 'wcfmvm_vendor_manage_membership_additional_info' ), 12 );
 			add_action( 'wcfm_vendor_manage_membrship_details', array( &$this, 'wcfmvm_vendor_manage_membrship_details' ), 12 );
 		}
 		
-		// Membership Details in Profile 
+		 
 		if( wcfm_is_vendor() && apply_filters( 'wcfm_is_allow_vendor_membership', true ) ) {
 			if( apply_filters( 'wcfm_is_pref_membership', true ) ) {
 				add_action( 'wcfm_dashboard_after_username', array( &$this, 'wcfmvm_vendor_dashboard_username' ), 12 );
-				//add_action( 'end_wcfm_vendor_settings', array( &$this, 'wcfmvm_vendor_membership_user_setting_block' ), 12 );
+				 
 				add_action( 'wcfm_vendor_setting_header_after', array( &$this, 'wcfmvm_vendor_membership_user_setting_header' ), 12 );
 				add_action( 'end_wcfm_user_profile', array( &$this, 'wcfmvm_vendor_membership_user_profile' ), 12 );
 				if( apply_filters( 'wcfm_is_allow_membership_manage_under_setting', false ) ) {
@@ -54,44 +54,44 @@ class WCFMvm_Frontend {
 			}
 		}
 		
-		// Show Membership Plan change option when product limit reached
+		 
 		if( wcfm_is_vendor() ) {
 			add_action( 'wcfm_product_limit_pay_for_product_after', array( &$this, 'wcfmvm_after_pay_per_product_option' ) );
 			add_action( 'wcfm_product_limit_reached', array( &$this, 'wcfmvm_change_membership_option' ), 20 );
 		}
 		
-		// Membership direct message type
+		 
 		add_filter( 'wcfm_message_types', array( &$this, 'wcfm_membership_message_types' ), 50 );
 		
-		// WC Checkout for WCfM Membership products thank you redirect
+		 
 		add_action( 'woocommerce_thankyou', array( &$this, 'wcfmvm_thankyou_redirect_on_membership_purchase' ) );
 		
-		// Custom Plan Page Redirect support added
+		 
 		add_filter( 'wcfm_change_membership_url', array( &$this, 'wcfm_membership_custom_plan_url' ), 50 );
 		
-		// Custom Thank You Page Redirect support added
+		 
 		add_filter( 'wcfm_registration_thankyou_url', array( &$this, 'wcfm_membership_custom_thankyou_url' ), 50 );
 		
-		// Membership Subscription First Step
+		 
 		add_filter( 'wcfmvm_is_allow_registration_first', array( &$this, 'wcfmvm_registration_first_step' ), 50 );
 		
-		// Membership enqueue scripts
+		 
 		add_action('wp_enqueue_scripts', array(&$this, 'wcfmvm_scripts'));
-		// Membership enqueue styles
+		 
 		add_action('wp_enqueue_scripts', array(&$this, 'wcfmvm_styles'));
 
-		// Membership email translation support based on membership page language (wpml)
+		 
 		add_action( 'wcfm_membership_registration', array( &$this, 'wcfmvm_set_wpml_language' ), 10, 2 );
 
-		// Membership payment forms - one handler per payment method slug
+		 
 		add_action( 'wcfmvm_membership_payment_form_paypal', array( &$this, 'wcfmvm_membership_payment_form_paypal' ), 10, 3 );
 		add_action( 'wcfmvm_membership_payment_form_stripe', array( &$this, 'wcfmvm_membership_payment_form_stripe' ), 10, 3 );
 		add_action( 'wcfmvm_membership_payment_form_bank_transfer', array( &$this, 'wcfmvm_membership_payment_form_bank_transfer' ), 10, 3 );
 	}
 	
-	/**
- 	 * WCFM Page template if full screen selected
- 	 */
+	
+
+
 	function wcfm_membership_template( $page_template ) {
 		global $WCFM;
 		if ( wc_post_content_has_shortcode( 'wcfm_vendor_membership' ) && apply_filters( 'wcfm_is_allow_membership_empty_template', true )  ) {
@@ -111,7 +111,7 @@ class WCFMvm_Frontend {
 			if( $is_dashboard_full_view_disabled != 'yes' ) {
 				$template_path = WC()->template_path();
 				$skin_path     = $WCFM->plugin_path . 'templates/classic/';
-				//if( $is_dashboard_theme_header_disabled == 'yes' ) $skin_path     = $WCFM->plugin_path . 'templates/default/';
+				 
 				$page_template = wc_locate_template( 'wcfm-content.php', $template_path, $skin_path );
 			}
 		}
@@ -119,9 +119,9 @@ class WCFMvm_Frontend {
 		return $page_template;
 	}
 	
-	/**
-   * WCFM Membership Query Var
-   */
+	
+
+
   function wcfmvm_vendor_membership_wcfm_query_vars( $query_vars ) {
   	$wcfm_modified_endpoints = get_option( 'wcfm_endpoints', array() );
   	
@@ -136,9 +136,9 @@ class WCFMvm_Frontend {
 		return $query_vars;
   }
   
-  /**
-   * WCFM Membership End Point Title
-   */
+  
+
+
   function wcfmvm_vendor_membership_endpoint_title( $title, $endpoint ) {
   	
   	switch ( $endpoint ) {
@@ -156,26 +156,26 @@ class WCFMvm_Frontend {
   	return $title;
   }
   
-  /**
-   * WCFM Membership Endpoint Intialize
-   */
+  
+
+
   function wcfmvm_vendor_membership_init() {
   	global $WCFM_Query;
 	
-		// Intialize WCFM End points
+		 
 		$WCFM_Query->init_query_vars();
 		$WCFM_Query->add_endpoints();
 		
 		if( !get_option( 'wcfm_updated_end_point_wcfmvm_vendor_membership' ) ) {
-			// Flush rules after endpoint update
+			 
 			flush_rewrite_rules();
 			update_option( 'wcfm_updated_end_point_wcfmvm_vendor_membership', 1 );
 		}
   }
   
-  /**
-	 * WCFM Membership Pages Edit
-	 */
+  
+
+
   function wcfmvm_settings_fields_pages( $wcfm_pages ) {
   	$wcfm_page_options = get_option( 'wcfm_page_options', array() );
   	$wcfm_pages["wcfm_vendor_membership_page_id"] = array( 'label' => __('Membership', 'wc-multivendor-membership'), 'type' => 'select', 'name' => 'wcfm_page_options[wcfm_vendor_membership_page_id]', 'options' => $wcfm_pages["wc_frontend_manager_page_id"]['options'], 'class' => 'wcfm-select wcfm_ele', 'label_class' => 'wcfm_title', 'value' => isset($wcfm_page_options['wcfm_vendor_membership_page_id']) ? $wcfm_page_options['wcfm_vendor_membership_page_id'] : '', 'desc_class' => 'wcfm_page_options_desc', 'desc' => __( 'This page should have shortcode - wcfm_vendor_membership', 'wc-frontend-manager') );
@@ -184,9 +184,9 @@ class WCFMvm_Frontend {
   	return $wcfm_pages;
   }
   
-  /**
-	 * WCFM Membership Endpoiint Edit
-	 */
+  
+
+
 	function wcfmvm_vendor_membership_endpoints_slug( $endpoints ) {
 		
 		$wcfmvm_vendor_membership_endpoints = array(
@@ -200,9 +200,9 @@ class WCFMvm_Frontend {
 		return $endpoints;
 	}
   
-  /**
-   * WCFM Membership Menu
-   */
+  
+
+
   function wcfmvm_vendor_membership_menus( $menus ) {
   	global $WCFM;
   	
@@ -221,18 +221,18 @@ class WCFMvm_Frontend {
   	return $menus;
   }
   
-  /**
-   * WCFM Membership Menu Dependency
-   */
+  
+
+
   function wcfmvm_vendor_membership_menu_dependancy_map( $menu_dependency_mapping ) {
   	$menu_dependency_mapping['wcfm-memberships-manage'] = 'wcfm-memberships';
   	$menu_dependency_mapping['wcfm-memberships-settings'] = 'wcfm-memberships';
   	return $menu_dependency_mapping;
   }
   
-  /**
-   * Vendor Details page Membership
-   */
+  
+
+
   function wcfmvm_vendor_manage_membrship_details( $vendor_id ) {
   	global $WCFM, $WCFMvm;
 		
@@ -375,7 +375,7 @@ class WCFMvm_Frontend {
 							wcfmvm_membership_table_tax_display( 'span' );
 							echo ' <span class="wcfm_membership_price_description">(' . esc_html($price_description) . ')</span>';
 							
-							// Show PayPal Recurring profile details
+							 
 							$paymode = get_user_meta( $vendor_id, 'wcfm_membership_paymode', true );
 							if( $paymode && ( $paymode == 'paypal_subs' ) ) {
 								$transaction_id = get_user_meta( $vendor_id, 'wcfm_transaction_id', true );
@@ -404,7 +404,7 @@ class WCFMvm_Frontend {
 		do_action( 'after_wcfm_vendors_manage_membership_details', $vendor_id );
 		
 		$wcfm_memberships_list = get_wcfm_memberships();
-		//if( !$is_recurring ) {
+		 
 		if( count( $wcfm_memberships_list ) >= 1 ) {
 			echo "</h2><div class=\"wcfm_clearfix\"></div><br /><p class=\"wcfm_title\" style=\"width: auto; \">";
 			_e( 'Change or Upgrade:', 'wc-multivendor-membership' );
@@ -428,22 +428,22 @@ class WCFMvm_Frontend {
 			<div class="wcfm_clearfix"></div>
 			<?php
 		}
-		//} else {
-			//if( count( $wcfm_memberships_list ) > 1 ) {
-			//	printf( __( '%sChange or Upgrade: First cancel your current subscription.%s', 'wc-multivendor-membership' ), '<span style="text-decoration: underline; margin-left: 10px;">', '</span>' );
-			//}
-		//}
+		 
+			 
+			 
+			 
+		 
   }
   
-  /**
-   * Vendor Profile Additional Info
-   */
+  
+
+
   function wcfmvm_vendor_manage_membership_additional_info( $vendor_id ) {
   	global $WCFM, $WCFMvm;
   	
   	if( !$vendor_id ) return;
   		
-  	$wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custom_fields', array() );
+  	$wcfmvm_registration_custom_fields = wcfmvm_get_registration_custom_fields( get_user_meta( $vendor_id, 'wcfm_membership', true ), $vendor_id );
 		$wcfmvm_custom_infos = (array) get_user_meta( $vendor_id, 'wcfmvm_custom_infos', true );
 		
 		if( !empty( $wcfmvm_registration_custom_fields ) ) {
@@ -678,7 +678,7 @@ class WCFMvm_Frontend {
 									wcfmvm_membership_table_tax_display( 'span' );
 									echo ' <span class="wcfm_membership_price_description">(' . esc_html($price_description) . ')</span>';
 									
-									// Show PayPal Recurring profile details
+									 
 									$paymode = get_user_meta( $vendor_id, 'wcfm_membership_paymode', true );
 									if( $paymode && ( $paymode == 'paypal_subs' ) ) {
 										$transaction_id = get_user_meta( $vendor_id, 'wcfm_transaction_id', true );
@@ -709,7 +709,7 @@ class WCFMvm_Frontend {
 			  	echo "</h2><div class=\"wcfm_clearfix\"></div><br />";
 			  }
 			  
-			  $wcfmvm_registration_custom_fields = get_option( 'wcfmvm_registration_custom_fields', array() );
+			  $wcfmvm_registration_custom_fields = wcfmvm_get_registration_custom_fields( $wcfm_membership_id, $vendor_id );
 				$wcfmvm_custom_infos = (array) get_user_meta( $vendor_id, 'wcfmvm_custom_infos', true );
 				
 				if( !empty( $wcfmvm_registration_custom_fields ) ) {
@@ -806,7 +806,7 @@ class WCFMvm_Frontend {
 			foreach ( $line_items as $item_id => $item ) {
 				$product_id = $item->get_product_id();
 				
-				// WPML Support
+				 
 				if ( $product_id && defined( 'ICL_SITEPRESS_VERSION' ) && ! ICL_PLUGIN_INACTIVE && class_exists( 'SitePress' ) ) {
 					global $sitepress;
 					$default_language = $sitepress->get_default_language();
@@ -814,7 +814,7 @@ class WCFMvm_Frontend {
 				}
 				
 				if( in_array( $product_id, $wcfm_subcription_products ) ) {
-					// Reset Membership Session
+					 
 					if( WC()->session && WC()->session->get( 'wcfm_membership' ) ) {
 						WC()->session->__unset( 'wcfm_membership' );
 					}
@@ -860,26 +860,26 @@ class WCFMvm_Frontend {
 		return $is_registration;
 	}
   
-  /**
-	 * WCFMvm Core JS
-	 */
+  
+
+
 	function wcfmvm_scripts() {
  		global $WCFM, $WCFMvm, $wp, $WCFM_Query;
  		
  		if( isset( $_REQUEST['fl_builder'] ) ) return;
  		
- 		// Memmebrship Subscribe Button
+ 		 
  		if( apply_filters( 'wcfm_is_pref_membership', true ) ) {
- 			//wp_enqueue_script( 'wcfm_membership_subscribe_js', $WCFMvm->library->js_lib_url_min . 'wcfmvm-script-membership-subscribe.js', array('jquery' ), $WCFMvm->version, true );
+ 			 
  		}
  		
- 		// Load End Point Scripts
+ 		 
 	  if( is_wcfm_membership_page() ) {
 	  	$current_step = wcfm_membership_registration_current_step();
 			
 			switch( $current_step ) {
 				case 'registration':
-					//$WCFM->library->load_upload_lib();
+					 
 					$WCFM->library->load_select2_lib();
 					wp_enqueue_script( 'wc-country-select' );
 					wp_enqueue_script( 'wcfm_membership_registration_js', $WCFMvm->library->js_lib_url_min . 'wcfmvm-script-membership-registration.js', array('jquery' ), $WCFMvm->version, true );
@@ -958,9 +958,9 @@ class WCFMvm_Frontend {
 		}
  	}
  	
- 	/**
- 	 * WCFMvm Core CSS
- 	 */
+ 	
+
+
  	function wcfmvm_styles() {
  		global $WCFM, $WCFMvm, $wp, $WCFM_Query;
  		
@@ -971,7 +971,7 @@ class WCFMvm_Frontend {
  		$upload_dir      = wp_upload_dir();
  		
  		if( apply_filters( 'wcfm_is_pref_membership', true ) ) {
-			//wp_enqueue_style( 'wcfm_subscribe_button_css',  $WCFMvm->library->css_lib_url_min . 'wcfmvm-style-subscribe-button.css', array(), $WCFMvm->version );
+			 
 			
 			$wcfmvm_style_custom_subscribe_button = get_option( 'wcfmvm_style_custom_subscribe_button' );
 			if( $wcfmvm_style_custom_subscribe_button && file_exists( trailingslashit( $upload_dir['basedir'] ) . 'wcfm/' . $wcfmvm_style_custom_subscribe_button ) ) {
@@ -981,7 +981,7 @@ class WCFMvm_Frontend {
 		
 		$current_step = wcfm_membership_registration_current_step();
  		
- 		// Load End Point Scripts
+ 		 
 	  if( is_wcfm_membership_page() ) {
 			
 			wp_enqueue_style( 'wcfm_membership_steps_css',  $WCFMvm->library->css_lib_url_min . 'wcfmvm-style-membership-steps.css', array(), $WCFMvm->version );
@@ -1027,7 +1027,7 @@ class WCFMvm_Frontend {
 				break;
 			}
 			
-			// Load Template Style
+			 
 			$is_dashboard_full_view_disabled = isset( $wcfm_options['dashboard_full_view_disabled'] ) ? $wcfm_options['dashboard_full_view_disabled'] : 'no';
 			if( $is_dashboard_full_view_disabled != 'yes' ) {
 				wp_enqueue_style( 'wcfmvm_template_css',  $WCFM->plugin_url . 'templates/classic/template-style.css', array( ), $WCFMvm->version );
@@ -1051,7 +1051,7 @@ class WCFMvm_Frontend {
 		}
 			
 		if( is_wcfm_registration_page() || is_wcfm_membership_page() ) {
-			// WCFMvm Custom CSS
+			 
 			$wcfmvm_style_custom = get_option( 'wcfmvm_style_custom' );
 			if( $wcfmvm_style_custom && file_exists( trailingslashit( $upload_dir['basedir'] ) . 'wcfm/' . $wcfmvm_style_custom ) ) {
 				wp_enqueue_style( 'wcfmvm_custom_css',  trailingslashit( $upload_dir['baseurl'] ) . 'wcfm/' . $wcfmvm_style_custom, array( 'wcfm_membership_css' ), $WCFMvm->version );
@@ -1062,21 +1062,21 @@ class WCFMvm_Frontend {
 	  }
  	}
  	
- 	/**
- 	 * Closing block of a membership payment form - message holder, submit button and </form>.
- 	 *
- 	 * Gateway handlers registered on `wcfmvm_membership_payment_form_{$payment_method}`
- 	 * may call this to render the very same submit block core renders, instead of
- 	 * repeating the markup.
- 	 *
- 	 * @param string $payment_method Payment method slug, used to build the button id.
- 	 * @param string $button_class   Submit button classes. Keep `wcfm_membership_payment_button`
- 	 *                               to submit through WCFM's own AJAX payment controller - that
- 	 *                               controller only completes offline methods, see
- 	 *                               get_wcfm_membership_offline_payment_methods(). Drop it when the
- 	 *                               gateway submits the form itself (as Stripe does).
- 	 * @param string $button_label   Submit button label, defaults to "Proceed".
- 	 */
+ 	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
  	function wcfmvm_membership_payment_form_footer( $payment_method, $button_class = 'wcfm_membership_payment_button wcfm_submit_button', $button_label = '' ) {
  		if( !$button_label ) $button_label = __( 'Proceed', 'wc-multivendor-membership' );
  		?>
@@ -1091,39 +1091,39 @@ class WCFMvm_Frontend {
 	<?php
  	}
 
- 	/**
- 	 * PayPal membership payment form
- 	 *
- 	 * Registered on `wcfmvm_membership_payment_form_paypal`, dispatched from
- 	 * templates/vendor_payment.php
- 	 */
+ 	
+
+
+
+
+
  	function wcfmvm_membership_payment_form_paypal( $membership_id, $member_id, $subscription = array() ) {
  		$this->generate_paypal_request_form( $membership_id, $member_id );
  		$this->wcfmvm_membership_payment_form_footer( 'paypal' );
  	}
 
- 	/**
- 	 * Stripe membership payment form
- 	 *
- 	 * Registered on `wcfmvm_membership_payment_form_stripe`, dispatched from
- 	 * templates/vendor_payment.php. The submit block is rendered only when the
- 	 * Stripe checkout session could be created - generate_stripe_request_form()
- 	 * has already reported the reason otherwise and has opened no form to close.
- 	 */
+ 	
+
+
+
+
+
+
+
  	function wcfmvm_membership_payment_form_stripe( $membership_id, $member_id, $subscription = array() ) {
  		if( $this->generate_stripe_request_form( $membership_id, $member_id ) ) {
- 			// Stripe submits the form through its own script, so this button is
- 			// deliberately not a `wcfm_membership_payment_button`.
+ 			 
+ 			 
  			$this->wcfmvm_membership_payment_form_footer( 'stripe', 'wcfm_submit_button' );
  		}
  	}
 
- 	/**
- 	 * Bank Transfer membership payment form
- 	 *
- 	 * Registered on `wcfmvm_membership_payment_form_bank_transfer`, dispatched from
- 	 * templates/vendor_payment.php
- 	 */
+ 	
+
+
+
+
+
  	function wcfmvm_membership_payment_form_bank_transfer( $membership_id, $member_id, $subscription = array() ) {
  		$wcfm_membership_options = get_option( 'wcfm_membership_options', array() );
  		$membership_payment_settings = array();
@@ -1139,9 +1139,9 @@ class WCFMvm_Frontend {
 		$this->wcfmvm_membership_payment_form_footer( 'bank_transfer' );
  	}
 
- 	/**
- 	 * PayPal request form
- 	 */
+ 	
+
+
  	function generate_paypal_request_form( $membership_id, $member_id ) {
  		global $WCFM, $WCFMvm;
  		
@@ -1188,8 +1188,8 @@ class WCFMvm_Frontend {
 			<input type="hidden" name="item_number" value="<?php echo esc_attr($membership_id); ?>">
 			<input type="hidden" name="item_name" value="<?php echo esc_html($title . ' - ' . $description); ?>">
 			
-			<?php /* Amounts rounded to the shop's price decimals - PayPal accepts at most
-			         two, and the IPN handler validates against these same values. */ ?>
+			<?php 
+ ?>
 			<?php if( $subscription_type == 'one_time' ) { ?>
 		  	<input type="hidden" name="amount" value="<?php echo esc_attr( wc_format_decimal( wcfmvm_membership_tax_price($one_time_amt), wc_get_price_decimals() ) ); ?>" />
 		  <?php } else { ?>
@@ -1225,9 +1225,9 @@ class WCFMvm_Frontend {
 		<?php
  	}
  	
- 	/**
- 	 * Stripe request form
- 	 */
+ 	
+
+
  	function generate_stripe_request_form( $membership_id, $member_id ) {
  		global $WCFM, $WCFMvm;
  		
@@ -1245,10 +1245,10 @@ class WCFMvm_Frontend {
 		$stripe_secret_key_test = isset( $membership_payment_settings['stripe_secret_key_test'] ) ? $membership_payment_settings['stripe_secret_key_test'] : '';
 		if ($payment_sandbox == 'yes') {
 			$secret_key = $stripe_secret_key_test;
-			$publishable_key = $stripe_published_key_test; //Use sandbox API key
+			$publishable_key = $stripe_published_key_test;  
     } else {
     	$secret_key = $stripe_secret_key_live;
-			$publishable_key = $stripe_published_key_live; //Use live API key
+			$publishable_key = $stripe_published_key_live;  
     }
  		
  		$subscription = (array) get_post_meta( $membership_id, 'subscription', true );
@@ -1276,8 +1276,8 @@ class WCFMvm_Frontend {
 			$price_in_cents = $one_time_amt;
 			$payment_amount = $billing_amt;
     } else {
-			$price_in_cents = $one_time_amt * 100; //The amount (in cents). This value is passed to Stripe API.
-			$payment_amount = $billing_amt; // / 100;
+			$price_in_cents = $one_time_amt * 100;  
+			$payment_amount = $billing_amt;  
     }
     
     $button_label = __( 'Pay', 'wc-multivendor-membership' );
@@ -1286,25 +1286,25 @@ class WCFMvm_Frontend {
     	$payment_amount = $one_time_amt;
     	$pay_description = wcfmvm_membership_tax_price($one_time_amt) . ' ' . $payment_currency;
     } elseif( $stripe_plan_id ) {
-    	// Stripe Plan Data Fetching
+    	 
     	$plan_data = get_post_meta( $membership_id, 'stripe_plan_data', true );
     	if ( empty($plan_data) ) {
         if (version_compare(PHP_VERSION, '5.4.0', '>')) {
         	include_once( $WCFMvm->plugin_path . 'includes/libs/stripe-gateway/stripe-util-functions.php' );
 					$result = WCFMvmStripeUtilFunctions::get_stripe_plan_info($secret_key, $stripe_plan_id);
 					if ($result['success'] === false) {
-						// some error occured, let's display it and stop processing the shortcode further
+						 
 						wcfmvm_create_log( 'Stripe error occured: ' . $result['error_msg'] );
 					} else {
-						// plan data has been successfully retreived
+						 
 						$plan_data = $result['plan_data'];
-						// Let's update post_meta in order to not re-request the data again on each button display
+						 
 						update_post_meta( $membership_id, 'stripe_plan_data', $plan_data );
 					}
 				}
       }
     	
-      // Plan Pricing description
+       
       $price_in_cents = $billing_amt * 100;
     	$pay_description = wcfmvm_membership_tax_price($billing_amt) . ' ' . $payment_currency;
     	if ($billing_period_count == 1) {
@@ -1323,16 +1323,16 @@ class WCFMvm_Frontend {
     }
     
     
-    // SCA Enable
+     
     
     $uniqid = md5( uniqid() );
 		$ref_id = 'wcfm_' . $uniqid . '|' . $membership_id . '|' . $member_id;
 	
-		 // home_url() . '/?swpm_process_stripe_sca_subscription=1&ref_id=' . $ref_id; //We are going to use it to do post payment processing.
+		  
 	
 		$current_url = ( isset( $_SERVER['HTTPS'] ) ? 'https' : 'http' ) . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 		
-		//Include the Stripe library.
+		 
 		if( !class_exists( 'Stripe\Stripe' ) ) {
 			include( $WCFMvm->plugin_path . 'includes/libs/stripe-gateway/init.php');
 		}
@@ -1341,13 +1341,13 @@ class WCFMvm_Frontend {
 			\Stripe\Stripe::setApiKey( $secret_key );
 			
 			if( $subscription_type == 'one_time' ) {
-				//Return, cancel, notifiy URLs
+				 
 				$notify_url = add_query_arg( array( 'wcfmvm_process_ipn' => 'stripe_sca_ipn',
 																				'ref_id' => $ref_id
 																			), get_wcfm_membership_page() );
-				// Stripe takes whole cents - membership tax applied to a value already
-				// converted to cents easily yields a fraction (19.99 + 20% => 2398.8),
-				// which Stripe rejects for every non zero decimal currency.
+				 
+				 
+				 
 				$taxed_price_in_cents = (int) round( wcfmvm_membership_tax_price( $price_in_cents ) );
 				if(!apply_filters('wcfm_stripe_api_2023_or_later', false)){
 					$opts = array(
@@ -1390,7 +1390,7 @@ class WCFMvm_Frontend {
 					);
 				}
 			} else {
-				//Return, cancel, notifiy URLs
+				 
 				$notify_url = add_query_arg( array( 'wcfmvm_process_ipn' => 'stripe_sca_subs_ipn',
 																				'ref_id' => $ref_id
 																			), get_wcfm_membership_page() );
@@ -1407,7 +1407,7 @@ class WCFMvm_Frontend {
 		
 				$trial_period = absint( $trial_period );
 				if ( $trial_period ) {
-					//convert month or year to days
+					 
 					if($trial_period_type && $trial_period_type == 'M'){
 						$trial_period = $trial_period * 30;
 					} elseif ($trial_period_type && $trial_period_type == 'Y') {
@@ -1424,7 +1424,7 @@ class WCFMvm_Frontend {
 			return false;
 		}
 	
-		/* === Stripe Buy Now Button Form === */
+		 
 		?>
 		<form id='wcfm_membership_payment_form_stripe' class='wcfm wcfm_membership_payment_form wcfm_membership_payment_form_non_free' action='<?php echo esc_url($notify_url); ?>' METHOD='POST'>
 			<div style='display: none !important'>

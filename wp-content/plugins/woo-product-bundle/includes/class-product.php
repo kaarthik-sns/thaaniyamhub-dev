@@ -289,6 +289,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$available_qty_no_backorder = [];
 			$is_outofstock              = false;
 			$has_backorder_item         = false;
+			$short_backorder_setting    = null; // Backorder setting of components that are short but allow backorders.
 
 			foreach ( $this->items as $item ) {
 				$product = $this->get_bundled_product_object( $item['id'] );
@@ -321,8 +322,34 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					$is_outofstock = true;
 				}
 
-				if ( $product->get_stock_status() === 'onbackorder' || ( $_qty && ! $has_enough && $product->backorders_allowed() ) ) {
+				// A component that is short on stock but allows backorders (has_enough_stock() is always
+				// true for these, so compare the real stock quantity / status instead).
+				$is_short_on_backorder = false;
+
+				if ( $_qty && $product->backorders_allowed() ) {
+					if ( $product->get_stock_status() === 'onbackorder' ) {
+						$is_short_on_backorder = true;
+					} elseif ( $product->managing_stock() ) {
+						$_stock = $product->get_stock_quantity();
+
+						if ( $_stock !== null && (float) $_stock < $_qty ) {
+							$is_short_on_backorder = true;
+						}
+					}
+				}
+
+				if ( $product->get_stock_status() === 'onbackorder' || ( $_qty && ! $has_enough ) || $is_short_on_backorder ) {
 					$has_backorder_item = true;
+				}
+
+				// Remember the component's backorder setting ('notify' takes priority over 'yes')
+				// so the bundle can accept the backorder.
+				if ( $is_short_on_backorder ) {
+					$component_backorders = $product->get_backorders();
+
+					if ( $component_backorders === 'notify' || $short_backorder_setting === null ) {
+						$short_backorder_setting = $component_backorders === 'notify' ? 'notify' : 'yes';
+					}
 				}
 
 				// ── Skip optional-guarded fields when bundle has optional items ───────────
@@ -395,7 +422,8 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			//
 			// Usage:
 			//   add_filter( 'woosb_stock_quantity_mode', fn() => 'physical' );
-			$stock_qty_mode = apply_filters( 'woosb_stock_quantity_mode', 'hard_limit' );
+			// Default comes from the 'Stock quantity mode' setting (Settings > Cart & Checkout).
+			$stock_qty_mode = apply_filters( 'woosb_stock_quantity_mode', $this->helper->get_setting( 'stock_quantity_mode', 'hard_limit' ) );
 
 			$min_stock_qty = null;
 			if ( 'physical' === $stock_qty_mode ) {
@@ -413,17 +441,27 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			// Used only to detect whether any item is already depleted and going onbackorder.
 			$min_all_qty = ! empty( $available_qty ) ? min( $available_qty ) : null;
 
+			// Hard limit: only components that do NOT allow backorders can make the bundle unpurchasable.
+			$min_hard_qty = ! empty( $available_qty_no_backorder ) ? min( $available_qty_no_backorder ) : null;
+
 			// Determine final stock status.
-			// $min_stock_qty → hard purchasable limit (no-backorder items drive outofstock).
-			// $min_all_qty   → detects when any item (incl. backorder-allowed) is at/below zero.
-			if ( $is_outofstock || $all_out_of_stock || ( $min_stock_qty !== null && $min_stock_qty <= 0 && $backorders === 'no' ) ) {
+			// $min_hard_qty → components without backorders (drive outofstock).
+			// $min_all_qty  → detects when any item (incl. backorder-allowed) is at/below zero.
+			if ( $is_outofstock || $all_out_of_stock || ( $min_hard_qty !== null && $min_hard_qty <= 0 ) ) {
 				$final_status = 'outofstock';
-			} elseif ( $min_stock_qty !== null && $min_stock_qty > 0 ) {
-				$final_status = 'instock';
 			} elseif ( $has_backorder_item || ( $min_all_qty !== null && $min_all_qty <= 0 ) ) {
 				$final_status = 'onbackorder';
+			} elseif ( $min_stock_qty !== null && $min_stock_qty > 0 ) {
+				$final_status = 'instock';
 			} else {
 				$final_status = $stock_status;
+			}
+
+			// When the bundle is on backorder because a backorder-allowed component is short,
+			// accept the backorder using that component's notify/yes setting instead of 'no'
+			// (which would be forced by another component that disallows backorders).
+			if ( $final_status === 'onbackorder' && $short_backorder_setting !== null ) {
+				$backorders = $short_backorder_setting;
 			}
 
 			return $this->stock_data_cache = [

@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMgs Memberships Disable Template
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/views
- * @version   2.0.8
- */
+
+
+
+
+
+
+
+
+
 
 global $WCFM, $WCFMvm;
   

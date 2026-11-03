@@ -1,18 +1,18 @@
 <?php
-/**
- * WCFM Membership plugin core
- *
- * Plugin Ajax Controler
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/core
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFMvm_Ajax {
-	/**
-	 * @var string $controllers_path
-	 */
+	
+
+
 	public $controllers_path;
 
 	public function __construct() {
@@ -23,49 +23,49 @@ class WCFMvm_Ajax {
 		add_action( 'after_wcfm_ajax_controller', array( &$this, 'wcfmvm_ajax_controller' ) );
 		add_action( 'wp_ajax_nopriv_wcfm_ajax_controller', array( &$this, 'wcfmvm_ajax_controller' ) );
 		
-		// Choose Membship Plan
+		 
 		add_action( 'wp_ajax_wcfm_choose_membership', array( &$this, 'wcfm_choose_membership' ) );
 		add_action( 'wp_ajax_nopriv_wcfm_choose_membership', array( &$this, 'wcfm_choose_membership' ) );
 		
-		// Generate Vendor Approval Response Html
+		 
     add_action( 'wp_ajax_wcfmvm_vendor_approval_html', array( &$this, 'wcfmvm_vendor_approval_html' ) );
     
-    // Update Vendor Approval Response
+     
     add_action( 'wp_ajax_wcfmvm_vendor_approval_response_update', array( &$this, 'wcfmvm_vendor_approval_response_update' ) );
     
-    // Vendor membership cancel
+     
     add_action( 'wp_ajax_wcfmvm_membership_cancel', array( &$this, 'wcfmvm_membership_cancel' ) );
     
-    // Vendor membership change
+     
     add_action( 'wp_ajax_wcfmvm_membership_change', array( &$this, 'wcfmvm_membership_change' ) );
     
-    // Membership Delete
+     
 		add_action( 'wp_ajax_delete_wcfm_membership', array( &$this, 'delete_wcfm_membership' ) );
 		
-		// Membership Schedule Change Html
+		 
     add_action('wp_ajax_wcfmvm_change_next_renewal_html', array( &$this, 'wcfmvm_change_next_renewal_html' ) );
     
-    // Membership Schedule Change Update
+     
     add_action( 'wp_ajax_wcfmvm_change_next_renewal', array( &$this, 'wcfmvm_change_next_renewal_update' ) );
 		
-		// Email Verification Code
+		 
 		add_action( 'wp_ajax_wcfmvm_email_verification_code', array( &$this, 'wcfmvm_email_verification_code' ) );
 		add_action( 'wp_ajax_nopriv_wcfmvm_email_verification_code', array( &$this, 'wcfmvm_email_verification_code' ) );
 		
-		// SMS Verification Code
+		 
 		add_action( 'wp_ajax_wcfmvm_sms_verification_code', array( &$this, 'wcfmvm_sms_verification_code' ) );
 		add_action( 'wp_ajax_nopriv_wcfmvm_sms_verification_code', array( &$this, 'wcfmvm_sms_verification_code' ) );
 		
-		// Store Slug Verification
+		 
 		add_action( 'wp_ajax_wcfmvm_store_slug_verification', array( &$this, 'wcfmvm_store_slug_verification' ) );
 		add_action( 'wp_ajax_nopriv_wcfmvm_store_slug_verification', array( &$this, 'wcfmvm_store_slug_verification' ) );
 
 		add_action( 'wp_ajax_wcfm-memberships-payment-paypal', array( &$this, 'wcfm_memberships_payment_paypal' ) );
 	}
 	
-	/**
-   * WCFM Membership Ajax Controllers
-   */
+	
+
+
   public function wcfmvm_ajax_controller() {
   	global $WCFM, $WCFMvm;
   	
@@ -81,7 +81,7 @@ class WCFMvm_Ajax {
   		switch( $controller ) {
 	  	
 				case 'wcfm-memberships':
-					if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+					if ( !wcfmvm_current_user_can_manage_memberships() ) {
 						wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 						wp_die();
 					}
@@ -91,7 +91,7 @@ class WCFMvm_Ajax {
 				break;
 				
 				case 'wcfm-memberships-manage':
-					if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+					if ( !wcfmvm_current_user_can_manage_memberships() ) {
 						wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 						wp_die();
 					}
@@ -111,7 +111,7 @@ class WCFMvm_Ajax {
 				break;
 				
 				case 'wcfm-memberships-settings':
-					if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+					if ( !wcfmvm_current_user_can_manage_memberships() ) {
 						wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 						wp_die();
 					}
@@ -123,9 +123,9 @@ class WCFMvm_Ajax {
 		}
 	}
 	
-	/**
-	 * WCFM Choose Membership Plan
-	 */
+	
+
+
 	function wcfm_choose_membership() {
 		global $WCFM, $WCFMvm, $_SESSION;
 		
@@ -135,7 +135,7 @@ class WCFMvm_Ajax {
 		}
 		
 		if ( ! check_ajax_referer( 'wcfm_ajax_nonce', 'wcfm_ajax_nonce', false ) ) {
-			if( $method != 'by_url' ) { // Have to look for alternate solution, static url not able to generate nonce url
+			if( $method != 'by_url' ) {  
 				wp_send_json_error( esc_html__( 'Invalid nonce! Refresh your page and try again.', 'wc-frontend-manager' ) );
 				wp_die();
 			}
@@ -143,8 +143,16 @@ class WCFMvm_Ajax {
 		
 		if( isset( $_REQUEST['membership'] ) && !empty( $_REQUEST['membership'] ) ) {
 			$membership = absint($_REQUEST['membership']);
+			 
+			if( !wcfm_is_selectable_membership( $membership ) ) {
+				if( $method == 'by_url' ) {
+					wp_safe_redirect( get_wcfm_membership_url() );
+					die;
+				}
+				wp_send_json_error( esc_html__( 'Invalid membership plan selected.', 'wc-multivendor-membership' ) );
+			}
 			
-			// Session store
+			 
 			if( WC()->session ) {
 				do_action( 'woocommerce_set_cart_cookies', true );
 				WC()->session->set( 'wcfm_membership', $membership );
@@ -209,9 +217,9 @@ class WCFMvm_Ajax {
 		die;
 	}
 	
-	/**
-	 * Generate Vendor Approval HTMl
-	 */
+	
+
+
 	function wcfmvm_vendor_approval_html() {
 		global $WCFM, $WCFMvm;
 		
@@ -220,7 +228,7 @@ class WCFMvm_Ajax {
   		wp_die();
   	}
 		
-		if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+		if ( !wcfmvm_current_user_can_manage_memberships() ) {
   		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 			wp_die();
 		}
@@ -253,7 +261,7 @@ class WCFMvm_Ajax {
 				$wcfmvm_registration_static_fields = wcfm_get_option( 'wcfmvm_registration_static_fields', array() );
 				$wcfmvm_static_infos = (array) get_user_meta( $member_id, 'wcfmvm_static_infos', true );
 				
-				$wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custom_fields', array() );
+				$wcfmvm_registration_custom_fields = wcfmvm_get_registration_custom_fields( get_user_meta( $member_id, 'temp_wcfm_membership', true ), $member_id );
 				$wcfmvm_custom_infos = (array) get_user_meta( $member_id, 'wcfmvm_custom_infos', true );
 				
 				?>
@@ -292,7 +300,7 @@ class WCFMvm_Ajax {
 								</tr>
 							<?php } ?>
 							<?php
-							// Registration Static Field Support - 1.0.6
+							 
 							if( !empty( $wcfmvm_registration_static_fields ) ) {
 								foreach( $wcfmvm_registration_static_fields as $wcfmvm_registration_static_field => $wcfmvm_registration_static_field_val ) {
 									$field_value = array();
@@ -338,7 +346,7 @@ class WCFMvm_Ajax {
 							}
 							
 							
-							// Registration Custom Field Support - 1.0.5
+							 
 							if( !empty( $wcfmvm_registration_custom_fields ) ) {
 								foreach( $wcfmvm_registration_custom_fields as $wcfmvm_registration_custom_field ) {
 									if( !isset( $wcfmvm_registration_custom_field['enable'] ) ) continue;
@@ -410,13 +418,13 @@ class WCFMvm_Ajax {
   		wp_die();
   	}
 		
-		if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+		if ( !wcfmvm_current_user_can_manage_memberships() ) {
   		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 			wp_die();
 		}
 		
 		$wcfm_vendor_approval_response_form_data = array();
-	  parse_str($_POST['wcfm_vendor_approval_response_form'], $wcfm_vendor_approval_response_form_data);
+	  parse_str( wp_unslash( $_POST['wcfm_vendor_approval_response_form'] ), $wcfm_vendor_approval_response_form_data );
 	  
 	  $wcfm_vendor_approval_response_form_data = wc_clean( $wcfm_vendor_approval_response_form_data );
 		
@@ -461,13 +469,12 @@ class WCFMvm_Ajax {
 						if( !defined( 'DOING_WCFM_EMAIL' ) ) 
 							  define( 'DOING_WCFM_EMAIL', true );
 
-						// Switch language context…
+						 
 						if( apply_filters( 'wcfm_allow_wpml_email_translation', true ) ) {
 							do_action('wpml_switch_language_for_email', $member_user->user_email);
 						}
 						
 						$rejection_reason = wcfm_stripe_newline( $wcfm_vendor_approval_response_form_data['wcfm_vendor_rejection_reason'] );
-						$rejection_reason = esc_sql( $rejection_reason );
 					
 						$reject_notication_subject = wcfm_get_option( 'wcfm_membership_reject_notication_subject', '{site_name}: Vendor Application Rejected' );
 						$reject_notication_content = wcfm_get_option( 'wcfm_membership_reject_notication_content', '' );
@@ -483,13 +490,14 @@ class WCFMvm_Ajax {
 						
 						$subject = str_replace( '{site_name}', get_bloginfo( 'name' ), $reject_notication_subject );
 						$subject = apply_filters( 'wcfm_email_subject_wrapper', $subject );
-						$message = str_replace( '{first_name}', $member_user->first_name, $reject_notication_content );
+						$message = str_replace( '{first_name}', esc_html( $member_user->first_name ), $reject_notication_content );
+						$message = str_replace( '{site_name}', get_bloginfo( 'name' ), $message );
 						$message = str_replace( '{rejection_reason}', $rejection_reason, $message );
 						$message = apply_filters( 'wcfm_email_content_wrapper', $message, __( 'Vendor Application Rejected', 'wc-multivendor-membership' ) );
 						
 						wp_mail( $member_user->user_email, $subject, $message );
 
-						// switch language back
+						 
 						if( apply_filters( 'wcfm_allow_wpml_email_translation', true ) ) {
 							do_action('wpml_restore_language_from_email');
 						}
@@ -509,15 +517,15 @@ class WCFMvm_Ajax {
 					}
 				}
 				
-				// Vendor Approval message mark read
+				 
 				$author_id = apply_filters( 'wcfm_message_author', get_current_user_id() );
 				$todate = date('Y-m-d H:i:s');
 				
-				/*$wcfm_read_message     = "INSERT into {$wpdb->prefix}wcfm_messages_modifier 
-																		(`message`, `is_read`, `read_by`, `read_on`)
-																		VALUES
-																		({$message_id}, 1, {$author_id}, '{$todate}')";
-				$wpdb->query($wcfm_read_message);*/
+				
+
+
+
+
 				$wpdb->query( $wpdb->prepare("DELETE FROM {$wpdb->prefix}wcfm_messages WHERE ID =%d", $message_id ) );
 				
 				
@@ -529,9 +537,9 @@ class WCFMvm_Ajax {
 		die;
 	}
 	
-	/**
-	 * Vednor membership cancel
-	 */
+	
+
+
 	function wcfmvm_membership_cancel() {
 		global $WCFM, $WCFMvm, $_POST, $wpdb;
 		
@@ -569,9 +577,9 @@ class WCFMvm_Ajax {
 		die;
 	}
 	
-	/**
-	 * Vednor membership change byAdmin
-	 */
+	
+
+
 	function wcfmvm_membership_change() {
 		global $WCFM, $WCFMvm, $_POST, $wpdb;
 		
@@ -580,23 +588,26 @@ class WCFMvm_Ajax {
   		wp_die();
   	}
 		
-		if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'wcfm_vendor' ) && !current_user_can( 'seller' ) && !current_user_can( 'vendor' ) && !current_user_can( 'shop_staff' ) ) {
+		 
+		 
+		if ( !wcfmvm_current_user_can_manage_memberships() ) {
   		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 			wp_die();
 		}
 		
 		if( isset( $_POST['memberid'] ) && isset($_POST['membershipid']) ) {
 			$member_id = absint( $_POST['memberid'] );
-			$user_id = apply_filters('wcfm_current_vendor_id', get_current_user_id());
-            if ( function_exists( 'wcfm_user_can_perform_request' ) && !wcfm_user_can_perform_request( $member_id, 'wcfm_membership' ) ) {
-				echo '{"status": false, "message": "' . esc_html( __( 'You do not have permission to do this.', 'wc-multivendor-membership' ) ) . '"}';
-				die;
-			} elseif ( !function_exists( 'wcfm_user_can_perform_request' ) && !current_user_can( 'manage_woocommerce' ) && ( $user_id != $member_id ) ) {
+			if ( !$member_id || !wcfmvm_current_user_can_manage_memberships( $member_id ) ) {
 				echo '{"status": false, "message": "' . esc_html( __( 'You do not have permission to do this.', 'wc-multivendor-membership' ) ) . '"}';
 				die;
 			}
 			
 			$wcfm_membership_id = absint( $_POST['membershipid'] );
+			$wcfm_membership    = get_post( $wcfm_membership_id );
+			if ( !$wcfm_membership || ( 'wcfm_memberships' !== $wcfm_membership->post_type ) || ( 'publish' !== $wcfm_membership->post_status ) ) {
+				echo '{"status": false, "message": "' . esc_html( __( 'Vendor membership can not be changed right now, please try after sometime.', 'wc-multivendor-membership' ) ) . '"}';
+				die;
+			}
 			$member_user = new WP_User( $member_id );
 			$shop_name = get_user_meta( $member_id, 'store_name', true );
 			$old_membership_id = get_user_meta( $member_id, 'wcfm_membership', true );
@@ -615,9 +626,9 @@ class WCFMvm_Ajax {
 		die;
 	}
 	
-	/**
-   * Handle membership Delete
-   */
+	
+
+
   public function delete_wcfm_membership() {
   	global $WCFM, $WCFMvm;
   	
@@ -626,7 +637,7 @@ class WCFMvm_Ajax {
   		wp_die();
   	}
   	
-  	if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+  	if ( !wcfmvm_current_user_can_manage_memberships() ) {
   		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 			wp_die();
 		}
@@ -642,9 +653,9 @@ class WCFMvm_Ajax {
 		}
   }
   
-  /**
-   * Membership Schedule Change HTML
-   */
+  
+
+
   function wcfmvm_change_next_renewal_html() {
   	global $WCFM, $WCFMvm;
   	
@@ -653,7 +664,7 @@ class WCFMvm_Ajax {
   		wp_die();
   	}
   	
-  	if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+  	if ( !wcfmvm_current_user_can_manage_memberships() ) {
   		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 			wp_die();
 		}
@@ -678,9 +689,9 @@ class WCFMvm_Ajax {
 		die;
   }
   
-  /**
-   * Membership Next Schedule Update
-   */
+  
+
+
   function wcfmvm_change_next_renewal_update() {
   	global $WCFM, $WCFMvm;
   	
@@ -689,13 +700,18 @@ class WCFMvm_Ajax {
   		wp_die();
   	}
   	
-  	if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'shop_staff' ) ) {
+  	if ( !wcfmvm_current_user_can_manage_memberships() ) {
   		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
 			wp_die();
 		}
   	
   	$next_renewal = wc_clean($_POST['next_renewal']);
   	$member_id    = absint($_POST['member']);
+  	
+  	if ( !$member_id || !wcfmvm_current_user_can_manage_memberships( $member_id ) ) {
+  		wp_send_json_error( esc_html__( 'You don&#8217;t have permission to do this.', 'woocommerce' ) );
+			wp_die();
+		}
   	
   	if( $next_renewal ) {
   		$next_renewal = strtotime( wcfm_standard_date( $next_renewal ) );
@@ -710,9 +726,9 @@ class WCFMvm_Ajax {
   	die;
   }
   
-  /**
-   * WCfM Registration email verification code send
-   */
+  
+
+
   function wcfmvm_email_verification_code() {
   	global $WCFM, $WCFMvm, $_SESSION;
   	
@@ -734,30 +750,30 @@ class WCFMvm_Ajax {
 			} else {
 				$verification_code = rand( 100000, 999999 );
 			}
-			// Session store
+			 
 			if( WC()->session ) {
 				do_action( 'woocommerce_set_cart_cookies', true );
 				WC()->session->set( 'wcfm_membership_email_verification_code', $verification_code );
 				WC()->session->set( 'wcfm_membership_email_verification_for', $user_email );
 			}
 			
-			// Sending verification code in email
+			 
 			if( !defined( 'DOING_WCFM_EMAIL' ) ) 
 			  define( 'DOING_WCFM_EMAIL', true );
 			
-			/*$verification_mail_subject = "{site_name}: " . __( "Email Verification Code", "wc-frontend-manager" ) . " - " . $verification_code;
-			$verification_mail_body = __( 'Hi', 'wc-multivendor-membership' ) .
-																	 ',<br/><br/>' . 
-																	 apply_filters( 'wcfm_email_verification_mail_content', sprintf( __( 'Here is your email verification code - <b>%s</b>', 'wc-multivendor-membership' ), '{verification_code}' ) ) .
-																	 '<br /><br/>' . __( 'Thank You', 'wc-multivendor-membership' );
-													 
-			$subject = str_replace( '{site_name}', get_bloginfo( 'name' ), $verification_mail_subject );
-			$subject = apply_filters( 'wcfm_email_subject_wrapper', $subject );
-			$subject = str_replace( '{verification_code}', $verification_code, $subject );
-			$message = str_replace( '{verification_code}', $verification_code, $verification_mail_body );
-			$message = apply_filters( 'wcfm_email_content_wrapper', $message, __( 'Email Verification', 'wc-multivendor-membership' ) );
 			
-			wp_mail( $user_email, $subject, $message );*/
+
+
+
+
+
+
+
+
+
+
+
+
 			
 			
 			$wcfm_email = WC()->mailer()->emails['WCFMvm_Email_Email_verification'];
@@ -772,9 +788,9 @@ class WCFMvm_Ajax {
 		die;
   }
   
-  /**
-   * WCfM Registration SMS - OTP verification code send
-   */
+  
+
+
   function wcfmvm_sms_verification_code() {
   	global $WCFM, $WCFMvm, $WCFMmp, $_SESSION;
   	
@@ -801,14 +817,14 @@ class WCFMvm_Ajax {
 			} else {
 				$verification_code = rand( 1000, 9999 );
 			}
-			// Session store
+			 
 			if( WC()->session ) {
 				do_action( 'woocommerce_set_cart_cookies', true );
 				WC()->session->set( 'wcfm_membership_sms_verification_code', $verification_code );
 			  WC()->session->set( 'wcfm_membership_sms_verification_for', $user_phone );
 			} 
 			
-			//$sms_messages = $verification_code . ' - ' . __( "verification code (OPT) for registration at ", "wc-frontend-manager" ) . get_bloginfo( 'name' );
+			 
 			$sms_messages = __( "Your verification code is", "wc-multivendor-membership" ) . ' ' . $verification_code;
 			
 			$sms_messages  = strip_tags( $sms_messages );
@@ -864,7 +880,7 @@ class WCFMvm_Ajax {
 				$recipient   = $user_phone;
 				if( $recipient ) {
 					wcfm_log( "OPT:: " . $recipient . ": " . $sms_messages );
-					// removed @2.10.2, core plugin no more available
+					 
 				}
 			}
 			
@@ -891,9 +907,9 @@ class WCFMvm_Ajax {
 		die;
   }
   
-  /**
-   * Store Name Validation
-   */
+  
+
+
   function wcfmvm_store_slug_verification() {
   	global $WCFM, $WCFMvm, $_SESSION;
   	
@@ -935,11 +951,11 @@ class WCFMvm_Ajax {
   	die;
   }
 
-	/**
-	 * 	Process Membership Paypal payment
-	 */
+	
+
+
 	function wcfm_memberships_payment_paypal() {
-		// proceed only after a valid nonce check
+		 
 		if (!check_ajax_referer('wcfm_ajax_nonce', 'wcfm_ajax_nonce', false)) {
 			wp_send_json_error(esc_html__('Invalid nonce! Refresh your page and try again.', 'wc-frontend-manager'));
 			wp_die();
@@ -992,7 +1008,7 @@ class WCFMvm_Ajax {
 					'business'		=> esc_attr($paypal_email),
 					'currency_code'	=> esc_attr($payment_currency),
 					'item_number'	=> esc_attr($membership_id),
-					'item_name'		=> substr(esc_attr($title . ' - ' . $description), 0, 20), // maxlength 20 characters
+					'item_name'		=> substr(esc_attr($title . ' - ' . $description), 0, 20),  
 					'no_shipping'	=> 1,
 					'notify_url'	=> esc_url(add_query_arg( 'wcfmvm_process_ipn', 'paypal_ipn', get_wcfm_membership_url() )),
 					'return'		=> esc_url(apply_filters( 'wcfm_registration_thankyou_url', add_query_arg( 'vmstep', 'thankyou', get_wcfm_membership_url() ) )),
@@ -1000,10 +1016,10 @@ class WCFMvm_Ajax {
 					'custom'		=> esc_attr($member_id),
 				];
 
-				// PayPal accepts at most two decimals (none for zero decimal currencies)
-				// and the IPN handler compares what PayPal reports back against these
-				// same wc_format_decimal() rounded values - an unrounded tax result like
-				// 23.988 would be rejected at PayPal or fail the IPN amount check.
+				 
+				 
+				 
+				 
 				if ($subscription_type == 'one_time') {
 					$body['cmd'] = '_xclick';
 					$body['amount'] = wc_format_decimal( wcfmvm_membership_tax_price($one_time_amt), wc_get_price_decimals() );

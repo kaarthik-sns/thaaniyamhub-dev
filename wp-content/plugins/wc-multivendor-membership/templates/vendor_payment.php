@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMvm Memberships Template
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/templates
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
 
 global $WCFM, $WCFMvm;
 
@@ -40,8 +40,8 @@ $membership_payment_settings = array();
 if( isset( $wcfm_membership_options['membership_payment_settings'] ) ) $membership_payment_settings = $wcfm_membership_options['membership_payment_settings'];
 $payment_methods = array( 'paypal' );
 if( isset( $membership_payment_settings['payment_methods'] ) ) $payment_methods = $membership_payment_settings['payment_methods'];
-// Gateway specific settings (PayPal credentials, bank details, ...) are read by the
-// payment form handler of each method, see `wcfmvm_membership_payment_form_{$payment_method}`.
+ 
+ 
 $payment_terms = isset( $membership_payment_settings['payment_terms'] ) ? $membership_payment_settings['payment_terms'] : '';
 
 $wcfm_membership_payment_methods = get_wcfm_membership_payment_methods();
@@ -168,18 +168,18 @@ if ( $is_wc_checkout ) {
 						}
 						echo "</div>";
 					
-						/**
-						 * Render the payment form for this payment method.
-						 *
-						 * Every method renders through its own action, so a gateway added with the
-						 * `wcfm_membership_payment_methods` filter can render a fully custom payment
-						 * form for its own slug without overriding this template. Core registers the
-						 * PayPal, Stripe and Bank Transfer handlers in WCFMvm_Frontend.
-						 *
-						 * @param int   $membership_id Membership plan (post) ID.
-						 * @param int   $member_id     Member (user) ID.
-						 * @param array $subscription  The plan `subscription` meta.
-						 */
+						
+
+
+
+
+
+
+
+
+
+
+
 						if( has_action( 'wcfmvm_membership_payment_form_' . $payment_method ) ) {
 							do_action( 'wcfmvm_membership_payment_form_' . $payment_method, $membership_id, $member_id, $subscription );
 						} else {

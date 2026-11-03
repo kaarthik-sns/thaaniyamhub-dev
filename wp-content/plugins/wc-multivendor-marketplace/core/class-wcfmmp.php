@@ -39,6 +39,7 @@ class WCFMmp {
 	public $wcfmmp_store;
 	public $wcfmmp_store_seo;
 	public $wcfmmp_vendor;
+	public $wcfmmp_rest_access;
 	public $wcfmmp_product;
 	public $wcfmmp_emails;
 	public $wcfmmp_shipping;
@@ -325,6 +326,10 @@ class WCFMmp {
 		 
 		$this->load_class('vendor');
 		$this->wcfmmp_vendor = new WCFMmp_Vendor();
+
+		 
+		$this->load_class('rest-access');
+		$this->wcfmmp_rest_access = new WCFMmp_REST_Access();
 
 		 
 		$this->load_class('store');

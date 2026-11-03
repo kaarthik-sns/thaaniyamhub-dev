@@ -211,6 +211,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                         $bundles_position      = $this->helper->get_setting( 'bundles_position', 'no' );
                         $coupon_restrictions   = $this->helper->get_setting( 'coupon_restrictions', 'no' );
                         $exclude_unpurchasable = $this->helper->get_setting( 'exclude_unpurchasable', 'no' );
+                        $stock_quantity_mode   = $this->helper->get_setting( 'stock_quantity_mode', 'hard_limit' );
                         $contents_count        = $this->helper->get_setting( 'cart_contents_count', 'bundle' );
                         $hide_bundle_name      = $this->helper->get_setting( 'hide_bundle_name', 'no' );
                         $hide_bundled          = $this->helper->get_setting( 'hide_bundled', 'no' );
@@ -605,6 +606,30 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                                 </select> </label>
                                             <p class="description">
                                                 <?php esc_html_e( 'Make the bundle still purchasable when one of the bundled products is un-purchasable. These bundled products are excluded from the orders.', 'woo-product-bundle' ); ?>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr class="show_if_section_none">
+                                        <th><?php esc_html_e( 'Stock quantity mode', 'woo-product-bundle' ); ?></th>
+                                        <td>
+                                            <label> <select name="woosb_settings[stock_quantity_mode]">
+                                                    <option value="hard_limit" <?php selected( $stock_quantity_mode, 'hard_limit' ); ?>>
+                                                        <?php esc_html_e( 'Hard limit', 'woo-product-bundle' ); ?>
+                                                    </option>
+                                                    <option value="physical" <?php selected( $stock_quantity_mode, 'physical' ); ?>>
+                                                        <?php esc_html_e( 'Physical', 'woo-product-bundle' ); ?>
+                                                    </option>
+                                                </select> </label>
+                                            <p class="description">
+                                                <?php esc_html_e( 'Choose how the bundle stock quantity is calculated from its bundled products.', 'woo-product-bundle' ); ?>
+                                            </p>
+                                            <p class="description">
+                                                <strong><?php esc_html_e( 'Hard limit (default):', 'woo-product-bundle' ); ?></strong>
+                                                <?php esc_html_e( 'The bundle stock is the lowest quantity among bundled products that do NOT allow backorders. Products that allow backorders are not counted as a limit because they can always be backordered. Example: Product A (stock 1, backorders allowed) + Product B (stock 100, backorders not allowed) = bundle stock 100.', 'woo-product-bundle' ); ?>
+                                            </p>
+                                            <p class="description">
+                                                <strong><?php esc_html_e( 'Physical:', 'woo-product-bundle' ); ?></strong>
+                                                <?php esc_html_e( 'The bundle stock is the lowest quantity among ALL bundled products that manage stock, regardless of their backorder settings. It reflects the real physical stock, so it is more conservative. Example: Product A (stock 1, backorders allowed) + Product B (stock 100, backorders not allowed) = bundle stock 1.', 'woo-product-bundle' ); ?>
                                             </p>
                                         </td>
                                     </tr>

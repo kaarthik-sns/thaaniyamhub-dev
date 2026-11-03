@@ -84,11 +84,7 @@ class WCFMmp_Media {
 		$WCFM_Query->init_query_vars();
 		$WCFM_Query->add_endpoints();
 		
-		 
-			 
-			flush_rewrite_rules();
-			update_option( 'wcfm_updated_end_point_media', 1 );
-		 
+		wcfmmp_maybe_flush_rewrite_rules( 'media' );
   }
   
 	

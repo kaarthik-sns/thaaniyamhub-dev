@@ -1,26 +1,26 @@
 <?php
-/**
- * WCFM plugin core
- *
- * Plugin shortcode
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/core
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFMvm_Shortcode {
 
 	public $list_product;
 
 	public function __construct() {
-		// WC Frontend Manager Membership Shortcode
+		 
 		add_shortcode('wcfm_vendor_membership', array(&$this, 'wcfm_vendor_membership'));
 		
-		// WC Frontend Manager Registration Shortcode
+		 
 		add_shortcode('wcfm_vendor_registration', array(&$this, 'wcfm_vendor_registraion'));
 		
-		// WC Frontend Manager Subscribe Button Shortcode
+		 
 		add_shortcode('wcfmvm_subscribe', array(&$this, 'wcfmvm_subscribe'));
 	}
 
@@ -94,27 +94,27 @@ class WCFMvm_Shortcode {
 		return ob_get_clean();
 	}
 	
-	/**
-	 * Shortcode Wrapper
-	 *
-	 * @access public
-	 * @param mixed $function
-	 * @param array $atts (default: array())
-	 * @return string
-	 */
+	
+
+
+
+
+
+
+
 	public function shortcode_wrapper($function, $atts = array()) {
 		ob_start();
 		call_user_func($function, $atts);
 		return ob_get_clean();
 	}
 
-	/**
-	 * Shortcode CLass Loader
-	 *
-	 * @access public
-	 * @param mixed $class_name
-	 * @return void
-	 */
+	
+
+
+
+
+
+
 	public function load_class($class_name = '') {
 		global $WCFMvm;
 		if ('' != $class_name && '' != $WCFMvm->token) {

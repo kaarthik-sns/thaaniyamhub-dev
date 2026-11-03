@@ -1,20 +1,20 @@
 <?php
-/**
- * Stripe webhook handler
- *
- * The signed server-to-server channel for everything that happens to a membership
- * AFTER checkout - the browser return handlers (wcfmvm-handle-stripe-sca-*.php)
- * only ever see the customer coming back from the payment page, so renewals,
- * cancellations at Stripe and checkouts the customer never returned from were
- * invisible before this endpoint existed.
- *
- * Endpoint: {membership page}?wcfmvm_process_ipn=stripe_webhook
- * Events consumed: checkout.session.completed, invoice.payment_succeeded,
- * invoice.payment_failed, customer.subscription.deleted.
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/ipn
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class wcfmvm_stripe_webhook_handler {
 
@@ -40,25 +40,25 @@ class wcfmvm_stripe_webhook_handler {
 		$this->handle_webhook();
 	}
 
-	/**
-	 * End the request with a status code - Stripe re-delivers on anything but 2xx.
-	 */
+	
+
+
 	protected function respond( $code, $message ) {
 		status_header( $code );
 		echo esc_html( $message );
 		exit;
 	}
 
-	/**
-	 * Member a Stripe subscription belongs to.
-	 *
-	 * Resolved from the metas stored at signup: `wcfm_stripe_subscription_id`
-	 * (browser return / checkout webhook) with `wcfm_subscription_profile_id`
-	 * (ledger) as fallback.
-	 *
-	 * @param string $subscription_id Stripe subscription id.
-	 * @return int Member (user) ID, 0 when the subscription is not a membership.
-	 */
+	
+
+
+
+
+
+
+
+
+
 	protected function member_by_subscription( $subscription_id ) {
 		if( !$subscription_id ) return 0;
 
@@ -76,10 +76,10 @@ class wcfmvm_stripe_webhook_handler {
 		return 0;
 	}
 
-	/**
-	 * Subscription id an invoice belongs to - the field moved between Stripe API
-	 * versions, so both shapes are read.
-	 */
+	
+
+
+
 	protected function invoice_subscription_id( $invoice ) {
 		if( isset( $invoice->subscription ) && $invoice->subscription ) {
 			return is_string( $invoice->subscription ) ? $invoice->subscription : $invoice->subscription->id;
@@ -94,7 +94,7 @@ class wcfmvm_stripe_webhook_handler {
 	public function handle_webhook() {
 		global $WCFM, $WCFMvm;
 
-		//Include the Stripe library.
+		 
 		if( !class_exists( 'Stripe\Stripe' ) ) {
 			include( $WCFMvm->plugin_path . 'includes/libs/stripe-gateway/init.php');
 		}
@@ -140,14 +140,14 @@ class wcfmvm_stripe_webhook_handler {
 		$this->respond( 200, 'Ignored: ' . $event->type );
 	}
 
-	/**
-	 * A checkout the customer paid - whether or not they made it back to the site.
-	 *
-	 * The browser return handlers do this same activation when the customer comes
-	 * back; before this event was consumed, a customer who paid and then closed the
-	 * tab was charged but never registered. Whichever side runs first deletes
-	 * `temp_wcfm_membership`, so the other becomes a no-op.
-	 */
+	
+
+
+
+
+
+
+
 	protected function handle_checkout_session_completed( $event ) {
 		global $WCFM, $WCFMvm;
 
@@ -157,10 +157,10 @@ class wcfmvm_stripe_webhook_handler {
 			$this->respond( 200, 'Session not paid, nothing to do.' );
 		}
 
-		// Only sessions this plugin created carry its reference:
-		// 'wcfm_{hash}|{membership_id}|{member_id}' - see generate_stripe_request_form().
-		// The same Stripe account may serve other checkouts (the marketplace gateway,
-		// another plugin), those must pass through untouched.
+		 
+		 
+		 
+		 
 		$ref_id = isset( $session->client_reference_id ) ? (string) $session->client_reference_id : '';
 		$trans_info = explode( '|', $ref_id );
 		if( ( count( $trans_info ) !== 3 ) || ( strpos( $trans_info[0], 'wcfm_' ) !== 0 ) ) {
@@ -221,9 +221,9 @@ class wcfmvm_stripe_webhook_handler {
 		$this->respond( 200, 'Checkout processed.' );
 	}
 
-	/**
-	 * A paid subscription invoice - the renewal signal.
-	 */
+	
+
+
 	protected function handle_invoice_payment_succeeded( $event ) {
 		global $WCFM, $WCFMvm;
 
@@ -234,9 +234,9 @@ class wcfmvm_stripe_webhook_handler {
 			$this->respond( 200, 'Invoice has no subscription.' );
 		}
 
-		// The first invoice of a subscription belongs to checkout - activation is done
-		// by checkout.session.completed (webhook or browser return), never counted as
-		// a renewal.
+		 
+		 
+		 
 		$billing_reason = isset( $invoice->billing_reason ) ? $invoice->billing_reason : '';
 		if( 'subscription_create' === $billing_reason ) {
 			$this->respond( 200, 'Initial invoice, activation handled by the checkout event.' );
@@ -244,16 +244,16 @@ class wcfmvm_stripe_webhook_handler {
 
 		$member_id = $this->member_by_subscription( $subscription_id );
 		if( !$member_id ) {
-			// Same Stripe account, different product (marketplace vendor subscriptions,
-			// another plugin) - or a membership whose metas were lost. Log, do not fail:
-			// a non 2xx would make Stripe retry forever and finally disable the endpoint.
+			 
+			 
+			 
 			wcfmvm_create_log( 'Stripe invoice ' . $invoice->id . ' paid for subscription ' . $subscription_id . ' which no member is linked to. Ignored.' );
 			$this->respond( 200, 'Subscription not linked to a member.' );
 		}
 
-		// The charge amount is decided by the Stripe Price/Plan the admin configured,
-		// which this plugin never creates - so a difference from the site's plan price
-		// is an admin configuration drift, not tampering. Surface it, do not refuse it.
+		 
+		 
+		 
 		$wcfm_membership = absint( get_user_meta( $member_id, 'wcfm_membership', true ) );
 		if( $wcfm_membership ) {
 			$subscription = (array) get_post_meta( $wcfm_membership, 'subscription', true );
@@ -268,7 +268,7 @@ class wcfmvm_stripe_webhook_handler {
 			}
 		}
 
-		// The end of the period this invoice paid for IS the next charge date.
+		 
 		$next_schedule = 0;
 		if( isset( $invoice->lines->data[0]->period->end ) ) {
 			$next_schedule = absint( $invoice->lines->data[0]->period->end );
@@ -285,7 +285,7 @@ class wcfmvm_stripe_webhook_handler {
 			}
 		}
 
-		// One invoice is one renewal, however many deliveries and event types report it.
+		 
 		if( !wcfmvm_claim_transaction( 'stripe', 'invoice_' . $invoice->id ) ) {
 			$this->respond( 200, 'Invoice already claimed.' );
 		}
@@ -307,9 +307,9 @@ class wcfmvm_stripe_webhook_handler {
 		) );
 
 		if( !$renewed ) {
-			// Refused (no valid membership any more, plan not recurring, ...) - logged by
-			// the renewal itself. Release the claim so a manual re-delivery from the
-			// Stripe dashboard can be processed once the cause is fixed.
+			 
+			 
+			 
 			wcfmvm_release_transaction( 'stripe', 'invoice_' . $invoice->id );
 			$this->respond( 200, 'Renewal refused, see membership log.' );
 		}
@@ -320,11 +320,11 @@ class wcfmvm_stripe_webhook_handler {
 		$this->respond( 200, 'Renewal processed.' );
 	}
 
-	/**
-	 * A failed subscription collection - Stripe retries on its own schedule and sends
-	 * customer.subscription.deleted when it finally gives up, so the membership is
-	 * left untouched here.
-	 */
+	
+
+
+
+
 	protected function handle_invoice_payment_failed( $event ) {
 		$invoice = $event->data->object;
 
@@ -339,9 +339,9 @@ class wcfmvm_stripe_webhook_handler {
 		$this->respond( 200, 'Failure recorded.' );
 	}
 
-	/**
-	 * The subscription ended at Stripe - cancelled there, or dunning gave up.
-	 */
+	
+
+
 	protected function handle_subscription_deleted( $event ) {
 		global $WCFM, $WCFMvm;
 
@@ -361,9 +361,9 @@ class wcfmvm_stripe_webhook_handler {
 		$wcfm_membership_id = get_user_meta( $member_id, 'wcfm_membership', true );
 		wcfm_log( 'Membership Expiry by Stripe :: ' . $member_id . ' <=> ' . $wcfm_membership_id . ' <=> ' . $event->type );
 
-		// Ledger first, then drop the profile metas so the membership cancellation
-		// below does not issue a redundant cancel call against the already deleted
-		// subscription at Stripe.
+		 
+		 
+		 
 		$WCFMvm->store_subscription_data( $member_id, 'stripe_subs', $subscription_id, 'subscr_cancel', 'Cancelled', '' );
 		delete_user_meta( $member_id, 'wcfm_stripe_subscription_id' );
 		delete_user_meta( $member_id, 'wcfm_subscription_profile_id' );

@@ -930,6 +930,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     continue;
                 }
 
+                // Skip items without a complete pricing context (e.g. items cloned by third-party plugins with partial bundle data)
+                $has_pricing_context = array_key_exists( 'woosb_fixed_price', $parent_item ) || isset( $parent_item['woosb_bundle']['pricing_mode'] );
+
+                if ( ! apply_filters( 'woosb_has_pricing_context', $has_pricing_context, $parent_item, $parent_key ) ) {
+                    continue;
+                }
+
                 $is_fixed_price = ! empty( $parent_item['woosb_fixed_price'] ) || ( isset( $parent_item['woosb_bundle']['pricing_mode'] ) && $parent_item['woosb_bundle']['pricing_mode'] === 'fixed' );
                 $child_keys     = $bundle_children_map[ $bundle_id ] ?? [];
 

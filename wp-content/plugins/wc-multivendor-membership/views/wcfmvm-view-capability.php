@@ -1,22 +1,22 @@
 <?php
-/**
- * WCFMvm plugin Views
- *
- * Plugin Capability View
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/views
- * @version   1.0.1
- */
+
+
+
+
+
+
+
+
+
 ?>
 
 <?php
 
-/**
- * WCFM advanced capability
- *
- * @since 1.0.1
- */
+
+
+
+
+
  
  
 add_action( 'wcfm_capability_settings_miscellaneous', 'wcfmvm_capability_settings_miscellaneous_advanced', 60 );

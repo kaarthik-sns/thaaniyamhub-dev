@@ -50,6 +50,45 @@ if(!function_exists('wcfm_is_valid_membership')) {
 	}
 }
 
+if(!function_exists('wcfm_is_selectable_membership')) {
+	
+
+
+
+
+
+
+
+	function wcfm_is_selectable_membership( $wcfm_membership ) {
+		$wcfm_membership = absint( $wcfm_membership );
+		if( !$wcfm_membership ) return false;
+		if( 'wcfm_memberships' !== get_post_type( $wcfm_membership ) ) return false;
+		if( 'publish' !== get_post_status( $wcfm_membership ) ) return false;
+		if( get_post_meta( $wcfm_membership, 'is_wcfm_membership_disable', true ) ) return false;
+		return apply_filters( 'wcfm_is_selectable_membership', true, $wcfm_membership );
+	}
+}
+
+if(!function_exists('wcfmvm_get_product_membership')) {
+	
+
+
+
+
+
+
+
+	function wcfmvm_get_product_membership( $product_id ) {
+		$product_id = absint( $product_id );
+		if( !$product_id ) return 0;
+		$wcfm_membership = absint( get_post_meta( $product_id, '_wcfm_membership', true ) );
+		if( !$wcfm_membership ) return 0;
+		if( 'wcfm_memberships' !== get_post_type( $wcfm_membership ) ) return 0;
+		if( absint( get_post_meta( $wcfm_membership, 'subscription_product', true ) ) !== $product_id ) return 0;
+		return $wcfm_membership;
+	}
+}
+
 if(!function_exists('wcfm_has_membership')) {
 	function wcfm_has_membership() { 
 		if( !is_user_logged_in() ) return false;
@@ -72,7 +111,7 @@ if(!function_exists('wcfm_get_membership')) {
 
 if(!function_exists('is_wcfm_membership_page')) {
 	function is_wcfm_membership_page() {   
-		//return wc_post_content_has_shortcode( 'wcfm_vendor_membership' );
+		 
 		$pages = get_option("wcfm_page_options", array());
 		if( isset( $pages['wcfm_vendor_membership_page_id'] ) && $pages['wcfm_vendor_membership_page_id'] ) {
 			return is_page( $pages['wcfm_vendor_membership_page_id'] ) || wc_post_content_has_shortcode( 'wcfm_vendor_membership' );
@@ -103,7 +142,7 @@ if(!function_exists('get_wcfm_membership_page')) {
 
 if(!function_exists('is_wcfm_registration_page')) {
 	function is_wcfm_registration_page() {  
-		//return wc_post_content_has_shortcode( 'wcfm_vendor_registration' );
+		 
 		$pages = get_option("wcfm_page_options", array());
 		if( isset( $pages['wcfm_vendor_registration_page_id'] ) && $pages['wcfm_vendor_registration_page_id'] ) {
 			return is_page( $pages['wcfm_vendor_registration_page_id'] ) || wc_post_content_has_shortcode( 'wcfm_vendor_registration' );
@@ -156,23 +195,23 @@ if(!function_exists('get_wcfm_membership_payment_methods')) {
 }
 
 if(!function_exists('get_wcfm_membership_recurring_paymodes')) {
-	/**
-	 * Pay modes that identify a *recurring profile* subscription record.
-	 *
-	 * store_subscription_data() is called twice for a recurring plan: once with the
-	 * plain pay mode (e.g. 'stripe') for the initial / trial payment, and once with the
-	 * recurring variant (e.g. 'stripe_subs') carrying the gateway's own subscription or
-	 * billing profile id. The recurring record is the one that stores the billing amount,
-	 * the billing interval and `wcfm_subscription_profile_id`.
-	 *
-	 * Every supported payment method gets a `{method}_subs` recurring variant, so a
-	 * gateway added with the `wcfm_membership_payment_methods` filter is recognised as
-	 * recurring capable without any further registration. Use the filter below to declare
-	 * a recurring pay mode that does not follow that naming, or to drop the recurring
-	 * variant of a gateway that only ever takes one time payments.
-	 *
-	 * @return array Recurring pay mode key => the payment method it belongs to.
-	 */
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	function get_wcfm_membership_recurring_paymodes() {
 		$recurring_paymodes = array();
 
@@ -185,36 +224,36 @@ if(!function_exists('get_wcfm_membership_recurring_paymodes')) {
 }
 
 if(!function_exists('wcfmvm_transaction_claim_key')) {
-	/**
-	 * Option name holding the claim for a processed gateway transaction
-	 *
-	 * @param string $gateway Gateway slug, e.g. 'paypal', 'stripe'.
-	 * @param string $txn_id  Gateway transaction / event id.
-	 * @return string
-	 */
+	
+
+
+
+
+
+
 	function wcfmvm_transaction_claim_key( $gateway, $txn_id ) {
 		return 'wcfmvm_' . sanitize_key( $gateway ) . '_txn_' . $txn_id;
 	}
 }
 
 if(!function_exists('wcfmvm_claim_transaction')) {
-	/**
-	 * Claim a gateway transaction id before processing it.
-	 *
-	 * INSERT IGNORE against the unique `option_name` index is the claim and the
-	 * replay check in one atomic statement - exactly one of any number of
-	 * concurrent notifications for the same transaction gets a row inserted.
-	 * add_option() is deliberately NOT used here: it checks with get_option()
-	 * first and then runs INSERT ... ON DUPLICATE KEY UPDATE, so two concurrent
-	 * requests can both walk through it.
-	 *
-	 * Claims are stored without autoload and pruned once past the retention
-	 * window, see WCFMvm::wcfmvm_prune_processed_transactions().
-	 *
-	 * @param string $gateway Gateway slug, e.g. 'paypal', 'stripe'.
-	 * @param string $txn_id  Gateway transaction / event id.
-	 * @return bool True when this request claimed the transaction.
-	 */
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	function wcfmvm_claim_transaction( $gateway, $txn_id ) {
 		global $wpdb;
 
@@ -222,46 +261,46 @@ if(!function_exists('wcfmvm_claim_transaction')) {
 
 		$claimed = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (`option_name`, `option_value`, `autoload`) VALUES (%s, %s, 'no')", wcfmvm_transaction_claim_key( $gateway, $txn_id ), time() ) );
 
-		// A failed query is treated as not claimed - the gateway retries the notification.
+		 
 		return ( 1 === (int) $claimed );
 	}
 }
 
 if(!function_exists('wcfmvm_release_transaction')) {
-	/**
-	 * Release a claim taken by wcfmvm_claim_transaction().
-	 *
-	 * Gateways re-send a notification that was not accepted the first time (a
-	 * payment that had not cleared yet, a misconfigured receiver account), so a
-	 * transaction that was NOT processed has to become claimable again.
-	 *
-	 * @param string $gateway Gateway slug.
-	 * @param string $txn_id  Gateway transaction / event id.
-	 */
+	
+
+
+
+
+
+
+
+
+
 	function wcfmvm_release_transaction( $gateway, $txn_id ) {
 		delete_option( wcfmvm_transaction_claim_key( $gateway, $txn_id ) );
 	}
 }
 
 if(!function_exists('get_wcfm_membership_enabled_payment_methods')) {
-	/**
-	 * Store admin enabled membership payment methods (allow-list).
-	 *
-	 * Unlike get_wcfm_membership_payment_methods() -- which lists every method the
-	 * plugin globally supports -- this returns only the methods the store admin has
-	 * actually enabled under WCFM Membership > Settings. Any server side flow that
-	 * accepts a client supplied paymode (e.g. the membership payment controller) MUST
-	 * validate against this list, never the global one, otherwise a disabled method
-	 * can be forced by posting directly to the endpoint.
-	 *
-	 * @return array List of enabled payment method keys, e.g. array( 'paypal', 'bank_transfer' ).
-	 */
+	
+
+
+
+
+
+
+
+
+
+
+
 	function get_wcfm_membership_enabled_payment_methods() {
 		$wcfm_membership_options     = get_option( 'wcfm_membership_options', array() );
 		$membership_payment_settings = isset( $wcfm_membership_options['membership_payment_settings'] ) ? $wcfm_membership_options['membership_payment_settings'] : array();
 		$enabled_methods             = isset( $membership_payment_settings['payment_methods'] ) ? (array) $membership_payment_settings['payment_methods'] : array( 'paypal' );
 
-		// Keep only methods that are still globally supported.
+		 
 		$supported_methods = array_keys( get_wcfm_membership_payment_methods() );
 		$enabled_methods   = array_values( array_intersect( $enabled_methods, $supported_methods ) );
 
@@ -270,18 +309,56 @@ if(!function_exists('get_wcfm_membership_enabled_payment_methods')) {
 }
 
 if(!function_exists('get_wcfm_membership_offline_payment_methods')) {
-	/**
-	 * Payment methods a membership subscription may be completed with WITHOUT an
-	 * online gateway confirmation.
-	 *
-	 * Only these methods may finalise a subscription directly through the membership
-	 * payment controller. Online gateways (PayPal, Stripe) must complete only after
-	 * their gateway returns a verified IPN, so they are deliberately excluded here.
-	 *
-	 * @return array List of offline payment method keys.
-	 */
+	
+
+
+
+
+
+
+
+
+
 	function get_wcfm_membership_offline_payment_methods() {
 		return apply_filters( 'wcfm_membership_offline_payment_methods', array( 'bank_transfer' ) );
+	}
+}
+
+if(!function_exists('wcfmvm_current_user_can_manage_memberships')) {
+	
+
+
+
+
+
+
+
+
+
+
+
+	function wcfmvm_current_user_can_manage_memberships( $member_id = 0 ) {
+		if( !is_user_logged_in() ) return false;
+		
+		$user_id = get_current_user_id();
+		$can     = false;
+		
+		if( current_user_can( 'manage_woocommerce' ) ) {
+			$can = true;
+		} elseif( current_user_can( 'shop_staff' ) ) {
+			 
+			$can = !get_user_meta( $user_id, '_wcfm_vendor', true );
+		}
+		
+		if( $can && ( wcfm_is_vendor( $user_id ) || wcfm_is_vendor( apply_filters( 'wcfm_current_vendor_id', $user_id ) ) ) ) {
+			$can = false;
+		}
+		
+		if( $can && $member_id && function_exists( 'wcfm_is_group_manager' ) && wcfm_is_group_manager() ) {
+			$can = function_exists( 'wcfm_user_can_perform_request' ) && wcfm_user_can_perform_request( $member_id, 'wcfm_membership' );
+		}
+		
+		return apply_filters( 'wcfmvm_current_user_can_manage_memberships', $can, $user_id, $member_id );
 	}
 }
 
@@ -301,7 +378,7 @@ if(!function_exists('get_wcfm_memberships')) {
 							'post_type'        => 'wcfm_memberships',
 							'post_mime_type'   => '',
 							'post_parent'      => '',
-							//'author'	   => get_current_user_id(),
+							 
 							'post_status'      => array('publish'),
 							'suppress_filters' => true 
 						);
@@ -328,7 +405,7 @@ if(!function_exists('wcfm_membership_registration_steps')) {
 																									'registration'      => __( 'Registration', 'wc-multivendor-membership' ),
 																									'payment'           => __( 'Confirmation', 'wc-multivendor-membership' ),
 																									'thankyou'          => __( 'Thank You', 'wc-multivendor-membership' ),
-																									//'cancel'            => __( 'Cancel', 'wc-multivendor-membership' )
+																									 
 																								);
 		
 		$membership_id = '';
@@ -342,7 +419,7 @@ if(!function_exists('wcfm_membership_registration_steps')) {
 																										'choose_membership' => __( 'Plans', 'wc-multivendor-membership' ),
 																										'payment'           => __( 'Confirmation', 'wc-multivendor-membership' ),
 																										'thankyou'          => __( 'Thank You', 'wc-multivendor-membership' ),
-																										//'cancel'            => __( 'Cancel', 'wc-multivendor-membership' )
+																										 
 																									);
 		}
 		
@@ -496,6 +573,21 @@ if(!function_exists('get_wcfm_basic_membership')) {
 	}
 }
 
+if(!function_exists('get_wcfm_selectable_free_membership')) {
+	
+
+
+
+
+
+
+	function get_wcfm_selectable_free_membership() {
+		$free_membership = get_wcfm_free_membership();
+		if( !$free_membership || !wcfm_is_selectable_membership( $free_membership ) ) return 0;
+		return $free_membership;
+	}
+}
+
 if(!function_exists('wcfmvm_membership_table_tax_display')) {
 	function wcfmvm_membership_table_tax_display( $html_handler = 'div' ) {
 		if( !apply_filters( 'wcfm_is_allow_membership_table_tax_display', true ) ) return;
@@ -565,6 +657,144 @@ if(!function_exists('wcfm_membership_features_table')) {
 if(!function_exists('wcfmvm_create_log')) {
 	function wcfmvm_create_log( $message, $level = 'debug' ) {
 		wcfm_create_log( $message, $level, 'wcfm-membership' );
+	}
+}
+
+if( ! function_exists( 'wcfmvm_notification_text' ) ) {
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	function wcfmvm_notification_text( $text ) {
+		$text = (string) $text;
+
+		 
+		 
+		do {
+			$previous = $text;
+			$text     = wp_strip_all_tags( html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ) );
+		} while ( $text !== $previous );
+
+		return trim( $text );
+	}
+}
+
+if( ! function_exists( 'wcfmvm_unslash_settings' ) ) {
+	
+
+
+
+
+
+
+
+
+	function wcfmvm_unslash_settings() {
+		global $wpdb;
+
+		 
+		$content_options = array(
+			'wcfm_membership_free_thankyou_content',
+			'wcfm_membership_subscription_thankyou_content',
+			'wcfm_non_membership_welcome_email_content',
+			'wcfm_membership_subscription_welcome_email_content',
+			'wcfm_registration_admin_notication_content',
+			'wcfm_membership_subscription_admin_notication_content',
+			'wcfm_membership_onapproval_admin_notication_content',
+			'wcfm_membership_switch_admin_notication_content',
+			'wcfm_membership_switch_notication_content',
+			'wcfm_membership_next_payment_notication_content',
+			'wcfm_membership_reminder_notication_content',
+			'wcfm_membership_reject_notication_content',
+			'wcfm_membership_cancel_notication_content',
+			'wcfm_membership_expire_notication_content',
+		);
+
+		 
+		$form_options = array(
+			'wcfm_membership_options',
+			'wcfmvm_registration_static_fields',
+			'wcfmvm_registration_custom_fields',
+			'wcfm_non_membership_welcome_email_subject',
+			'wcfm_membership_subscription_welcome_email_subject',
+			'wcfm_registration_admin_notication_subject',
+			'wcfm_membership_subscription_admin_notication_subject',
+			'wcfm_membership_onapproval_admin_notication_subject',
+			'wcfm_membership_switch_admin_notication_subject',
+			'wcfm_membership_switch_notication_subject',
+			'wcfm_membership_next_payment_notication_subject',
+			'wcfm_membership_reminder_notication_subject',
+			'wcfm_membership_reject_notication_subject',
+			'wcfm_membership_cancel_notication_subject',
+			'wcfm_membership_expire_notication_subject',
+		);
+
+		foreach ( array_merge( $content_options, $form_options ) as $option ) {
+			 
+			$option_names = $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name = %s OR option_name LIKE %s", $option, $wpdb->esc_like( $option . '_' ) . '%' ) );
+
+			foreach ( $option_names as $option_name ) {
+				$value = get_option( $option_name );
+
+				if ( in_array( $option, $content_options, true ) ) {
+					 
+					$unslashed = ( is_string( $value ) && ( addslashes( stripslashes( $value ) ) === $value ) ) ? stripslashes( $value ) : $value;
+				} else {
+					$unslashed = map_deep( $value, function( $field ) {
+						return is_string( $field ) ? preg_replace( "/\\\\+'/", "'", $field ) : $field;
+					} );
+				}
+
+				if ( $unslashed !== $value ) {
+					update_option( $option_name, $unslashed );
+				}
+			}
+		}
+	}
+}
+
+if( ! function_exists( 'wcfmvm_get_registration_custom_fields' ) ) {
+	
+
+
+
+
+
+
+
+
+
+
+
+
+	function wcfmvm_get_registration_custom_fields( $membership_id = 0, $member_id = 0 ) {
+		$fields = wcfm_get_option( 'wcfmvm_registration_custom_fields', array() );
+
+		
+
+
+
+
+
+
+
+
+
+		return (array) apply_filters( 'wcfmvm_registration_custom_fields', (array) $fields, (int) $membership_id, absint( $member_id ) );
 	}
 }
 ?>

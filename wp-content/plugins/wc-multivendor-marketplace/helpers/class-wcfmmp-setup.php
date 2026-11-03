@@ -27,7 +27,39 @@ class WCFMmp_Marketplace_Setup {
 
 
 	public function wcfm_admin_menus() {
-		add_dashboard_page( '', '', 'manage_options', 'wcfmmp-setup', '' );
+		add_dashboard_page( '', '', self::setup_capability(), 'wcfmmp-setup', '' );
+	}
+
+	
+
+
+
+
+
+
+
+
+
+	public static function setup_capability() {
+		return apply_filters( 'wcfmmp_setup_page_required_capability', 'activate_plugins' );
+	}
+
+	
+
+
+
+
+
+
+
+	private function verify_setup_access() {
+		if ( ! is_user_logged_in() || ! current_user_can( self::setup_capability() ) ) {
+			wp_die(
+				esc_html__( "You don't have permission to access this page. Please contact the site administrator for assistance.", 'wc-multivendor-marketplace' ),
+				esc_html__( 'Access Denied', 'wc-multivendor-marketplace' ),
+				array( 'response' => 403 )
+			);
+		}
 	}
 
 	
@@ -38,6 +70,8 @@ class WCFMmp_Marketplace_Setup {
 		if ( filter_input(INPUT_GET, 'page') != 'wcfmmp-setup') {
 			return;
 		}
+
+		$this->verify_setup_access();
 
 		if (!WCFMmp_Dependencies::woocommerce_plugin_active_check()) {
 			if (isset($_POST['wcfmmp_install_woocommerce'])) {
@@ -174,6 +208,7 @@ class WCFMmp_Marketplace_Setup {
 
 
 	public function install_woocommerce() {
+		$this->verify_setup_access();
 		check_admin_referer('wcfmmp-install-woocommerce');
 		include_once( ABSPATH . 'wp-admin/includes/file.php' );
 		include_once( ABSPATH . 'wp-admin/includes/plugin-install.php' );
@@ -386,6 +421,7 @@ class WCFMmp_Marketplace_Setup {
 
 
 	public function install_wcfmvm() {
+		$this->verify_setup_access();
 		check_admin_referer('wcfmmp-install-wcfmvm');
 		include_once( ABSPATH . 'wp-admin/includes/file.php' );
 		include_once( ABSPATH . 'wp-admin/includes/plugin-install.php' );
@@ -598,6 +634,7 @@ class WCFMmp_Marketplace_Setup {
 
 
 	public function install_wcfm() {
+		$this->verify_setup_access();
 		check_admin_referer('wcfmmp-install-wcfm');
 		include_once( ABSPATH . 'wp-admin/includes/file.php' );
 		include_once( ABSPATH . 'wp-admin/includes/plugin-install.php' );

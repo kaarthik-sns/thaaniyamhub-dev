@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMgs Memberships Template
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/templates
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
 
 global $WCFM, $WCFMvm;
 
@@ -26,7 +26,7 @@ $sms_verification   = '';
 if( is_user_logged_in() ) {
 	$user_id = get_current_user_id();
 	$current_user = get_userdata( $user_id );
-	// Fetching User Data
+	 
 	if( $current_user && !empty( $current_user ) ) {
 		$user_name  = $current_user->user_login;
 		$user_email = $current_user->user_email;
@@ -52,7 +52,8 @@ if( apply_filters( 'wcfm_is_allow_sms_verification', true ) && function_exists( 
 
 $wcfmvm_registration_static_fields = wcfm_get_option( 'wcfmvm_registration_static_fields', array() );
 
-$wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custom_fields', array() );
+$wcfm_membership = ( WC()->session && WC()->session->get( 'wcfm_membership' ) ) ? WC()->session->get( 'wcfm_membership' ) : get_wcfm_free_membership();
+$wcfmvm_registration_custom_fields = wcfmvm_get_registration_custom_fields( $wcfm_membership, $user_id );
 
 ?>
 
@@ -187,7 +188,7 @@ $wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custo
 					
 					do_action( 'wcfm_membership_registration_form_before_static_custom_fields' );
 					
-					// Registration Static Field Support - 1.0.6
+					 
 					$terms = '';
 					$terms_page = '';
 					if( !empty( $wcfmvm_registration_static_fields ) ) {
@@ -207,24 +208,24 @@ $wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custo
 								$field_value['country']  = isset( $vendor_data['address']['country'] ) ? $vendor_data['address']['country'] : get_user_meta( $user_id, 'billing_country', true );
 								$field_value['state']    = isset( $vendor_data['address']['state'] ) ? $vendor_data['address']['state'] : get_user_meta( $user_id, 'billing_state', true );
 
-								/*$billing_address_fields = array( 	
-																						'billing_address_1'  => 'addr_1',
-																						'billing_address_2'  => 'addr_2',
-																						'billing_country'    => 'country',
-																						'billing_city'       => 'city',
-																						'billing_state'      => 'state',
-																						'billing_postcode'   => 'zip',
-																					);
-			
-								foreach( $billing_address_fields as $billing_address_field_key => $billing_address_field ) {
-									$field_value[$billing_address_field] = get_user_meta( $user_id, $billing_address_field_key, true );
-								}*/
+								
+
+
+
+
+
+
+
+
+
+
+
 							}
 							
 							switch( $wcfmvm_registration_static_field ) {
 							  case 'address':
 							  	
-							  	// GEO Locate Support
+							  	 
 							  	if( is_user_logged_in() && ( !isset( $field_value['country'] ) || ( isset( $field_value['country'] ) && empty( $field_value['country'] ) ) ) ) {
 										$user_location = get_user_meta( $user_id, 'wcfm_user_location', true );
 										if( $user_location ) {
@@ -281,7 +282,7 @@ $wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custo
 					
 					do_action( 'wcfm_membership_registration_form_before_dynamic_custom_fields' );
 					
-					// Registration Custom Field Support - 1.0.5
+					 
 					if( !empty( $wcfmvm_registration_custom_fields ) && !wcfm_is_vendor() ) {
 						foreach( $wcfmvm_registration_custom_fields as $wcfmvm_registration_custom_field ) {
 							if( !isset( $wcfmvm_registration_custom_field['enable'] ) ) continue;
@@ -302,7 +303,7 @@ $wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custo
 								}
 							}
 							
-							// Is Required
+							 
 							$custom_attributes = array();
 							if( isset( $wcfmvm_registration_custom_field['required'] ) && $wcfmvm_registration_custom_field['required'] ) $custom_attributes = array( 'required' => 1 );
 							
@@ -383,7 +384,7 @@ $wcfmvm_registration_custom_fields = wcfm_get_option( 'wcfmvm_registration_custo
 					
 					do_action( 'end_wcfm_membership_registration_form' );
 					
-					// Terms & Conditions support add - 1.1.9
+					 
 					if( $terms == 'active' ) {
 						?>
 						<input type="checkbox" id="terms" name="wcfmvm_static_infos[terms]" class="wcfm-checkbox" value="<?php esc_html_e( 'Agree', 'wc-multivendor-membership' ); ?>" data-required="1" data-required_message="<?php esc_html_e( 'Terms & Conditions', 'wc-multivendor-membership' ); ?>: <?php esc_html_e( 'This field is required.', 'wc-frontend-manager' ); ?>">

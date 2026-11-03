@@ -1,45 +1,45 @@
 <?php
-/**
- * WCFM Vendor Membership plugin core
- *
- * Plugin Pay for Product Module
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/core
- * @version   2.0.0
- */
+
+
+
+
+
+
+
+
+
  
 class WCFMvm_Pay_For_Product {
 	
 	public function __construct() {
 		global $WCFM, $WCFMvm;
 		
-		// Pay for Product Settings
+		 
 		add_action( 'end_wcfm_membership_settings_form', array( &$this, 'wcfmvm_pay_per_product_settings' ), 100 );
 		add_action( 'wcfm_membership_settings_update', array( &$this, 'wcfmvm_pay_per_product_update' ), 100 );
 		
 		if( wcfm_is_vendor() && apply_filters( 'wcfm_is_allow_pay_for_product', true ) ) {
-			// Set Pay for Product Default Product Limit
+			 
 			add_filter( 'wcfm_vendor_product_limit', array( &$this, 'wcfmvm_pay_per_product_limit' ), 750, 2 );
 		
-			// Show Pay for Product when product limit reached
+			 
 			add_action( 'wcfm_product_limit_reached', array( &$this, 'wcfmvm_pay_per_product_option' ) );
 		
-			// Pay for Product Button Handler
+			 
 			add_action( 'wp_ajax_wcfm_pay_for_product', array( &$this, 'wcfmvm_pay_for_product_checkout' ) );
 		}
 		
-		// WC Checkout for WCfM Pay for Product process
+		 
     add_action( 'woocommerce_order_status_completed', array( &$this, 'wcfmvm_pay_per_product_process_on_order_completed' ), 20, 1 );
     
-    // Pay for Product message type
+     
 		add_filter( 'wcfm_message_types', array( &$this, 'wcfm_pay_per_product_message_types' ), 52 );
 		
-		// Load Pay for Product Scripts
+		 
     add_action( 'wcfm_load_scripts', array( &$this, 'load_scripts' ) );
     add_action( 'after_wcfm_load_scripts', array( &$this, 'load_scripts' ) );
 		
-		// Load Pay for Product Styles
+		 
     add_action( 'wcfm_load_styles', array( &$this, 'load_styles' ) );
     add_action( 'after_wcfm_load_styles', array( &$this, 'load_styles' ) );
 		
@@ -89,7 +89,7 @@ class WCFMvm_Pay_For_Product {
 			$credit = isset( $pay_for_product_settings['credit'] ) ? $pay_for_product_settings['credit'] : '1';
 			$default_limit = isset( $pay_for_product_settings['default_limit'] ) ? $pay_for_product_settings['default_limit'] : 'by_cap';
 			
-			//if( !$cost ) return;
+			 
 			
 			$wcfm_pay_for_product_settings = get_option( 'wcfm_pay_for_product_settings', array() );
 			$pay_for_product_id = isset( $wcfm_pay_for_product_settings['product'] ) ? absint( $wcfm_pay_for_product_settings['product'] ) : '';
@@ -135,7 +135,7 @@ class WCFMvm_Pay_For_Product {
 	function wcfmvm_pay_per_product_limit( $product_limit, $current_user_id = 0 ) {
 		global $WCFM, $WCFMvm;
 		
-		// Fetching current user's pay for product credit limit
+		 
 		if( !$current_user_id ) {
 			$current_user_id = apply_filters( 'wcfm_current_vendor_id', get_current_user_id() );
 		}
@@ -253,7 +253,7 @@ class WCFMvm_Pay_For_Product {
 						$member_id       = absint( $order->get_user_id() );
 						$member_user     = new WP_User( absint( $member_id ) );
 						
-						// Fetching current user's pay for product credit limit
+						 
 						$wcfm_pay_for_product_credit = get_user_meta( $member_id, '_wcfm_pay_for_product_credit', true );
 						$wcfm_pay_for_product_credit = absint( $wcfm_pay_for_product_credit );
 						$wcfm_pay_for_product_credit += absint($credit);
@@ -262,11 +262,11 @@ class WCFMvm_Pay_For_Product {
 						if( !defined( 'DOING_WCFM_EMAIL' ) ) 
 							 define( 'DOING_WCFM_EMAIL', true );
 							
-						// Vendor Pay for Product Admin Email Notification
+						 
 						if( apply_filters( 'wcfm_is_allow_pay_per_product_admin_email', true ) ) {
 							$mail_to = apply_filters( 'wcfm_admin_email_notification_receiver', get_bloginfo( 'admin_email' ), 'pay_for_product' );
 
-							// Switch language context…
+							 
 							if( apply_filters( 'wcfm_allow_wpml_email_translation', true ) ) {
 								do_action('wpml_switch_language_for_email', $mail_to);
 							}
@@ -281,21 +281,21 @@ class WCFMvm_Pay_For_Product {
 							$subject = str_replace( '{site_name}', get_bloginfo( 'name' ), $pay_for_product_admin_notication_subject );
 							$subject = str_replace( '{vendor_name}', $member_user->first_name, $subject );
 							$subject = apply_filters( 'wcfm_email_subject_wrapper', $subject );
-							$message = str_replace( '{vendor_name}', $member_user->first_name, $pay_for_product_admin_notication_content );
+							$message = str_replace( '{vendor_name}', esc_html( $member_user->first_name ), $pay_for_product_admin_notication_content );
 							$message = str_replace( '{credit_limit}', $credit, $message );
 							$message = apply_filters( 'wcfm_email_content_wrapper', $message, __( 'Pay for Product', 'wc-multivendor-membership' ) );
 							
 							wp_mail( $mail_to, $subject, $message ); 
 
-							// switch language back
+							 
 							if( apply_filters( 'wcfm_allow_wpml_email_translation', true ) ) {
 								do_action('wpml_restore_language_from_email');
 							}
 						}
 						
-						// Vendor Pay for Product Vendor Email Notification
+						 
 						if( apply_filters( 'wcfm_is_allow_pay_per_product_vendor_email', true ) ) {
-							// Switch language context…
+							 
 							if( apply_filters( 'wcfm_allow_wpml_email_translation', true ) ) {
 								do_action('wpml_switch_language_for_email', $member_user->user_email);
 							}
@@ -309,24 +309,24 @@ class WCFMvm_Pay_For_Product {
 																			 
 							$subject = str_replace( '{site_name}', get_bloginfo( 'name' ), $pay_for_product_vendor_notication_subject );
 							$subject = apply_filters( 'wcfm_email_subject_wrapper', $subject );
-							$message = str_replace( '{vendor_name}', $member_user->first_name, $pay_for_product_vendor_notication_content );
+							$message = str_replace( '{vendor_name}', esc_html( $member_user->first_name ), $pay_for_product_vendor_notication_content );
 							$message = str_replace( '{credit_limit}', $credit, $message );
 							$message = apply_filters( 'wcfm_email_content_wrapper', $message, __( 'Pay for Product', 'wc-multivendor-membership' ) );
 							
 							wp_mail( $member_user->user_email, $subject, $message ); 
 
-							// switch language back
+							 
 							if( apply_filters( 'wcfm_allow_wpml_email_translation', true ) ) {
 								do_action('wpml_restore_language_from_email');
 							}
 						}
 						
-						// Pay for Product Desktop Notification
+						 
 						if( apply_filters( 'wcfm_is_allow_pay_per_product_notification', true ) ) {
-							$wcfm_messages = sprintf( __( '%s has just received product credit limit: %s', 'wc-multivendor-membership' ), $member_user->first_name, $credit );
+							$wcfm_messages = sprintf( __( '%s has just received product credit limit: %s', 'wc-multivendor-membership' ), wcfmvm_notification_text( $member_user->first_name ), $credit );
 							$WCFM->wcfm_notification->wcfm_send_direct_message( -2, 0, 1, 0, $wcfm_messages, 'pay_for_product', false );
 							
-							// For Vendor
+							 
 							$wcfm_messages = sprintf( __( 'You have just received product credit limit: %s', 'wc-multivendor-membership' ), $credit );
 							$WCFM->wcfm_notification->wcfm_send_direct_message( -1, $member_id, 1, 0, $wcfm_messages, 'pay_for_product', false );
 						}

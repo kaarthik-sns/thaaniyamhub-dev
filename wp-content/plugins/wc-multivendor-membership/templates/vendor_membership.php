@@ -1,13 +1,13 @@
 <?php
-/**
- * WCFM plugin view
- *
- * WCFMgs Memberships Template
- *
- * @author 		WC Lovers
- * @package 	wcfmvm/templates
- * @version   1.0.0
- */
+
+
+
+
+
+
+
+
+
 
 global $WCFM, $WCFMvm;
 
@@ -59,11 +59,11 @@ if( !empty( $membership_feature_lists ) ) {
 }
 
 $wcfm_restricted_memberships = array();
-//if( $current_plan ) {
+ 
 	$member_id = apply_filters( 'wcfm_current_vendor_id', get_current_user_id() );
 	$wcfm_restricted_memberships = get_user_meta( $member_id, 'wcfm_restricted_memberships', true ); 
 	if( !$wcfm_restricted_memberships ) $wcfm_restricted_memberships = array();
-//}
+ 
 
 $wcfm_membership_table_plan_count = 0;
 ?>
@@ -102,7 +102,7 @@ $wcfm_membership_table_plan_count = 0;
     	$is_wcfm_membership_plan_disable = apply_filters( 'wcfm_membership_is_plan_disable', $is_wcfm_membership_plan_disable, $wcfm_membership_id );
     	if( $is_wcfm_membership_plan_disable == 'yes' ) continue;
     	
-    	// Restricted Membership Check
+    	 
     	$subscription = (array) get_post_meta( $wcfm_membership_id, 'subscription', true );
     	$is_restricted = isset( $subscription['is_restricted'] ) ? 'yes' : 'no';
     	if( ($is_restricted == 'yes' ) && in_array( $wcfm_membership_id, $wcfm_restricted_memberships ) ) continue;

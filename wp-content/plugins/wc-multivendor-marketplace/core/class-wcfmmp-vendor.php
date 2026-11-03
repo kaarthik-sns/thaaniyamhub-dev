@@ -594,8 +594,8 @@ class WCFMmp_Vendor {
             $address     = $store_user->get_address_string();
 
             $wcfm_vendors_name .= '<span style="color:#555;">';
-            if ($email) $wcfm_vendors_name .= '<br /><span style="line-height:2em;"><i class="wcfmfa fa-at" aria-hidden="true" style="color:#20a8d8;vertical-align: middle;"></i>&nbsp;<span>' . $email . '</span></span>';
-            if ($phone) $wcfm_vendors_name .= '<br /><span style="line-height:2em;"><i class="wcfmfa fa-phone" aria-hidden="true" style="color:#20a8d8;"></i>&nbsp;<span>' . $phone . '</span></span>';
+            if ($email) $wcfm_vendors_name .= '<br /><span style="line-height:2em;"><i class="wcfmfa fa-at" aria-hidden="true" style="color:#20a8d8;vertical-align: middle;"></i>&nbsp;<span>' . esc_html($email) . '</span></span>';
+            if ($phone) $wcfm_vendors_name .= '<br /><span style="line-height:2em;"><i class="wcfmfa fa-phone" aria-hidden="true" style="color:#20a8d8;"></i>&nbsp;<span>' . esc_html($phone) . '</span></span>';
             if ($address) $wcfm_vendors_name .= '<br /><span><i class="wcfmfa fa-map-marker" aria-hidden="true" style="color:#20a8d8;"></i>&nbsp;<span>' . $address . '</span></span>';
             $wcfm_vendors_name .= '</span>';
         }
@@ -1931,10 +1931,20 @@ class WCFMmp_Vendor {
     
 
 
+    function wcfmmp_profile_additional_info_fields($vendor_id) {
+        if (function_exists('wcfmvm_get_registration_custom_fields')) {
+            return wcfmvm_get_registration_custom_fields(get_user_meta($vendor_id, 'wcfm_membership', true), $vendor_id);
+        }
+        return wcfm_get_option('wcfmvm_registration_custom_fields', array());
+    }
+
+    
+
+
     function wcfmmp_profile_additional_info($vendor_id) {
         global $WCFM, $WCFMmp, $wpdb;
 
-        $wcfmmp_addition_info_fields = wcfm_get_option('wcfmvm_registration_custom_fields', array());
+        $wcfmmp_addition_info_fields = $this->wcfmmp_profile_additional_info_fields($vendor_id);
         if (empty($wcfmmp_addition_info_fields)) return;
 
         $has_addition_field = false;
@@ -2066,11 +2076,12 @@ class WCFMmp_Vendor {
         global $WCFM, $WCFMmp, $wpdb;
 
         if (isset($wcfm_profile_form['wcfmmp_additional_infos'])) {
-            update_user_meta($vendor_id, 'wcfmvm_custom_infos', $wcfm_profile_form['wcfmmp_additional_infos']);
+            $wcfmmp_addition_info_fields = $this->wcfmmp_profile_additional_info_fields($vendor_id);
+            $wcfmvm_custom_infos = (array) $wcfm_profile_form['wcfmmp_additional_infos'];
 
              
-            $wcfmmp_addition_info_fields = wcfm_get_option('wcfmvm_registration_custom_fields', array());
-            $wcfmvm_custom_infos = (array) $wcfm_profile_form['wcfmmp_additional_infos'];
+            $wcfmvm_saved_custom_infos = get_user_meta($vendor_id, 'wcfmvm_custom_infos', true);
+            $wcfmvm_saved_custom_infos = array_replace(is_array($wcfmvm_saved_custom_infos) ? $wcfmvm_saved_custom_infos : array(), $wcfmvm_custom_infos);
 
             if (!empty($wcfmmp_addition_info_fields)) {
                 foreach ($wcfmmp_addition_info_fields as $wcfmvm_registration_custom_field) {
@@ -2079,6 +2090,11 @@ class WCFMmp_Vendor {
                     $field_value = '';
                     $wcfmvm_registration_custom_field['name'] = sanitize_title($wcfmvm_registration_custom_field['label']);
 
+                     
+                    $field_key = ($wcfmvm_registration_custom_field['type'] == 'upload') ? md5('wcfmvm_custom_infos[' . $wcfmvm_registration_custom_field['name'] . ']') : $wcfmvm_registration_custom_field['name'];
+                    if (!isset($wcfmvm_custom_infos[$field_key])) unset($wcfmvm_saved_custom_infos[$field_key]);
+
+                     
                     if (!empty($wcfmvm_custom_infos)) {
                         if ($wcfmvm_registration_custom_field['type'] == 'checkbox') {
                             $field_value = isset($wcfmvm_custom_infos[$wcfmvm_registration_custom_field['name']]) ? $wcfmvm_custom_infos[$wcfmvm_registration_custom_field['name']] : 'no';
@@ -2090,6 +2106,8 @@ class WCFMmp_Vendor {
                     update_user_meta($vendor_id, $wcfmvm_registration_custom_field['name'], $field_value);
                 }
             }
+
+            update_user_meta($vendor_id, 'wcfmvm_custom_infos', $wcfmvm_saved_custom_infos);
         }
     }
 
@@ -2118,7 +2136,8 @@ class WCFMmp_Vendor {
     function wcfmmp_wepos_product_query($args, $request) {
         global $WCFM, $WCFMmp, $wpdb;
         if (wcfm_is_vendor()) {
-            $args['author'] = $WCFMmp->vendor_id;
+             
+            $args['author'] = apply_filters('wcfm_current_vendor_id', get_current_user_id());
         }
         return $args;
     }
